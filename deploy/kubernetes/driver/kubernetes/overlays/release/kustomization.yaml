@@ -1,0 +1,9 @@
+bases:
+- ../../manifests
+commonLabels:
+  addonmanager.kubernetes.io/mode: Reconcile
+commonAnnotations:
+  version: (( grab $TRAVIS_COMMIT || "dev" ))
+patches:
+- controller-server-images.yaml
+- node-server-images.yaml

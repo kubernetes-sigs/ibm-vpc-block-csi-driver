@@ -1,0 +1,167 @@
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: ibm-vpc-block-csi-controller
+spec:
+  serviceName: "ibm-vpc-block-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ibm-vpc-block-csi-driver
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9080"
+        prometheus.io/path: "/metrics"
+      labels:
+        app: ibm-vpc-block-csi-driver
+    spec:
+      serviceAccountName: ibm-vpc-block-controller-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 2121
+      containers:
+        - name: csi-provisioner
+          image: MUSTPATCHWITHKUSTOMIZE
+          imagePullPolicy: Always
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+            - "--timeout=600s"
+            - "--feature-gates=Topology=true"
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+          resources:
+            limits:
+              cpu: 100m
+              memory: 100Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+        - name: csi-resizer
+          image: MUSTPATCHWITHKUSTOMIZE
+          imagePullPolicy: Always
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+            - "--timeout=600s"
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+          resources:
+            limits:
+              cpu: 100m
+              memory: 100Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+        - name: csi-attacher
+          image: MUSTPATCHWITHKUSTOMIZE
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+          args:
+            - "--v=5"
+            - "--csi-address=/csi/csi.sock"
+            - "--timeout=900s"
+          resources:
+            limits:
+              cpu: 100m
+              memory: 100Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+        - name: iks-vpc-block-driver
+          image: MUSTPATCHWITHKUSTOMIZE
+          imagePullPolicy: Always
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+          args:
+            - "--v=5"
+            - "--endpoint=$(CSI_ENDPOINT)"
+            - "--lock_enabled=false"
+          envFrom:
+          - configMapRef:
+              name: ibm-vpc-block-csi-configmap
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            limits:
+              cpu: 500m
+              memory: 500Mi
+            requests:
+              cpu: 50m
+              memory: 100Mi
+          ports:
+            - name: healthz
+              containerPort: 9808
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 10
+            timeoutSeconds: 3
+            periodSeconds: 10
+            failureThreshold: 5
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+            - name: customer-auth
+              readOnly: true
+              mountPath: /etc/storage_ibmc
+            - name: cluster-info
+              readOnly: true
+              mountPath: /etc/storage_ibmc/cluster_info
+        - name: liveness-probe
+          image: MUSTPATCHWITHKUSTOMIZE
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+          args:
+            - --csi-address=/csi/csi.sock
+          resources:
+            limits:
+              cpu: 50m
+              memory: 50Mi
+            requests:
+              cpu: 5m
+              memory: 10Mi
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+      volumes:
+        - name: socket-dir
+          emptyDir: {}
+        - name: customer-auth
+          secret:
+            secretName: storage-secret-store
+        - name: cluster-info
+          configMap:
+            name: cluster-info
+  volumeClaimTemplates: []

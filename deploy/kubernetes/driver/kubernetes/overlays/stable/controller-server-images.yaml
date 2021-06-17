@@ -1,0 +1,19 @@
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: ibm-vpc-block-csi-controller
+spec:
+  template:
+    spec:
+      containers:
+        - name: csi-provisioner
+          image: icr.io/ext/k8scsi/csi-provisioner:v1.6.0
+        - name: csi-resizer
+          image: quay.io/k8scsi/csi-resizer:v1.0.0
+        - name: csi-attacher
+          image: icr.io/ext/k8scsi/csi-attacher:v2.2.0
+        - name: liveness-probe
+          image: quay.io/k8scsi/livenessprobe:v1.1.0
+        - name: iks-vpc-block-driver
+          imagePullPolicy: Always
+          image: icr.io/ibm/ibm-vpc-block-csi-driver:v3.0.4

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+  <suppress>
+      <notes><![CDATA[
+      file name: github.com/modern-go/concurrent
+      ]]></notes>
+      <packageUrl regex="true">^pkg:golang/github\.com/modern\-go/concurrent@.*$</packageUrl>
+      <cve>CVE-2020-10517</cve>
+  </suppress>
+  <suppress>
+      <notes><![CDATA[
+      file name: github.com/modern-go/concurrent
+      ]]></notes>
+      <packageUrl regex="true">^pkg:golang/github\.com/modern\-go/concurrent@.*$</packageUrl>
+      <cve>CVE-2020-10518</cve>
+  </suppress>
+  <suppress>
+      <notes><![CDATA[
+      file name: github.com/modern-go/reflect2
+      ]]></notes>
+      <packageUrl regex="true">^pkg:golang/github\.com/modern\-go/reflect2@.*$</packageUrl>
+      <cve>CVE-2020-10517</cve>
+  </suppress>
+  <suppress>
+      <notes><![CDATA[
+      file name: github.com/modern-go/reflect2
+      ]]></notes>
+      <packageUrl regex="true">^pkg:golang/github\.com/modern\-go/reflect2@.*$</packageUrl>
+      <cve>CVE-2020-10518</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/k8s.io/kubernetes@.*$</packageUrl>
+      <cve>CVE-2019-11245</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/k8s.io/kubernetes@.*$</packageUrl>
+      <cve>CVE-2019-11246</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/k8s.io/kubernetes@.*$</packageUrl>
+      <cve>CVE-2019-11247</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/k8s.io/kubernetes@.*$</packageUrl>
+      <cve>CVE-2019-11248</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/k8s.io/kubernetes@.*$</packageUrl>
+      <cve>CVE-2019-11249</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/k8s.io/kubernetes@.*$</packageUrl>
+      <cve>CVE-2019-11250</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/k8s.io/kubernetes@.*$</packageUrl>
+      <cve>CVE-2019-11251</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/k8s.io/kubernetes@.*$</packageUrl>
+      <cve>CVE-2019-11252</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/k8s.io/kubernetes@.*$</packageUrl>
+      <cve>CVE-2019-11253</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/k8s.io/kubernetes@.*$</packageUrl>
+      <cve>CVE-2019-11254</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/k8s.io/kubernetes@.*$</packageUrl>
+      <cve>CVE-2020-8552</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/k8s.io/kubernetes@.*$</packageUrl>
+      <cve>CVE-2020-8555</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/k8s.io/kubernetes@.*$</packageUrl>
+      <cve>CVE-2020-8557</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/k8s.io/kubernetes@.*$</packageUrl>
+      <cve>CVE-2020-8558</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/k8s.io/kubernetes@.*$</packageUrl>
+      <cve>CVE-2020-8559</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/k8s.io/kubernetes@.*$</packageUrl>
+      <cve>CVE-2020-8563</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/k8s.io/kubernetes@.*$</packageUrl>
+      <cve>CVE-2020-8554</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/github\.com/coreos/go-etcd@.*$</packageUrl>
+      <cve>CVE-2020-15106</cve>
+  </suppress>
+  <suppress>
+      <notes><![CDATA[
+      file name: github.com/IBM-Cloud/go-etcd-rules:1.3.0
+      ]]></notes>
+      <packageUrl regex="true">^pkg:golang/github\.com/coreos/go-etcd@.*$</packageUrl>
+      <cve>CVE-2020-15112</cve>
+  </suppress>
+  <suppress>
+      <notes><![CDATA[
+      file name: github.com/IBM-Cloud/go-etcd-rules:1.3.0
+      ]]></notes>
+      <packageUrl regex="true">^pkg:golang/github\.com/coreos/go-etcd@.*$</packageUrl>
+      <cve>CVE-2020-15113</cve>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/k8s\.io/kubernetes@.*$</packageUrl>
+      <vulnerabilityName>CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')</vulnerabilityName>
+  </suppress>
+  <suppress>
+      <packageUrl regex="true">^pkg:golang/github\.com/gin-gonic/gin@.*$</packageUrl>
+      <cve>CVE-2020-28483</cve>
+  </suppress>
+</suppressions>

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ibm-vpc-block-csi-configmap
+  namespace: kube-system
+data:
+  SECRET_CONFIG_PATH: "/etc/storage_ibmc"
+  CSI_ENDPOINT: "unix:/csi/csi.sock"
+  VPC_ENABLED: "True"
+  VPC_BLOCK_PROVIDER_NAME: "vpc-classic"
+  VPC_API_TIMEOUT: "90s" # 1.5 minutes for API time out its not related with retry
+  VPC_RETRY_ATTEMPT: "10" # Number of retry, overall time should not increase from k8s retry
+  VPC_RETRY_INTERVAL: "60" # This is max retry Gap in seconds even considering for exponential retry
+  VPC_API_VERSION: "2019-07-02"
+  VPC_API_GENERATION: "1"
+  IKS_ENABLED: "True"
+  IKS_BLOCK_PROVIDER_NAME: "iks-vpc-classic"

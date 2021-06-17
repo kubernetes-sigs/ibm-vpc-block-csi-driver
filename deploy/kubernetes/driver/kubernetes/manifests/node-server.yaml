@@ -1,0 +1,173 @@
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: ibm-vpc-block-csi-node
+spec:
+  selector:
+    matchLabels:
+      app: ibm-vpc-block-csi-driver
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9080"
+        prometheus.io/path: "/metrics"
+      labels:
+        app: ibm-vpc-block-csi-driver
+    spec:
+      serviceAccountName: ibm-vpc-block-node-sa
+      tolerations:
+      - operator: Exists
+      containers:
+        - name: csi-driver-registrar
+          image: MUSTPATCHWITHKUSTOMIZE
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+            privileged: false
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+            - "--kubelet-registration-path=$(DRIVER_REGISTRATION_SOCK)"
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "rm -rf /registration/vpc.block.csi.ibm.io /registration/vpc.block.csi.ibm.io-reg.sock"]
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+            - name: DRIVER_REGISTRATION_SOCK
+              value: /var/lib/kubelet/csi-plugins/vpc.block.csi.ibm.io/csi.sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          resources:
+            limits:
+              cpu: 100m
+              memory: 100Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /csi
+            - name: registration-dir
+              mountPath: /registration
+        - name: iks-vpc-block-node-driver
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+            privileged: true
+          image: MUSTPATCHWITHKUSTOMIZE
+          imagePullPolicy: Always
+          args:
+            - "--v=5"
+            - "--endpoint=unix:/csi/csi.sock"
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          envFrom:
+          - configMapRef:
+              name: ibm-vpc-block-csi-configmap
+          resources:
+            limits:
+              cpu: 200m
+              memory: 250Mi
+            requests:
+              cpu: 20m
+              memory: 50Mi
+          ports:
+            - name: healthz
+              containerPort: 9808
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 10
+            timeoutSeconds: 3
+            periodSeconds: 10
+            failureThreshold: 5
+          volumeMounts:
+            - name: kubelet-data-dir
+              mountPath: /var/data/kubelet
+              mountPropagation: "Bidirectional"
+            - name: plugin-dir
+              mountPath: /csi
+            - name: device-dir
+              mountPath: /dev
+            - name: etcudevpath
+              mountPath: /etc/udev
+            - name: runudevpath
+              mountPath: /run/udev
+            - name: libudevpath
+              mountPath: /lib/udev
+            - name : syspath
+              mountPath: /sys
+            - name: customer-auth
+              readOnly: true
+              mountPath: /etc/storage_ibmc
+            - name: cluster-info
+              readOnly: true
+              mountPath: /etc/storage_ibmc/cluster_info
+        - name: liveness-probe
+          image: MUSTPATCHWITHKUSTOMIZE
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+            privileged: false
+          args:
+            - --csi-address=/csi/csi.sock
+          resources:
+            limits:
+              cpu: 50m
+              memory: 50Mi
+            requests:
+              cpu: 5m
+              memory: 10Mi
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /csi
+      volumes:
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins_registry/
+            type: Directory
+        - name: kubelet-data-dir
+          hostPath:
+            path: /var/data/kubelet # IKS worker
+            type: Directory
+        - name: plugin-dir
+          hostPath:
+            path: /var/lib/kubelet/csi-plugins/vpc.block.csi.ibm.io/
+            type: DirectoryOrCreate
+        - name: device-dir
+          hostPath:
+            path: /dev
+            type: Directory
+        - name: etcudevpath
+          hostPath:
+            path: /etc/udev
+            type: Directory
+        - name: runudevpath
+          hostPath:
+            path: /run/udev
+            type: Directory
+        - name: libudevpath
+          hostPath:
+            path: /lib/udev
+            type: Directory
+        - name: syspath
+          hostPath:
+            path: /sys
+            type: Directory
+        - name: customer-auth # altough its not required, This is just to finish lib configuration which is a common code in the driver
+          secret:
+            secretName: storage-secret-store
+        - name: cluster-info # To get the cluster info
+          configMap:
+            name: cluster-info

@@ -1,0 +1,24 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: testpodrwo
+  labels:
+    app: testpodrwo
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: testpodrwo
+        tier: frontend
+    spec:
+      containers:
+      - image: rabbitmq #image name which should be avilable within cluster
+        name: container-name # name of the container inside POD
+        volumeMounts:
+        - mountPath: /myvolumepath  # mount path for pvc from container
+          name: pvc-name # pvc name for this pod
+      volumes:
+      - name: pvc-name  # volume resource name in this POD, user can choose any name as per kubernetes
+        persistentVolumeClaim:
+          claimName: csi-block-pvc-good  # pvc name which was created by using claim.yaml file

@@ -1,0 +1,15 @@
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: ibm-vpc-block-csi-node
+spec:
+  template:
+    spec:
+      containers:
+        - name: iks-vpc-block-node-driver
+          imagePullPolicy: Always
+          image: (( concat "{{ DOCKER_REGISTRY }}/armada-master/ibm-vpc-block-csi-driver:" $RELEASE_TAG ))
+        - name: csi-driver-registrar
+          image: icr.io/ext/k8scsi/csi-node-driver-registrar:v1.2.0
+        - name: liveness-probe
+          image: icr.io/ext/k8scsi/livenessprobe:v1.1.0

@@ -1,0 +1,17 @@
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: ibm-vpc-block-csi-controller
+spec:
+  template:
+    spec:
+      containers:
+        - name: csi-provisioner
+          image: icr.io/ext/k8scsi/csi-provisioner:v1.6.0
+        - name: csi-attacher
+          image: icr.io/ext/k8scsi/csi-attacher:v2.2.0
+        - name: liveness-probe
+          image: icr.io/ext/k8scsi/livenessprobe:v1.1.0
+        - name: iks-vpc-block-driver
+          imagePullPolicy: Always
+          image: (( concat "{{ DOCKER_REGISTRY }}/armada-master/ibm-vpc-block-csi-driver:" $RELEASE_TAG ))

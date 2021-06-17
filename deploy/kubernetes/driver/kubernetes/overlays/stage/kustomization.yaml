@@ -1,0 +1,5 @@
+bases:
+- ../../manifests
+patches:
+- controller-server-images.yaml
+- node-server-images.yaml
