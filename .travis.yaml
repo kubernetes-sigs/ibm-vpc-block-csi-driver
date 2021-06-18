@@ -1,0 +1,29 @@
+language: go
+
+go:
+  - "1.15.12"
+  - tip
+
+group: bluezone
+
+matrix:
+  fast_finish: true
+  allow_failures:
+  - go: tip
+
+cache:
+  bundler: true
+
+sudo: true
+
+before_install:
+  - sudo apt-get install bc
+
+before_script:
+  - make deps
+  - go get github.com/pierrre/gotestcover
+
+script:
+  - make fmt
+  - make test
+  - make ut-coverage
