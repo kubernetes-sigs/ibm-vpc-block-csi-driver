@@ -17,7 +17,7 @@ The following table details orchestration platforms suitable for deployment of t
 
 For building the driver `docker` and `GO` should be installed
 
-1. On your local machine, install [`docker`](https://docs.docker.com/install/), [`Go`](https://golang.org/doc/install), and [`glide`](https://glide.sh/).
+1. On your local machine, install [`docker`](https://docs.docker.com/install/) and [`Go`](https://golang.org/doc/install).
 2. Set the [`GOPATH` environment variable](https://github.com/golang/go/wiki/SettingGOPATH).
 3. Build the driver image
 
