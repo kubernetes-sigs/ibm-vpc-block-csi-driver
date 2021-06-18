@@ -39,9 +39,10 @@ For building the driver `docker` and `GO` should be installed
    ```
 
    Push image to registry
+
    Image should be pushed to any registry from which the worker nodes have access to pull
 
-   1. You can push the driver image to `docker.io` regitsry or `icr.io` IBM public registry under your namespace.
+   1. You can push the driver image to [docker.io](https://hub.docker.com/)  registry or [IBM public registry](https://cloud.ibm.com/docs/Registry?topic=Registry-registry_overview#registry_regions_local) under your namespace.
 
 # Deploy CSI driver on your cluster
 
@@ -50,7 +51,7 @@ For building the driver `docker` and `GO` should be installed
   - Update the image tag
      - Change `iks-vpc-block-driver` image name in `deploy/kubernetes/driver/kubernetes/overlays/stage/controller-server-images.yaml`
      - Change `iks-vpc-block-driver` image name in `deploy/kubernetes/driver/kubernetes/overlays/stage/node-server-images.yaml`
-  - Install `kustomize` tool. The instructions are available [here](https://github.com/kubernetes-sigs/kustomize/blob/master/docs/INSTALL.md)
+  - Install `kustomize` tool. The instructions are available [here](https://kubectl.docs.kubernetes.io/installation/kustomize/)
   - Deploy plugin
     - `sh deploy/kubernetes/driver/kubernetes/deploy-vpc-block-driver.sh stage`
 
