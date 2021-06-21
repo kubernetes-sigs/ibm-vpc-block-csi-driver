@@ -15,5 +15,3 @@ spec:
         - name: liveness-probe
           image: quay.io/k8scsi/livenessprobe:v1.1.0
           imagePullPolicy: IfNotPresent
-        - name: storage-secret-sidecar
-          image: icr.io/obs/armada-storage-secret:v1.0.0

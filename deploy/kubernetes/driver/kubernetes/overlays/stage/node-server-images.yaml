@@ -13,5 +13,3 @@ spec:
           image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
         - name: liveness-probe
           image: quay.io/k8scsi/livenessprobe:v2.0.0
-        - name: storage-secret-sidecar
-          image: icr.io/obs/armada-storage-secret:v1.0.0

@@ -15,5 +15,3 @@ spec:
         - name: iks-vpc-block-driver
           imagePullPolicy: Always
           image: icr.io/ibm/ibm-vpc-block-csi-driver:v3.0.4
-        - name: storage-secret-sidecar
-          image: icr.io/obs/armada-storage-secret:v1.0.0
