@@ -7,7 +7,7 @@
    - name: bluemix-default-secret
    - name: bluemix-default-secret-regional
    - name: bluemix-default-secret-international
-
+   - name: icr-io-secret
 ---
 
 kind: ClusterRole
@@ -48,7 +48,7 @@ roleRef:
    - name: bluemix-default-secret
    - name: bluemix-default-secret-regional
    - name: bluemix-default-secret-international
-
+   - name: icr-io-secret
 ---
 # xref: https://github.com/kubernetes-csi/external-provisioner/blob/master/deploy/kubernetes/rbac.yaml
 kind: ClusterRole
