@@ -94,15 +94,15 @@ If you have any questions or issues you can create a new issue [ here ](https://
 
 Pull requests are very welcome! Make sure your patches are well tested. Ideally create a topic branch for every separate change you make. For example:
 
-Fork the repo
+1. Fork the repo
 
-Create your feature branch (git checkout -b my-new-feature)
+2. Create your feature branch (git checkout -b my-new-feature)
 
-Commit your changes (git commit -am 'Added some feature')
+3. Commit your changes (git commit -am 'Added some feature')
 
-Push to the branch (git push origin my-new-feature)
+4. Push to the branch (git push origin my-new-feature)
 
-Create new Pull Request
+5. Create new Pull Request
 
 
 # Licensing
