@@ -122,4 +122,34 @@
       <packageUrl regex="true">^pkg:golang/github\.com/gin-gonic/gin@.*$</packageUrl>
       <cve>CVE-2020-28483</cve>
   </suppress>
+  <suppress>
+      <cve>CVE-2018-16886</cve>
+  </suppress>
+  <suppress>
+      <cve>CVE-2020-15106</cve>
+  </suppress>
+  <suppress>
+      <cve>CVE-2020-15112</cve>
+  </suppress>
+  <suppress>
+      <cve>CVE-2020-15113</cve>
+  </suppress>
+  <suppress>
+      <cve>CVE-2020-15114</cve>
+  </suppress>
+  <suppress>
+      <cve>CVE-2020-15115</cve>
+  </suppress>
+  <suppress>
+      <cve>CVE-2020-15136</cve>
+  </suppress>
+  <suppress>
+      <cve>CVE-2017-8359</cve>
+  </suppress>
+  <suppress>
+      <cve>CVE-2020-7768</cve>
+  </suppress>
+  <suppress>
+      <cve>CVE-2017-9431</cve>
+  </suppress>
 </suppressions>

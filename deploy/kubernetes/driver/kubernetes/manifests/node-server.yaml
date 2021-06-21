@@ -65,7 +65,10 @@ spec:
           args:
             - "--v=5"
             - "--endpoint=unix:/csi/csi.sock"
+            - "--sidecarEndpoint=$(SIDECAREP)"
           env:
+            - name: SIDECAREP
+              value: "/sidecardir/provider.sock"
             - name: KUBE_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -93,6 +96,8 @@ spec:
             periodSeconds: 10
             failureThreshold: 5
           volumeMounts:
+            - name: secret-sidecar-sock-dir
+              mountPath: /sidecardir
             - name: kubelet-data-dir
               mountPath: /var/data/kubelet
               mountPropagation: "Bidirectional"
@@ -132,7 +137,32 @@ spec:
           volumeMounts:
             - name: plugin-dir
               mountPath: /csi
+        - name: storage-secret-sidecar
+          image: MUSTPATCHWITHKUSTOMIZE
+          imagePullPolicy: Always
+          args:
+            - "--endpoint=$(ENDPOINT)"
+          resources:
+            limits:
+              cpu: 10m
+              memory: 20Mi
+            requests:
+              cpu: 3m
+              memory: 5Mi
+          env:
+            - name: ENDPOINT
+              value: "unix:/sidecardir/provider.sock"
+            - name: SECRET_CONFIG_PATH
+              value: /etc/storage_ibmc/cluster_info
+          volumeMounts:
+            - mountPath: /sidecardir
+              name: secret-sidecar-sock-dir
+            - mountPath: /etc/storage_ibmc/cluster_info
+              name: cluster-info
+              readOnly: true
       volumes:
+        - name: secret-sidecar-sock-dir
+          emptyDir: {}
         - name: registration-dir
           hostPath:
             path: /var/lib/kubelet/plugins_registry/

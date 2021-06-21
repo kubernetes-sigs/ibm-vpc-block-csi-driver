@@ -15,3 +15,5 @@ spec:
         - name: iks-vpc-block-driver
           imagePullPolicy: Always
           image: (( concat "{{ DOCKER_REGISTRY }}/armada-master/ibm-vpc-block-csi-driver:" $RELEASE_TAG ))
+        - name: storage-secret-sidecar
+          image: icr.io/obs/armada-storage-secret:v1.0.0
