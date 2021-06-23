@@ -17,6 +17,7 @@
  */
 
 //Package sanity ...
+
 package sanity
 
 import (
@@ -28,15 +29,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/uuid"
-	"go.uber.org/zap"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	providerError "github.com/IBM/ibmcloud-volume-interface/lib/utils"
-	sanity "github.com/kubernetes-csi/csi-test/v3/pkg/sanity"
+	"github.com/google/uuid"
+	sanity "github.com/kubernetes-csi/csi-test/v4/pkg/sanity"
+	"go.uber.org/zap"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	nodeMetadata "github.com/IBM/ibm-csi-common/pkg/metadata"
@@ -66,10 +66,10 @@ var (
 	CSIEndpoint = fmt.Sprintf("unix:%s/csi.sock", TempDir)
 
 	// TargetPath ...
-	TargetPath = path.Join(TempDir, "target")
+	TargetPath = path.Join(TempDir, "mount")
 
 	// StagePath ...
-	StagePath = path.Join(TempDir, "staging")
+	StagePath = path.Join(TempDir, "stage")
 )
 
 func TestSanity(t *testing.T) {
@@ -81,7 +81,7 @@ func TestSanity(t *testing.T) {
 	csiSanityDriver := initCSIDriverForSanity(t)
 
 	//  Create the temp directory for fake sanity driver
-	err := os.MkdirAll(TempDir, 0750)
+	err := os.MkdirAll(TempDir, 0755) // #nosec
 	if err != nil {
 		t.Fatalf("Failed to create sanity temp working dir %s: %v", TempDir, err)
 	}
@@ -103,8 +103,17 @@ func TestSanity(t *testing.T) {
 		Address:                  CSIEndpoint,
 		DialOptions:              []grpc.DialOption{grpc.WithInsecure()},
 		IDGen:                    &providerIDGenerator{},
+		TestVolumeAccessType:     "mount",
 		TestVolumeParametersFile: os.Getenv("SANITY_PARAMS_FILE"),
 		TestVolumeSize:           10737418240, // i.e 10 GB
+		CreateTargetDir: func(targetPath string) (string, error) {
+			targetPath = path.Join(TempDir, targetPath)
+			return targetPath, createTargetDir(targetPath)
+		},
+		CreateStagingDir: func(stagePath string) (string, error) {
+			stagePath = path.Join(TempDir, stagePath)
+			return stagePath, createTargetDir(stagePath)
+		},
 	}
 	sanity.Test(t, config)
 }
@@ -142,6 +151,7 @@ func initCSIDriverForSanity(t *testing.T) *csiDriver.IBMCSIDriver {
 	// Create fake provider and mounter
 	provider, _ := NewFakeSanityCloudProvider("", logger)
 	mounter := mountManager.NewFakeSafeMounter()
+	//mounter := mountManager.NewSafeMounter()
 
 	statsUtil := &MockStatSanity{}
 
@@ -184,6 +194,8 @@ func (su *MockStatSanity) IsBlockDevice(devicePath string) (bool, error) {
 
 func (su *MockStatSanity) IsDevicePathNotExist(devicePath string) bool {
 	// return true if not matched
+	fmt.Println("printing devicepath")
+	fmt.Println(devicePath)
 	return !strings.Contains(devicePath, TargetPath)
 }
 
@@ -421,7 +433,7 @@ func (c *fakeProviderSession) AttachVolume(attachRequest provider.VolumeAttachme
 		VolumeAttachmentRequest: provider.VolumeAttachmentRequest{
 			VolumeID:            attachRequest.VolumeID,
 			InstanceID:          attachRequest.InstanceID,
-			VPCVolumeAttachment: &provider.VolumeAttachment{DevicePath: "/tmp/csi/target/vol1"},
+			VPCVolumeAttachment: &provider.VolumeAttachment{DevicePath: "/csi/mount/vol1"},
 		},
 	}
 	return attachmentDetails, nil
@@ -444,7 +456,7 @@ func (c *fakeProviderSession) WaitForAttachVolume(attachRequest provider.VolumeA
 		VolumeAttachmentRequest: provider.VolumeAttachmentRequest{
 			VolumeID:            attachRequest.VolumeID,
 			InstanceID:          attachRequest.InstanceID,
-			VPCVolumeAttachment: &provider.VolumeAttachment{DevicePath: "/tmp/csi/target1/vol"},
+			VPCVolumeAttachment: &provider.VolumeAttachment{DevicePath: "/csi/mount/vol1"},
 		},
 	}, nil
 }
@@ -493,4 +505,18 @@ func (c *fakeProviderSession) ListSnapshots() ([]*provider.Snapshot, error) {
 //List all the  snapshots for a given volume
 func (c *fakeProviderSession) ListAllSnapshots(volumeID string) ([]*provider.Snapshot, error) {
 	return nil, nil
+}
+
+func createTargetDir(targetPath string) error {
+	fileInfo, err := os.Stat(targetPath)
+	if err != nil && os.IsNotExist(err) {
+		return os.MkdirAll(targetPath, 0755) //nolint
+	} else if err != nil {
+		return err
+	}
+	if !fileInfo.IsDir() {
+		return fmt.Errorf("target location %s is not a directory", targetPath)
+	}
+
+	return nil
 }

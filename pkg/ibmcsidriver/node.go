@@ -398,7 +398,7 @@ func (csiNS *CSINodeServer) NodeGetVolumeStats(ctx context.Context, req *csi.Nod
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	ctxLogger.Info("CSINodeServer-NodeGetVolumeStats... ", zap.Reflect("Request", *req)) //nolint:staticcheck
 	metrics.UpdateDurationFromStart(ctxLogger, "NodeGetVolumeStats", time.Now())
-	if req == nil || req.VolumeId == "" {
+	if req == nil || req.VolumeId == "" { //nolint:staticcheck
 		return nil, commonError.GetCSIError(ctxLogger, commonError.EmptyVolumeID, requestID, nil)
 	}
 
@@ -467,13 +467,17 @@ func (csiNS *CSINodeServer) NodeGetVolumeStats(ctx context.Context, req *csi.Nod
 func (csiNS *CSINodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolumeRequest) (*csi.NodeExpandVolumeResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	ctxLogger.Info("CSINodeServer-NodeExpandVolume", zap.Reflect("Request", *req))
+	volumeID := req.GetVolumeId()
+	if len(volumeID) == 0 {
+		return nil, commonError.GetCSIError(ctxLogger, commonError.EmptyVolumeID, requestID, nil)
+	}
 	volumePath := req.GetVolumePath()
 	if len(volumePath) == 0 {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.EmptyVolumePath, requestID, nil)
 	}
 	notMounted, err := csiNS.Mounter.IsLikelyNotMountPoint(volumePath)
 	if err != nil {
-		return nil, commonError.GetCSIError(ctxLogger, commonError.MountPointValidateError, requestID, err, volumePath)
+		return nil, commonError.GetCSIError(ctxLogger, commonError.ObjectNotFound, requestID, err, volumePath)
 	}
 
 	if notMounted {

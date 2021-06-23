@@ -1,6 +1,7 @@
 #FROM alpine:3.7
 ARG PROXY_IMAGE_URL=blank
-FROM "${PROXY_IMAGE_URL}"/armada-master/ibm-storage-ubi8:8.4-200.16
+
+FROM "${PROXY_IMAGE_URL}"/ubi8/ubi-minimal:8.4-200.1622548483
 
 # Default values
 ARG git_commit_id=unknown

@@ -59,7 +59,7 @@ const (
 	PublishInfoRequestID = "request-id"
 )
 
-var _ csi.ControllerServer = &CSIControllerServer{}
+var _ csi.ControllerServer = &CSIControllerServer{} //nolint:typecheck
 
 // CreateVolume ...
 func (csiCS *CSIControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
@@ -495,4 +495,13 @@ func (csiCS *CSIControllerServer) ControllerExpandVolume(ctx context.Context, re
 		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
 	}
 	return &csi.ControllerExpandVolumeResponse{CapacityBytes: capacity, NodeExpansionRequired: true}, nil
+}
+
+// ControllerGetVolume ...
+func (csiCS *CSIControllerServer) ControllerGetVolume(ctx context.Context, req *csi.ControllerGetVolumeRequest) (*csi.ControllerGetVolumeResponse, error) {
+	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
+	// populate requestID in the context
+	_ = context.WithValue(ctx, provider.RequestID, requestID)
+	_ = context.WithValue(ctx, provider.RequestID, requestID)
+	return nil, commonError.GetCSIError(ctxLogger, commonError.MethodUnimplemented, requestID, nil, "ControllerGetVolume")
 }

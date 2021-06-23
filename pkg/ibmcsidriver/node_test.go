@@ -629,7 +629,7 @@ func TestNodeExpandVolume(t *testing.T) {
 				VolumeId:   defaultVolumeID,
 				VolumePath: "/invalid-volPath",
 			},
-			expErrCode: codes.FailedPrecondition,
+			expErrCode: codes.NotFound,
 		},
 		{
 			name: "valid volumePath",
@@ -648,7 +648,7 @@ func TestNodeExpandVolume(t *testing.T) {
 				VolumeId:   defaultVolumeID,
 				VolumePath: "fake-volPath",
 			},
-			expErrCode: codes.FailedPrecondition,
+			expErrCode: codes.NotFound,
 		},
 	}
 	icDriver := initIBMCSIDriver(t)
