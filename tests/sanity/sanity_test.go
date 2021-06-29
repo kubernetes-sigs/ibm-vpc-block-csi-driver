@@ -151,7 +151,6 @@ func initCSIDriverForSanity(t *testing.T) *csiDriver.IBMCSIDriver {
 	// Create fake provider and mounter
 	provider, _ := NewFakeSanityCloudProvider("", logger)
 	mounter := mountManager.NewFakeSafeMounter()
-	//mounter := mountManager.NewSafeMounter()
 
 	statsUtil := &MockStatSanity{}
 
