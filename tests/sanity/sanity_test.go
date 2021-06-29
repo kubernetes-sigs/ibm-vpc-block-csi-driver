@@ -510,7 +510,7 @@ func (c *fakeProviderSession) ListAllSnapshots(volumeID string) ([]*provider.Sna
 func createTargetDir(targetPath string) error {
 	fileInfo, err := os.Stat(targetPath)
 	if err != nil && os.IsNotExist(err) {
-		return os.MkdirAll(targetPath, 0755) //nolint
+		return os.MkdirAll(targetPath, 0755)
 	} else if err != nil {
 		return err
 	}

@@ -398,7 +398,7 @@ func (csiNS *CSINodeServer) NodeGetVolumeStats(ctx context.Context, req *csi.Nod
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	ctxLogger.Info("CSINodeServer-NodeGetVolumeStats... ", zap.Reflect("Request", *req)) //nolint:staticcheck
 	metrics.UpdateDurationFromStart(ctxLogger, "NodeGetVolumeStats", time.Now())
-	if req == nil || req.VolumeId == "" { //nolint:staticcheck
+	if req == nil || req.VolumeId == "" {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.EmptyVolumeID, requestID, nil)
 	}
 
@@ -513,7 +513,7 @@ func (su *VolumeStatUtils) IsBlockDevice(devicePath string) (bool, error) {
 // DeviceInfo ...
 func (su *VolumeStatUtils) DeviceInfo(devicePath string) (int64, error) {
 	// See http://man7.org/linux/man-pages/man8/blockdev.8.html for details
-	output, err := exec.Command("blockdev", "getsize64", devicePath).CombinedOutput() //nolint:gosec
+	output, err := exec.Command("blockdev", "getsize64", devicePath).CombinedOutput()
 	if err != nil {
 		return 0, fmt.Errorf("failed to get size of block volume at path %s: output: %s, err: %v", devicePath, string(output), err)
 	}

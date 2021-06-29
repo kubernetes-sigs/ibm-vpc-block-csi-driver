@@ -59,7 +59,7 @@ const (
 	PublishInfoRequestID = "request-id"
 )
 
-var _ csi.ControllerServer = &CSIControllerServer{} //nolint:typecheck
+var _ csi.ControllerServer = &CSIControllerServer{}
 
 // CreateVolume ...
 func (csiCS *CSIControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {

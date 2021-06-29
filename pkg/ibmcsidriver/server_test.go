@@ -41,7 +41,7 @@ func TestSetup(t *testing.T) {
 
 	{
 		t.Logf("Good setup")
-		ls, err := nonBlockingServer.Setup(*goodEndpoint, ids, cs, ns) //nolint:typecheck
+		ls, err := nonBlockingServer.Setup(*goodEndpoint, ids, cs, ns)
 		assert.Nil(t, err)
 		assert.NotNil(t, ls)
 	}
@@ -55,7 +55,7 @@ func TestSetup(t *testing.T) {
 		t.Logf("Wrong endpoint format")
 
 		wrongEndpointFormat := flag.String("wrongendpoint", "---:/tmp/testcsi.sock", "Test CSI endpoint")
-		_, err := nonBlockingServer.Setup(*wrongEndpointFormat, ids, cs, ns) //nolint:typecheck
+		_, err := nonBlockingServer.Setup(*wrongEndpointFormat, ids, cs, ns)
 		assert.NotNil(t, err)
 		t.Logf("---------> error %v", err)
 	}

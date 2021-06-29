@@ -201,6 +201,6 @@ func (icDriver *IBMCSIDriver) Run(endpoint string) {
 	// In the future have this only run specific combinations of servers depending on which version this is.
 	// The schema for that was in util. basically it was just s.start but with some nil servers.
 
-	s.Start(endpoint, icDriver.ids, icDriver.cs, icDriver.ns) //nolint:typecheck
+	s.Start(endpoint, icDriver.ids, icDriver.cs, icDriver.ns)
 	s.Wait()
 }
