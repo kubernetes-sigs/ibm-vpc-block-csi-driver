@@ -193,8 +193,6 @@ func (su *MockStatSanity) IsBlockDevice(devicePath string) (bool, error) {
 
 func (su *MockStatSanity) IsDevicePathNotExist(devicePath string) bool {
 	// return true if not matched
-	fmt.Println("printing devicepath")
-	fmt.Println(devicePath)
 	return !strings.Contains(devicePath, TargetPath)
 }
 
