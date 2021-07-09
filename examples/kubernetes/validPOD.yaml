@@ -1,16 +1,18 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: testpodrwo
+  name: testpodfive
   labels:
     app: testpodrwo
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: testpodrwo
   template:
     metadata:
       labels:
         app: testpodrwo
-        tier: frontend
     spec:
       containers:
       - image: rabbitmq #image name which should be avilable within cluster
