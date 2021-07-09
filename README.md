@@ -26,9 +26,8 @@ For building the driver `docker` and `GO` should be installed
 
 1. On your local machine, install [`docker`](https://docs.docker.com/install/) and [`Go`](https://golang.org/doc/install).
 2. GO version should be >=1.16
-3. export GOPATH
-4. Set the [`GOPATH` environment variable](https://github.com/golang/go/wiki/SettingGOPATH).
-5. Build the driver image
+3. Set the [`GOPATH` environment variable](https://github.com/golang/go/wiki/SettingGOPATH).
+4. Build the driver image
 
    ## Clone the repo or your forked repo
 
@@ -100,7 +99,7 @@ For building the driver `docker` and `GO` should be installed
 
 # E2E Tests
 
-  Please refere [ this](https://github.com/IBM/ibm-csi-common/tree/master/tests/e2e) repository for e2e tests.
+  Please refer [ this](https://github.com/IBM/ibm-csi-common/tree/master/tests/e2e) repository for e2e tests.
 
 # How to contribute
 
