@@ -27,6 +27,8 @@ import (
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	providerError "github.com/IBM/ibmcloud-volume-interface/lib/utils"
+	utilReasonCode "github.com/IBM/ibmcloud-volume-interface/lib/utils/reasoncode"
+	userError "github.com/IBM/ibmcloud-volume-vpc/common/messages"
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 
 	"go.uber.org/zap"
@@ -105,6 +107,12 @@ func (csiCS *CSIControllerServer) CreateVolume(ctx context.Context, req *csi.Cre
 	// Validate if volume Already Exists
 	session, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
 	if err != nil {
+		if userError.GetUserErrorCode(err) == string(utilReasonCode.EndpointNotReachable) {
+			return nil, commonError.GetCSIError(ctxLogger, commonError.EndpointNotReachable, requestID, err)
+		}
+		if userError.GetUserErrorCode(err) == string(utilReasonCode.Timeout) {
+			return nil, commonError.GetCSIError(ctxLogger, commonError.Timeout, requestID, err)
+		}
 		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
 	}
 
