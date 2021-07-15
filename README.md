@@ -1,7 +1,7 @@
 # ibm-vpc-block-csi-driver
 
 [![Build Status](https://app.travis-ci.com/IBM/ibm-vpc-block-csi-driver.svg?branch=master)](https://app.travis-ci.com/IBM/ibm-vpc-block-csi-driver)
-[![code-coverage][coverage-badge]][coverage]
+[![code-coverage](https://ibm.github.io/ibm-vpc-block-csi-driver/coverage/master/badge.svg)](https://ibm.github.io/ibm-vpc-block-csi-driver/coverage/master/cover.html)
 
 ibm-vpc-block-csi-driver is a CSI plugin for creating and mounting VPC block storage on IBM VPC infrastructure based openshift or kubernetes cluster
 
@@ -132,7 +132,3 @@ Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
 http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
-
-
-[coverage]: https://codecov.io/gh/IBM/ibm-vpc-block-csi-driver
-[coverage-badge]: https://codecov.io/gh/IBM/ibm-vpc-block-csi-driver/branch/master/graph/badge.svg?token=0bde90c7-5a78-4929-91dd-bd7ced728d8c
