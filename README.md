@@ -17,8 +17,7 @@ The following table details orchestration platforms suitable for deployment of t
 
 To use the Block Storage for IBM VPC driver, complete the following tasks:
 
-1. Create a cluster based on IBM VPC infrastructure 
-2. Image registry which the cluster has access
+1. Create a cluster based on IBM VPC infrastructure
 
 # Build the driver
 
@@ -54,9 +53,9 @@ For building the driver `docker` and `GO` should be installed
 
    You can push the driver image to [docker.io](https://hub.docker.com/)  registry or [IBM public registry](https://cloud.ibm.com/docs/Registry?topic=Registry-registry_overview#registry_regions_local) under your namespace.
 
-   For IBM registry:
+   For pushing to IBM registry:
 
-   Create Image pull secret in your cluster
+   Create an image pull secret in your cluster
 
    1. Review and retrieve the following values for your image pull secret.
 
