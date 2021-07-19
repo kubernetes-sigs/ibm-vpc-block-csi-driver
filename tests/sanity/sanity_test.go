@@ -105,11 +105,9 @@ func TestSanity(t *testing.T) {
 		TestVolumeParametersFile: os.Getenv("SANITY_PARAMS_FILE"),
 		TestVolumeSize:           10737418240, // i.e 10 GB
 		CreateTargetDir: func(targetPath string) (string, error) {
-			//targetPath = path.Join(TempDir, targetPath)
 			return targetPath, createTargetDir(targetPath)
 		},
 		CreateStagingDir: func(stagePath string) (string, error) {
-			//stagePath = path.Join(TempDir, stagePath)
 			return stagePath, createTargetDir(stagePath)
 		},
 	}
