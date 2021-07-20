@@ -92,11 +92,11 @@ COMMIT_RANGE=(${TRAVIS_COMMIT_RANGE//.../ })
 
 # Generate result message for log and PR
 if (( $(echo "$OLD_COVERAGE > $NEW_COVERAGE" | bc -l) )); then
-	RESULT_MESSAGE=":red_circle: Coverage decreased from [$OLD_COVERAGE%](https://pages.github.com/$TRAVIS_REPO_SLUG/coverage/${COMMIT_RANGE[0]}/cover.html) to [$NEW_COVERAGE%](https://pages.github.com/$TRAVIS_REPO_SLUG/coverage/${COMMIT_RANGE[1]}/cover.html)"
+	RESULT_MESSAGE=":red_circle: Coverage decreased from [$OLD_COVERAGE%](https://github.com/$TRAVIS_REPO_SLUG/blob/gh-pages/coverage/${COMMIT_RANGE[0]}/cover.html) to [$NEW_COVERAGE%](https://github.com/$TRAVIS_REPO_SLUG/blob/gh-pages/coverage/${COMMIT_RANGE[1]}/cover.html)"
 elif (( $(echo "$OLD_COVERAGE == $NEW_COVERAGE" | bc -l) )); then
-	RESULT_MESSAGE=":thumbsup: Coverage remained same at [$NEW_COVERAGE%](https://pages.github.com/$TRAVIS_REPO_SLUG/coverage/${COMMIT_RANGE[1]}/cover.html)"
+	RESULT_MESSAGE=":thumbsup: Coverage remained same at [$NEW_COVERAGE%](https://github.com/$TRAVIS_REPO_SLUG/blob/gh-pages/coverage/${COMMIT_RANGE[1]}/cover.html)"
 else
-	RESULT_MESSAGE=":thumbsup: Coverage increased from [$OLD_COVERAGE%](https://pages.github.com/$TRAVIS_REPO_SLUG/coverage/${COMMIT_RANGE[0]}/cover.html) to [$NEW_COVERAGE%](https://pages.github.com/$TRAVIS_REPO_SLUG/coverage/${COMMIT_RANGE[1]}/cover.html)"
+	RESULT_MESSAGE=":thumbsup: Coverage increased from [$OLD_COVERAGE%](https://github.com/$TRAVIS_REPO_SLUG/blob/gh-pages/coverage/${COMMIT_RANGE[0]}/cover.html) to [$NEW_COVERAGE%](https://github.com/$TRAVIS_REPO_SLUG/blob/gh-pages/coverage/${COMMIT_RANGE[1]}/cover.html)"
 fi
 
 # Update gh-pages branch or PR
