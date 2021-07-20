@@ -1,3 +1,4 @@
+set -x
 echo "Publishing the coverage results"
 if [ "$TRAVIS_GO_VERSION" == "tip" ]; then
 	echo "Coverage information is not required for tip version."
