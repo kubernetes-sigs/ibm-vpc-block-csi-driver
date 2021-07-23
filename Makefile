@@ -19,7 +19,6 @@ DRIVER_NAME=vpcBlockDriver
 IMAGE = contsto2/${EXE_DRIVER_NAME}
 GOPACKAGES=$(shell go list ./... | grep -v /vendor/ | grep -v /cmd | grep -v /tests)
 VERSION := latest
-PROXY_IMAGE_URL:= "registry.access.redhat.com"
 GIT_COMMIT_SHA="$(shell git rev-parse HEAD 2>/dev/null)"
 GIT_REMOTE_URL="$(shell git config --get remote.origin.url 2>/dev/null)"
 BUILD_DATE="$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")"

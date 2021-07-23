@@ -1,7 +1,4 @@
-#FROM alpine:3.7
-ARG PROXY_IMAGE_URL=blank
-
-FROM "${PROXY_IMAGE_URL}"/ubi8/ubi-minimal:8.4-205
+FROM ubuntu:16.04
 
 # Default values
 ARG git_commit_id=unknown
@@ -19,13 +16,15 @@ LABEL jenkins-build-number=${jenkins_build_number}
 LABEL razee.io/source-url="${REPO_SOURCE_URL}"
 LABEL razee.io/build-url="${BUILD_URL}"
 
-#RUN apk update && apk --no-cache add ca-certificates nfs-utils rpcbind
-RUN microdnf update && microdnf install -y ca-certificates
+RUN apt-get update && apt-get install -y --no-install-recommends nfs-common && \
+   apt-get install -y udev && \		
+         apt-get install -y --no-install-recommends apt && \		
+ 	apt-get install -y --no-install-recommends ca-certificates xfsprogs && \		
+ 	apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /home/ibm-csi-drivers/
 ADD ibm-vpc-block-csi-driver /home/ibm-csi-drivers
 RUN chmod +x /home/ibm-csi-drivers/ibm-vpc-block-csi-driver
 
-USER 2121:2121
 
 ENTRYPOINT ["/home/ibm-csi-drivers/ibm-vpc-block-csi-driver"]
