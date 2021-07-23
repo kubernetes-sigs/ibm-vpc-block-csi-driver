@@ -71,10 +71,11 @@ build:
 .PHONY: test
 test:
 	$(GOPATH)/bin/gotestcover -v -race -short -coverprofile=cover.out ${GOPACKAGES}
-	go tool cover -html=cover.out -o=cover.html  # Uncomment this line when UT in place.
 
 .PHONY: ut-coverage
-ut-coverage: deps fmt test
+ut-coverage: 
+	
+	go tool cover -html=cover.out -o=cover.html
 
 .PHONY: buildimage
 buildimage: build-systemutil

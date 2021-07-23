@@ -1,4 +1,8 @@
 # ibm-vpc-block-csi-driver
+
+[![Build Status](https://app.travis-ci.com/IBM/ibm-vpc-block-csi-driver.svg?branch=master)](https://app.travis-ci.com/IBM/ibm-vpc-block-csi-driver)
+[![code-coverage](https://ibm.github.io/ibm-vpc-block-csi-driver/coverage/master/badge.svg)](https://ibm.github.io/ibm-vpc-block-csi-driver/coverage/master/cover.html)
+
 ibm-vpc-block-csi-driver is a CSI plugin for creating and mounting VPC block storage on IBM VPC infrastructure based openshift or kubernetes cluster
 
 # Supported orchestration platforms
