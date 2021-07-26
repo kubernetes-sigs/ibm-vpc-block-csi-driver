@@ -25,6 +25,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends nfs-common && \
 RUN mkdir -p /home/ibm-csi-drivers/
 ADD ibm-vpc-block-csi-driver /home/ibm-csi-drivers
 RUN chmod +x /home/ibm-csi-drivers/ibm-vpc-block-csi-driver
-
+USER 2121:2121
 
 ENTRYPOINT ["/home/ibm-csi-drivers/ibm-vpc-block-csi-driver"]
