@@ -465,13 +465,17 @@ func (csiNS *CSINodeServer) NodeGetVolumeStats(ctx context.Context, req *csi.Nod
 func (csiNS *CSINodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolumeRequest) (*csi.NodeExpandVolumeResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	ctxLogger.Info("CSINodeServer-NodeExpandVolume", zap.Reflect("Request", *req))
+	volumeID := req.GetVolumeId()
+	if len(volumeID) == 0 {
+		return nil, commonError.GetCSIError(ctxLogger, commonError.EmptyVolumeID, requestID, nil)
+	}
 	volumePath := req.GetVolumePath()
 	if len(volumePath) == 0 {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.EmptyVolumePath, requestID, nil)
 	}
 	notMounted, err := csiNS.Mounter.IsLikelyNotMountPoint(volumePath)
 	if err != nil {
-		return nil, commonError.GetCSIError(ctxLogger, commonError.MountPointValidateError, requestID, err, volumePath)
+		return nil, commonError.GetCSIError(ctxLogger, commonError.ObjectNotFound, requestID, err, volumePath)
 	}
 
 	if notMounted {
@@ -507,7 +511,7 @@ func (su *VolumeStatUtils) IsBlockDevice(devicePath string) (bool, error) {
 // DeviceInfo ...
 func (su *VolumeStatUtils) DeviceInfo(devicePath string) (int64, error) {
 	// See http://man7.org/linux/man-pages/man8/blockdev.8.html for details
-	output, err := exec.Command("blockdev", "getsize64", devicePath).CombinedOutput() //nolint:gosec
+	output, err := exec.Command("blockdev", "getsize64", devicePath).CombinedOutput()
 	if err != nil {
 		return 0, fmt.Errorf("failed to get size of block volume at path %s: output: %s, err: %v", devicePath, string(output), err)
 	}

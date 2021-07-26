@@ -19,8 +19,6 @@ DRIVER_NAME=vpcBlockDriver
 IMAGE = contsto2/${EXE_DRIVER_NAME}
 GOPACKAGES=$(shell go list ./... | grep -v /vendor/ | grep -v /cmd | grep -v /tests)
 VERSION := latest
-PROXY_IMAGE_URL:="registry.ng.bluemix.net"
-
 GIT_COMMIT_SHA="$(shell git rev-parse HEAD 2>/dev/null)"
 GIT_REMOTE_URL="$(shell git config --get remote.origin.url 2>/dev/null)"
 BUILD_DATE="$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")"
@@ -102,7 +100,7 @@ build-systemutil:
 
 .PHONY: test-sanity
 test-sanity: deps fmt
-	SANITY_PARAMS_FILE=./csi_sanity_params.yaml go test -timeout 60s ./tests/sanity -run ^TestSanity$$ -v
+	SANITY_PARAMS_FILE=./csi_sanity_params.yaml go test -timeout 160s ./tests/sanity -run ^TestSanity$$ -v
 
 .PHONY: clean
 clean:

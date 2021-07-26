@@ -15,30 +15,30 @@ limitations under the License.
 */
 
 //Package sanity ...
+
 package sanity
 
 import (
 	"errors"
 	"fmt"
+	"github.com/IBM/ibmcloud-volume-interface/config"
+	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
+	providerError "github.com/IBM/ibmcloud-volume-interface/lib/utils"
+	"github.com/google/uuid"
+	sanity "github.com/kubernetes-csi/csi-test/v4/pkg/sanity"
+	"go.uber.org/zap"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"k8s.io/kubernetes/pkg/util/mount"
 	"net/http"
 	"os"
 	"path"
 	"strings"
 	"testing"
 
-	"github.com/google/uuid"
-	"go.uber.org/zap"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-
-	"github.com/IBM/ibmcloud-volume-interface/config"
-	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
-	providerError "github.com/IBM/ibmcloud-volume-interface/lib/utils"
-	sanity "github.com/kubernetes-csi/csi-test/v3/pkg/sanity"
-
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	nodeMetadata "github.com/IBM/ibm-csi-common/pkg/metadata"
-	mountManager "github.com/IBM/ibm-csi-common/pkg/mountmanager"
+	//mountManager "github.com/IBM/ibm-csi-common/pkg/mountmanager"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 
 	csiConfig "github.com/IBM/ibm-vpc-block-csi-driver/config"
@@ -64,10 +64,10 @@ var (
 	CSIEndpoint = fmt.Sprintf("unix:%s/csi.sock", TempDir)
 
 	// TargetPath ...
-	TargetPath = path.Join(TempDir, "target")
+	TargetPath = path.Join(TempDir, "mount")
 
 	// StagePath ...
-	StagePath = path.Join(TempDir, "staging")
+	StagePath = path.Join(TempDir, "stage")
 )
 
 func TestSanity(t *testing.T) {
@@ -79,7 +79,7 @@ func TestSanity(t *testing.T) {
 	csiSanityDriver := initCSIDriverForSanity(t)
 
 	//  Create the temp directory for fake sanity driver
-	err := os.MkdirAll(TempDir, 0750)
+	err := os.MkdirAll(TempDir, 0755) // #nosec
 	if err != nil {
 		t.Fatalf("Failed to create sanity temp working dir %s: %v", TempDir, err)
 	}
@@ -101,8 +101,15 @@ func TestSanity(t *testing.T) {
 		Address:                  CSIEndpoint,
 		DialOptions:              []grpc.DialOption{grpc.WithInsecure()},
 		IDGen:                    &providerIDGenerator{},
+		TestVolumeAccessType:     "mount",
 		TestVolumeParametersFile: os.Getenv("SANITY_PARAMS_FILE"),
 		TestVolumeSize:           10737418240, // i.e 10 GB
+		CreateTargetDir: func(targetPath string) (string, error) {
+			return targetPath, createTargetDir(targetPath)
+		},
+		CreateStagingDir: func(stagePath string) (string, error) {
+			return stagePath, createTargetDir(stagePath)
+		},
 	}
 	sanity.Test(t, config)
 }
@@ -139,7 +146,7 @@ func initCSIDriverForSanity(t *testing.T) *csiDriver.IBMCSIDriver {
 
 	// Create fake provider and mounter
 	provider, _ := NewFakeSanityCloudProvider("", logger)
-	mounter := mountManager.NewFakeSafeMounter()
+	mounter := NewFakeSafeMounter()
 
 	statsUtil := &MockStatSanity{}
 
@@ -419,7 +426,7 @@ func (c *fakeProviderSession) AttachVolume(attachRequest provider.VolumeAttachme
 		VolumeAttachmentRequest: provider.VolumeAttachmentRequest{
 			VolumeID:            attachRequest.VolumeID,
 			InstanceID:          attachRequest.InstanceID,
-			VPCVolumeAttachment: &provider.VolumeAttachment{DevicePath: "/tmp/csi/target/vol1"},
+			VPCVolumeAttachment: &provider.VolumeAttachment{DevicePath: "/csi/mount/vol1"},
 		},
 	}
 	return attachmentDetails, nil
@@ -442,7 +449,7 @@ func (c *fakeProviderSession) WaitForAttachVolume(attachRequest provider.VolumeA
 		VolumeAttachmentRequest: provider.VolumeAttachmentRequest{
 			VolumeID:            attachRequest.VolumeID,
 			InstanceID:          attachRequest.InstanceID,
-			VPCVolumeAttachment: &provider.VolumeAttachment{DevicePath: "/tmp/csi/target1/vol"},
+			VPCVolumeAttachment: &provider.VolumeAttachment{DevicePath: "/csi/mount/vol1"},
 		},
 	}, nil
 }
@@ -491,4 +498,38 @@ func (c *fakeProviderSession) ListSnapshots() ([]*provider.Snapshot, error) {
 //List all the  snapshots for a given volume
 func (c *fakeProviderSession) ListAllSnapshots(volumeID string) ([]*provider.Snapshot, error) {
 	return nil, nil
+}
+
+func createTargetDir(targetPath string) error {
+	fileInfo, err := os.Stat(targetPath)
+	if err != nil && os.IsNotExist(err) {
+		return os.MkdirAll(targetPath, 0755)
+	} else if err != nil {
+		return err
+	}
+	if !fileInfo.IsDir() {
+		return fmt.Errorf("target location %s is not a directory", targetPath)
+	}
+
+	return nil
+}
+
+// NewFakeSafeMounter ...
+func NewFakeSafeMounter() *mount.SafeFormatAndMount {
+	execCallback := func(cmd string, args ...string) ([]byte, error) {
+		return nil, nil
+	}
+	fakeMounter := &mount.FakeMounter{MountPoints: []mount.MountPoint{{
+		Device: "/tmp/csi",
+		Path:   "/tmp/csi/tmp/csi/mount/target",
+		Type:   "ext4",
+		Opts:   []string{"defaults"},
+		Freq:   1,
+		Pass:   2,
+	}}, Log: []mount.FakeAction{}}
+	fakeExec := mount.NewFakeExec(execCallback)
+	return &mount.SafeFormatAndMount{
+		Interface: fakeMounter,
+		Exec:      fakeExec,
+	}
 }
