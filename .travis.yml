@@ -1,5 +1,5 @@
 language: go
-go_import_path: github.ibm.com/alchemy-containers/ibm-vpc-block-csi-driver
+go_import_path: github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
 dist: xenial
 env:
   global:
