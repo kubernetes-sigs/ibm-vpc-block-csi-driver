@@ -32,9 +32,9 @@ if [ ! -d "$TRAVIS_BUILD_DIR/gh-pages/coverage/$TRAVIS_COMMIT" ]; then
 	mkdir "$TRAVIS_BUILD_DIR/gh-pages/coverage/$TRAVIS_COMMIT"
 fi
 
-if [ -f "$GOPATH/src/github.com/IBM/ibm-vpc-block-csi-driver/Passing" ]; then
+if [ -f "$GOPATH/src/github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/Passing" ]; then
 	curl https://img.shields.io/badge/e2e-passing-Yellow.svg > $TRAVIS_BUILD_DIR/gh-pages/coverage/$TRAVIS_BRANCH/e2e.svg
-elif [ -f "$GOPATH/src/github.com/IBM/ibm-vpc-block-csi-driver/Failed" ]; then
+elif [ -f "$GOPATH/src/github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/Failed" ]; then
 	curl https://img.shields.io/badge/e2e-failed-Yellow.svg > $TRAVIS_BUILD_DIR/gh-pages/coverage/$TRAVIS_BRANCH/e2e.svg
 fi
 

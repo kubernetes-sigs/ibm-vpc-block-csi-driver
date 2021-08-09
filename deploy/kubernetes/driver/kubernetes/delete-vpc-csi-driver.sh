@@ -14,6 +14,6 @@ else
 fi
 
 readonly VERSION="${IKS_VPC_BLOCK_DRIVER_VERSION:-stable}"
-readonly PKG_DIR="${GOPATH}/src/github.com/IBM/ibm-vpc-block-csi-driver"
+readonly PKG_DIR="${GOPATH}/src/github.com/kubernetes-sigs/ibm-vpc-block-csi-driver"
 
 kustomize build ${PKG_DIR}/deploy/kubernetes/driver/kubernetes/overlays/${VERSION} | kubectl delete --ignore-not-found -f -

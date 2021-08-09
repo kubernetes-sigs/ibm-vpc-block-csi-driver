@@ -18,7 +18,7 @@ limitations under the License.
 package ibmcsidriver
 
 import (
-	"github.com/IBM/ibm-vpc-block-csi-driver/config"
+	"github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/config"
 )
 
 const (

@@ -1,4 +1,4 @@
-module github.com/IBM/ibm-vpc-block-csi-driver
+module github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
 
 go 1.16
 

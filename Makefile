@@ -16,7 +16,7 @@
 
 EXE_DRIVER_NAME=ibm-vpc-block-csi-driver
 DRIVER_NAME=vpcBlockDriver
-IMAGE = contsto2/${EXE_DRIVER_NAME}
+IMAGE = ibm-csidrivers/${EXE_DRIVER_NAME}
 GOPACKAGES=$(shell go list ./... | grep -v /vendor/ | grep -v /cmd | grep -v /tests)
 VERSION := latest
 GIT_COMMIT_SHA="$(shell git rev-parse HEAD 2>/dev/null)"
@@ -73,8 +73,8 @@ test:
 	$(GOPATH)/bin/gotestcover -v -race -short -coverprofile=cover.out ${GOPACKAGES}
 
 .PHONY: ut-coverage
-ut-coverage: 
-	
+ut-coverage:
+
 	go tool cover -html=cover.out -o=cover.html
 
 .PHONY: buildimage

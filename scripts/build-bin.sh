@@ -17,5 +17,5 @@ set -e
 set +x
 #git config --global url."https://$GHE_TOKEN@github.ibm.com/".insteadOf "https://github.ibm.com/"
 set -x
-cd /go/src/github.com/IBM/ibm-vpc-block-csi-driver
+cd /go/src/github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
 CGO_ENABLED=0 go build -a -ldflags '-X main.vendorVersion='"vpcBlockDriver-${TAG}"' -extldflags "-static"' -o /go/bin/ibm-vpc-block-csi-driver ./cmd/
