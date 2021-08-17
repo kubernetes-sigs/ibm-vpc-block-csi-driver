@@ -1,6 +1,6 @@
 # ibm-vpc-block-csi-driver
 
-[![Build Status](https://app.travis-ci.com/kubernetes-sigs/ibm-vpc-block-csi-driver.svg?branch=master)](https://app.travis-ci.com/kubernetes-sigs/ibm-vpc-block-csi-driver)
+[![Build Status](https://prow.k8s.io/badge.svg?jobs=pull-ibm-vpc-block-csi-driver-build)](https://prow.k8s.io)
 [![Coverage Status](https://coveralls.io/repos/github/kubernetes-sigs/ibm-vpc-block-csi-driver/badge.svg?branch=master)](https://coveralls.io/github/kubernetes-sigs/ibm-vpc-block-csi-driver?branch=master)
 
 ibm-vpc-block-csi-driver is a CSI plugin for creating and mounting VPC block storage on IBM VPC infrastructure based openshift or kubernetes cluster
