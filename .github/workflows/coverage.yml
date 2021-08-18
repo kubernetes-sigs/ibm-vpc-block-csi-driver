@@ -2,15 +2,15 @@ name: Quality
 on: [push, pull_request]
 jobs:
   test:
+    env:
+      GOPATH: ${{ github.workspace }}
+    defaults:
+      run:
+        working-directory: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
     name: Test with Coverage
     runs-on: ubuntu-latest
     container:
       image: golang:1.16
-      env:
-        GOPATH: ${{ github.workspace }}
-      defaults:
-        run:
-          working-directory: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
     steps:
     - name: Check out code
       uses: actions/checkout@v2
