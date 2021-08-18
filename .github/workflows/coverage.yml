@@ -7,28 +7,28 @@ jobs:
     container:
       image: golang:1.16
       env:
-        GOPATH: /__w/ibm-vpc-block-csi-driver/ibm-vpc-block-csi-driver/go/
+        GOPATH: ${{ github.workspace }}
+      defaults:
+        run:
+          working-directory: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
     steps:
     - name: Check out code
       uses: actions/checkout@v2
       with:
         fetch-depth: 1
-        path: go/src/github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
+        path: {{ env.GOPATH }}/src/github.com/${{ github.repository }}
     - name: Install dependencies
-      working-directory: /__w/ibm-vpc-block-csi-driver/ibm-vpc-block-csi-driver/go/src/github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
       run: |
         go mod download
     - name: Run Unit tests
-      working-directory: /__w/ibm-vpc-block-csi-driver/ibm-vpc-block-csi-driver/go/src/github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
       run: |
         go test $(go list ./... | grep -v /vendor/ | grep -v /cmd | grep -v /tests) -race -covermode atomic -coverprofile=covprofile ./...
     - name: Install goveralls
       env:
-        GOPATH: /__w/ibm-vpc-block-csi-driver/ibm-vpc-block-csi-driver/go/
+        GOPATH: ${{ github.workspace }}
       run: go install github.com/mattn/goveralls@latest
     - name: Send coverage
-      working-directory: /__w/ibm-vpc-block-csi-driver/ibm-vpc-block-csi-driver/go/src/github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
       run: $GOPATH/bin/goveralls -coverprofile=covprofile -service=github
       env:
         COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GOPATH: /__w/ibm-vpc-block-csi-driver/ibm-vpc-block-csi-driver/go
+        GOPATH: ${{ github.workspace }}
