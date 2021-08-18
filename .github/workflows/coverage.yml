@@ -29,7 +29,10 @@ jobs:
         GOPATH: ${{ github.workspace }}
       run: go install github.com/mattn/goveralls@latest
     - name: Send coverage
-      run: $GOPATH/bin/goveralls -coverprofile=covprofile -service=github
-      env:
-        COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GOPATH: ${{ github.workspace }}
+      #run: $GOPATH/bin/goveralls -coverprofile=covprofile -service=github
+      uses: shogo82148/actions-goveralls@v1
+      with:
+        path-to-profile: covprofile
+        #env:
+        #COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        #GOPATH: ${{ github.workspace }}
