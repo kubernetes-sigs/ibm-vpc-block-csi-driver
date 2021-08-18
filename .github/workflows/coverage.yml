@@ -27,7 +27,7 @@ jobs:
         GOPATH: /__w/ibm-vpc-block-csi-driver/ibm-vpc-block-csi-driver/go/
       run: go install github.com/mattn/goveralls@latest
     - name: Send coverage
+      run: $(GOPATH)/bin/goveralls -coverprofile=covprofile -service=github
       env:
         COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GOPATH: /__w/ibm-vpc-block-csi-driver/ibm-vpc-block-csi-driver/go
-      run: $(GOPATH)/bin/goveralls -coverprofile=covprofile -service=github
