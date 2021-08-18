@@ -4,13 +4,16 @@ jobs:
   test:
     name: Test with Coverage
     runs-on: ubuntu-latest
+    container:
+      image: golang:1.16
+      env:
+        GOPATH: /__w/temp/go/
     steps:
-    - name: Set up Go
-      uses: actions/setup-go@v1
-      with:
-        go-version: '1.16'
     - name: Check out code
       uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+        path: go/src/github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
     - name: Install dependencies
       run: |
         go mod download
