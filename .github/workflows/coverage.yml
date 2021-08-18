@@ -20,10 +20,14 @@ jobs:
         go mod download
     - name: Run Unit tests
       run: |
+        working-directory: /__w/ibm-vpc-block-csi-driver/ibm-vpc-block-csi-driver/go/src/github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
         go test $(go list ./... | grep -v /vendor/ | grep -v /cmd | grep -v /tests) -race -covermode atomic -coverprofile=covprofile ./...
     - name: Install goveralls
+      env:
+        GOPATH: /__w/ibm-vpc-block-csi-driver/ibm-vpc-block-csi-driver/go/
       run: go install github.com/mattn/goveralls@latest
     - name: Send coverage
       env:
         COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GOPATH: /__w/ibm-vpc-block-csi-driver/ibm-vpc-block-csi-driver/go
       run: $(GOPATH)/bin/goveralls -coverprofile=covprofile -service=github
