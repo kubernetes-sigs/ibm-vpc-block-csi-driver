@@ -15,6 +15,7 @@ jobs:
         fetch-depth: 1
         path: go/src/github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
     - name: Install dependencies
+      working-directory: /__w/ibm-vpc-block-csi-driver/ibm-vpc-block-csi-driver/go/src/github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
       run: |
         go mod download
     - name: Run Unit tests
