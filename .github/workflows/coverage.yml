@@ -7,7 +7,7 @@ jobs:
     container:
       image: golang:1.16
       env:
-        GOPATH: /__w/temp/go/
+        GOPATH: /__w/ibm-vpc-block-csi-driver/ibm-vpc-block-csi-driver/go/
     steps:
     - name: Check out code
       uses: actions/checkout@v2
