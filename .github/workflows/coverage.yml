@@ -15,7 +15,6 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v2
       with:
-        fetch-depth: 1
         path: {{ env.GOPATH }}/src/github.com/${{ github.repository }}
     - name: Install dependencies
       run: |
