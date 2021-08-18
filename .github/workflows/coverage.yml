@@ -32,7 +32,7 @@ jobs:
       #run: $GOPATH/bin/goveralls -coverprofile=covprofile -service=github
       uses: shogo82148/actions-goveralls@v1
       with:
-        path-to-profile: covprofile
+        path-to-profile: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}/covprofile
         #env:
         #COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         #GOPATH: ${{ github.workspace }}
