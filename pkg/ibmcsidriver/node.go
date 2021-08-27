@@ -31,20 +31,20 @@ import (
 	commonError "github.com/IBM/ibm-csi-common/pkg/messages"
 	nodeMetadata "github.com/IBM/ibm-csi-common/pkg/metadata"
 	"github.com/IBM/ibm-csi-common/pkg/metrics"
+	"github.com/IBM/ibm-csi-common/pkg/mountmanager"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 	"golang.org/x/sys/unix"
-	"k8s.io/kubernetes/pkg/util/mount"
-	"k8s.io/kubernetes/pkg/util/resizefs"
 	"k8s.io/kubernetes/pkg/volume/util/fs"
+	mount "k8s.io/mount-utils"
 )
 
 // CSINodeServer ...
 type CSINodeServer struct {
 	Driver   *IBMCSIDriver
-	Mounter  *mount.SafeFormatAndMount
+	Mounter  mountmanager.Mounter
 	Metadata nodeMetadata.NodeMetadata
 	Stats    StatsUtils
 	// TODO: Only lock mutually exclusive calls and make locking more fine grained
@@ -61,7 +61,7 @@ type StatsUtils interface {
 
 // MountUtils ...
 type MountUtils interface {
-	Resize(mounter *mount.SafeFormatAndMount, devicePath string, deviceMountPath string) (bool, error)
+	Resize(mounter mountmanager.Mounter, devicePath string, deviceMountPath string) (bool, error)
 }
 
 // VolumeStatUtils ...
@@ -74,7 +74,7 @@ type VolumeMountUtils struct {
 
 //FSInfo ...
 func (su *VolumeStatUtils) FSInfo(path string) (int64, int64, int64, int64, int64, int64, error) {
-	return fs.FsInfo(path)
+	return fs.Info(path)
 }
 
 const (
@@ -117,7 +117,6 @@ func (csiNS *CSINodeServer) NodePublishVolume(ctx context.Context, req *csi.Node
 	ctxLogger, requestID := utils.GetContextLoggerWithRequestID(ctx, false, &controlleRequestID)
 	ctxLogger.Info("CSINodeServer-NodePublishVolume...", zap.Reflect("Request", *req))
 	metrics.UpdateDurationFromStart(ctxLogger, "NodePublishVolume", time.Now())
-
 	csiNS.mux.Lock()
 	defer csiNS.mux.Unlock()
 
@@ -205,7 +204,7 @@ func (csiNS *CSINodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.No
 	}
 
 	ctxLogger.Info("Unmounting  target path", zap.String("targetPath", targetPath))
-	err := mount.CleanupMountPoint(targetPath, csiNS.Mounter.Interface, false /* bind mount */)
+	err := mount.CleanupMountPoint(targetPath, csiNS.Mounter, false /* bind mount */)
 	if err != nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.UnmountFailed, requestID, err, targetPath)
 	}
@@ -264,7 +263,7 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 	ctxLogger.Info("Found device path ", zap.String("devicePath", devicePath), zap.String("source", source))
 
 	// Check target path
-	exists, err := csiNS.Mounter.ExistsPath(stagingTargetPath)
+	exists, err := csiNS.Mounter.PathExists(stagingTargetPath)
 	if err != nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.TargetPathCheckFailed, requestID, err, stagingTargetPath)
 	}
@@ -301,7 +300,7 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 
 	// FormatAndMount will format only if needed
 	ctxLogger.Info("Formating and mounting ", zap.String("source", source), zap.String("stagingTargetPath", stagingTargetPath), zap.String("fsType", fsType), zap.Reflect("options", options))
-	err = csiNS.Mounter.FormatAndMount(source, stagingTargetPath, fsType, options)
+	err = csiNS.Mounter.NewSafeFormatAndMount().FormatAndMount(source, stagingTargetPath, fsType, options)
 	if err != nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.FormatAndMountFailed, requestID, err, source, stagingTargetPath)
 	}
@@ -329,7 +328,7 @@ func (csiNS *CSINodeServer) NodeUnstageVolume(ctx context.Context, req *csi.Node
 	}
 
 	ctxLogger.Info("Unmounting staging target path", zap.String("stagingTargetPath", stagingTargetPath))
-	err := mount.CleanupMountPoint(stagingTargetPath, csiNS.Mounter.Interface, false /* bind mount */)
+	err := mount.CleanupMountPoint(stagingTargetPath, csiNS.Mounter, false /* bind mount */)
 	if err != nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.UnmountFailed, requestID, err, stagingTargetPath)
 	}
@@ -537,8 +536,8 @@ func (su *VolumeStatUtils) IsDevicePathNotExist(devicePath string) bool {
 }
 
 // Resize expands the fs
-func (volMountUtils *VolumeMountUtils) Resize(mounter *mount.SafeFormatAndMount, devicePath string, deviceMountPath string) (bool, error) {
-	r := resizefs.NewResizeFs(mounter)
+func (volMountUtils *VolumeMountUtils) Resize(mounter mountmanager.Mounter, devicePath string, deviceMountPath string) (bool, error) {
+	r := mount.NewResizeFs(mounter.NewSafeFormatAndMount().Exec)
 	if _, err := r.Resize(devicePath, deviceMountPath); err != nil {
 		return false, err
 	}
