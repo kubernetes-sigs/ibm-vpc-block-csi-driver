@@ -21,6 +21,12 @@ package sanity
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"os"
+	"path"
+	"strings"
+	"testing"
+
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	providerError "github.com/IBM/ibmcloud-volume-interface/lib/utils"
@@ -30,14 +36,10 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"k8s.io/kubernetes/pkg/util/mount"
-	"net/http"
-	"os"
-	"path"
-	"strings"
-	"testing"
 
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	nodeMetadata "github.com/IBM/ibm-csi-common/pkg/metadata"
+
 	//mountManager "github.com/IBM/ibm-csi-common/pkg/mountmanager"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 
@@ -146,7 +148,7 @@ func initCSIDriverForSanity(t *testing.T) *csiDriver.IBMCSIDriver {
 
 	// Create fake provider and mounter
 	provider, _ := NewFakeSanityCloudProvider("", logger)
-	mounter := NewFakeSafeMounter()
+	mounter := mountManager.NewFakeNodeMounter()
 
 	statsUtil := &MockStatSanity{}
 

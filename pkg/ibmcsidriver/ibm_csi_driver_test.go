@@ -37,7 +37,7 @@ func initIBMCSIDriver(t *testing.T) *IBMCSIDriver {
 
 	// Create fake provider and mounter
 	provider, _ := cloudProvider.NewFakeIBMCloudStorageProvider("", logger)
-	mounter := mountManager.NewFakeSafeMounter()
+	mounter := mountManager.NewFakeNodeMounter()
 	statsUtil := &MockStatUtils{}
 
 	fakeNodeData := nodeMetadata.FakeNodeMetadata{}
@@ -69,7 +69,7 @@ func TestSetupIBMCSIDriver(t *testing.T) {
 
 	// Create fake provider and mounter
 	provider, _ := cloudProvider.NewFakeIBMCloudStorageProvider("", logger)
-	mounter := mountManager.NewFakeSafeMounter()
+	mounter := mountManager.NewFakeNodeMounter()
 	statsUtil := &MockStatUtils{}
 
 	fakeNodeData := nodeMetadata.FakeNodeMetadata{}
