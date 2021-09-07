@@ -112,8 +112,6 @@ func (csiCS *CSIControllerServer) CreateVolume(ctx context.Context, req *csi.Cre
 	existingVol, err := checkIfVolumeExists(session, *requestedVolume, ctxLogger)
 	if csiCS.CSIProvider.GetClusterInfo() != nil {
 		clusterID = csiCS.CSIProvider.GetClusterInfo().ClusterID
-	} else {
-		clusterID = ""
 	}
 	if existingVol != nil && err == nil {
 		ctxLogger.Info("Volume already exists", zap.Reflect("ExistingVolume", existingVol))
@@ -224,8 +222,6 @@ func (csiCS *CSIControllerServer) ControllerPublishVolume(ctx context.Context, r
 	}
 	if csiCS.CSIProvider.GetClusterInfo() != nil {
 		clusterID = csiCS.CSIProvider.GetClusterInfo().ClusterID
-	} else {
-		clusterID = ""
 	}
 
 	volumeAttachmentReq := provider.VolumeAttachmentRequest{
@@ -285,8 +281,6 @@ func (csiCS *CSIControllerServer) ControllerUnpublishVolume(ctx context.Context,
 
 	if csiCS.CSIProvider.GetClusterInfo() != nil {
 		clusterID = csiCS.CSIProvider.GetClusterInfo().ClusterID
-	} else {
-		clusterID = ""
 	}
 
 	volumeAttachmentReq := provider.VolumeAttachmentRequest{
