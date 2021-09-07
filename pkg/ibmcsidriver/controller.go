@@ -63,6 +63,7 @@ var _ csi.ControllerServer = &CSIControllerServer{}
 func (csiCS *CSIControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	// populate requestID in the context
+	clusterID := ""
 	ctx = context.WithValue(ctx, provider.RequestID, requestID)
 	ctxLogger.Info("CSIControllerServer-CreateVolume... ", zap.Reflect("Request", *req))
 	defer metrics.UpdateDurationFromStart(ctxLogger, "CreateVolume", time.Now())
@@ -109,15 +110,15 @@ func (csiCS *CSIControllerServer) CreateVolume(ctx context.Context, req *csi.Cre
 	}
 
 	existingVol, err := checkIfVolumeExists(session, *requestedVolume, ctxLogger)
+	if csiCS.CSIProvider.GetClusterInfo() != nil {
+		clusterID = csiCS.CSIProvider.GetClusterInfo().ClusterID
+	} else {
+		clusterID = ""
+	}
 	if existingVol != nil && err == nil {
 		ctxLogger.Info("Volume already exists", zap.Reflect("ExistingVolume", existingVol))
 		if existingVol.Capacity != nil && requestedVolume.Capacity != nil && *existingVol.Capacity == *requestedVolume.Capacity {
-			if csiCS.CSIProvider.GetClusterInfo() != nil {
-				return createCSIVolumeResponse(*existingVol, int64(*(existingVol.Capacity)*utils.GB), nil, csiCS.CSIProvider.GetClusterInfo().ClusterID), nil
-			} else {
-				return createCSIVolumeResponse(*existingVol, int64(*(existingVol.Capacity)*utils.GB), nil, ""), nil
-			}
-
+			return createCSIVolumeResponse(*existingVol, int64(*(existingVol.Capacity)*utils.GB), nil, clusterID), nil
 		}
 		return nil, commonError.GetCSIError(ctxLogger, commonError.VolumeAlreadyExists, requestID, err, name, *requestedVolume.Capacity)
 	}
@@ -128,11 +129,7 @@ func (csiCS *CSIControllerServer) CreateVolume(ctx context.Context, req *csi.Cre
 		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err, "creation")
 	}
 	// return csi volume object
-	if csiCS.CSIProvider.GetClusterInfo() != nil {
-		return createCSIVolumeResponse(*volumeObj, int64(*(requestedVolume.Capacity)*utils.GB), nil, csiCS.CSIProvider.GetClusterInfo().ClusterID), nil
-	} else {
-		return createCSIVolumeResponse(*volumeObj, int64(*(requestedVolume.Capacity)*utils.GB), nil, ""), nil
-	}
+	return createCSIVolumeResponse(*volumeObj, int64(*(requestedVolume.Capacity)*utils.GB), nil, clusterID), nil
 }
 
 // DeleteVolume ...
@@ -177,6 +174,7 @@ func (csiCS *CSIControllerServer) DeleteVolume(ctx context.Context, req *csi.Del
 // ControllerPublishVolume ...
 func (csiCS *CSIControllerServer) ControllerPublishVolume(ctx context.Context, req *csi.ControllerPublishVolumeRequest) (*csi.ControllerPublishVolumeResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
+	clusterID := ""
 	// populate requestID in the context
 	ctx = context.WithValue(ctx, provider.RequestID, requestID)
 	ctxLogger.Info("CSIControllerServer-ControllerPublishVolume...", zap.Reflect("Request", *req))
@@ -224,12 +222,17 @@ func (csiCS *CSIControllerServer) ControllerPublishVolume(ctx context.Context, r
 	} else if err != nil { // In case of other errors apart from volume not  found
 		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
 	}
+	if csiCS.CSIProvider.GetClusterInfo() != nil {
+		clusterID = csiCS.CSIProvider.GetClusterInfo().ClusterID
+	} else {
+		clusterID = ""
+	}
 
 	volumeAttachmentReq := provider.VolumeAttachmentRequest{
 		VolumeID:   volumeID,
 		InstanceID: nodeID,
 		IKSVolumeAttachment: &provider.IKSVolumeAttachment{
-			ClusterID: &csiCS.CSIProvider.GetClusterInfo().ClusterID,
+			ClusterID: &clusterID,
 		},
 	}
 	response, err := sess.AttachVolume(volumeAttachmentReq)
@@ -260,6 +263,7 @@ func (csiCS *CSIControllerServer) ControllerPublishVolume(ctx context.Context, r
 // ControllerUnpublishVolume ...
 func (csiCS *CSIControllerServer) ControllerUnpublishVolume(ctx context.Context, req *csi.ControllerUnpublishVolumeRequest) (*csi.ControllerUnpublishVolumeResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
+	clusterID := ""
 	// populate requestID in the context
 	ctx = context.WithValue(ctx, provider.RequestID, requestID)
 	defer metrics.UpdateDurationFromStart(ctxLogger, metrics.FunctionLabel("ControllerUnpublishVolume"), time.Now())
@@ -279,11 +283,17 @@ func (csiCS *CSIControllerServer) ControllerUnpublishVolume(ctx context.Context,
 	csiCS.mutex.Lock(nodeID)
 	defer csiCS.mutex.Unlock(nodeID)
 
+	if csiCS.CSIProvider.GetClusterInfo() != nil {
+		clusterID = csiCS.CSIProvider.GetClusterInfo().ClusterID
+	} else {
+		clusterID = ""
+	}
+
 	volumeAttachmentReq := provider.VolumeAttachmentRequest{
 		VolumeID:   volumeID,
 		InstanceID: nodeID,
 		IKSVolumeAttachment: &provider.IKSVolumeAttachment{
-			ClusterID: &csiCS.CSIProvider.GetClusterInfo().ClusterID,
+			ClusterID: &clusterID,
 		},
 	}
 	sess, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
