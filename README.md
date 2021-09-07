@@ -80,7 +80,7 @@ For building the driver `docker` and `GO` should be installed
 
 
 # Deploy CSI driver on your cluster
-
+- Edit [slclient_Gen1.toml](https://github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/blob/master/deploy/kubernetes/driver/kubernetes/slclient_Gen1.toml) for VPC Gen1 clusters and [slclient_Gen2.toml](https://github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/blob/master/deploy/kubernetes/driver/kubernetes/slclient_Gen2.toml) for VPC Gen2 clusters.
 - Install `kustomize` tool. The instructions are available [here](https://kubectl.docs.kubernetes.io/installation/kustomize/)
 - Export cluster config
 - Deploy CSI plugin on your cluster
