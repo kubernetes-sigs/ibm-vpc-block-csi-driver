@@ -89,7 +89,7 @@ For building the driver `docker` and `GO` should be installed
      - Change `iks-vpc-block-driver` image name in `deploy/kubernetes/driver/kubernetes/overlays/stage/controller-server-images.yaml`
      - Change `iks-vpc-block-driver` image name in `deploy/kubernetes/driver/kubernetes/overlays/stage/node-server-images.yaml`
   - Deploy plugin
-    - `sh deploy/kubernetes/driver/kubernetes/deploy-vpc-block-driver.sh stage`
+    - `bash deploy/kubernetes/driver/kubernetes/deploy-vpc-block-driver.sh stage`
 
 ## Testing
 
