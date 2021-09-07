@@ -35,8 +35,8 @@ For building the driver `docker` and `GO` should be installed
    ## Clone the repo or your forked repo
 
    ```
-   $ mkdir -p $GOPATH/src/github.com/IBM
-   $ cd $GOPATH/src/github.com/IBM/
+   $ mkdir -p $GOPATH/src/github.com/kubernetes-sigs
+   $ cd $GOPATH/src/github.com/kubernetes-sigs/
    $ git clone https://github.com/kubernetes-sigs/ibm-vpc-block-csi-driver.git
    $ cd ibm-vpc-block-csi-driver
    ```

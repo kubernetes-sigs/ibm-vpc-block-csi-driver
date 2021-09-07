@@ -1,0 +1,11 @@
+[server]
+debug_trace = false
+
+[vpc]
+iam_client_id = "bx"
+iam_client_secret = "bx"
+g2_token_exchange_endpoint_url = "https://iam.bluemix.net"
+g2_riaas_endpoint_url = "https://eu-gb.iaas.cloud.ibm.com"
+g2_resource_group_id = "yyy"
+g2_api_key = "xxx"
+provider_type = "g2"

@@ -15,3 +15,5 @@ spec:
         - name: iks-vpc-block-driver
           imagePullPolicy: Always
           image: (( concat "{{ DOCKER_REGISTRY }}/armada-master/ibm-vpc-block-csi-driver:" $RELEASE_TAG ))
+        - name: csi-resizer
+          image: quay.io/k8scsi/csi-resizer:v1.0.0

@@ -13,3 +13,5 @@ spec:
           image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
         - name: liveness-probe
           image: quay.io/k8scsi/livenessprobe:v1.1.0
+        - name: csi-resizer
+          image: quay.io/k8scsi/csi-resizer:v1.0.0

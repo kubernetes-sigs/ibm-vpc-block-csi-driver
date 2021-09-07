@@ -15,3 +15,5 @@ spec:
         - name: iks-vpc-block-driver
           imagePullPolicy: Always
           image: icr.io/ibm/ibm-vpc-block-csi-driver:v3.0.4
+        - name: csi-resizer
+          image: quay.io/k8scsi/csi-resizer:v1.0.0
