@@ -88,8 +88,9 @@ For building the driver `docker` and `GO` should be installed
   - Example using `stage` overlay to update the image tag
      - Change `iks-vpc-block-driver` image name in `deploy/kubernetes/driver/kubernetes/overlays/stage/controller-server-images.yaml`
      - Change `iks-vpc-block-driver` image name in `deploy/kubernetes/driver/kubernetes/overlays/stage/node-server-images.yaml`
+     - Pass gen1 or gen2 to the bash script depending on the VPC cluster type
   - Deploy plugin
-    - `bash deploy/kubernetes/driver/kubernetes/deploy-vpc-block-driver.sh stage`
+    - `bash deploy/kubernetes/driver/kubernetes/deploy-vpc-block-driver.sh stage gen2`
 
 ## Testing
 
