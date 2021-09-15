@@ -35,7 +35,7 @@ CORE_DRIVER_IMG ?= $(REGISTRY)/$(CORE_IMAGE_NAME)
 
 TAG ?= dev
 ARCH ?= amd64
-ALL_ARCH ?= amd64
+ALL_ARCH ?= ppc64le
 
 
 
@@ -101,7 +101,7 @@ buildimage: build-systemutil
         --build-arg jenkins_build_number=${BUILD_NUMBER} \
         --build-arg REPO_SOURCE_URL=${REPO_SOURCE_URL} \
         --build-arg BUILD_URL=${BUILD_URL} \
-	-t $(CORE_DRIVER_IMG)-$(ARCH):$(TAG) -f Dockerfile .
+	-t $(CORE_DRIVER_IMG):$(ARCH)-$(TAG) -f Dockerfile .
 
 .PHONY: build-systemutil
 build-systemutil:
@@ -123,17 +123,11 @@ clean:
 ## --------------------------------------
 
 .PHONY: docker-build
-docker-build: docker-pull-prerequisites buildimage ## Build the docker image for ibm-vpc-block-csi-driver
+docker-build: buildimage ## Build the docker image for ibm-vpc-block-csi-driver
 
 .PHONY: docker-push
 docker-push: ## Push the docker image
-	docker push $(CORE_DRIVER_IMG)-$(ARCH):$(TAG)
-
-.PHONY: docker-pull-prerequisites
-docker-pull-prerequisites:
-	docker pull docker.io/docker/dockerfile:1.1-experimental
-	docker pull docker.io/library/golang:$(GOLANG_VERSION)
-	docker pull gcr.io/distroless/static:latest
+	docker push $(CORE_DRIVER_IMG):$(ARCH)-$(TAG)
 
 ## --------------------------------------
 ## Docker - All ARCH
@@ -159,16 +153,16 @@ docker-push-core-manifest: ## Push the fat manifest docker image.
 
 .PHONY: docker-push-manifest
 docker-push-manifest:
-	docker manifest create --amend $(DRIVER_IMG):$(TAG) $(shell echo $(ALL_ARCH) | sed -e "s~[^ ]*~$(DRIVER_IMG)\-&:$(TAG)~g")
-	@for arch in $(ALL_ARCH); do docker manifest annotate --arch $${arch} ${DRIVER_IMG}:${TAG} ${DRIVER_IMG}-$${arch}:${TAG}; done
+	docker manifest create --amend $(DRIVER_IMG):$(TAG) $(shell echo $(ALL_ARCH) | sed -e "s~[^ ]*~$(DRIVER_IMG):&-$(TAG)~g")
+	@for arch in $(ALL_ARCH); do docker manifest annotate --arch $${arch} ${DRIVER_IMG}:${TAG} ${DRIVER_IMG}:$${arch}-${TAG}; done
 	docker manifest push --purge ${DRIVER_IMG}:${TAG}
 
 ## --------------------------------------
 ## Release
 ## --------------------------------------
 
-.PHONY: release-alias-tag # Adds the tag to the last build taggcloud container images add-tag -q $(CORE_DRIVER_IMG):$(TAG) $(CORE_DRIVER_IMG):$(RELEASE_ALIAS_TAG)
-release-alias-tag:
+.PHONY: release-alias-tag
+release-alias-tag: # Adds the tag to the last build tag.
 	gcloud container images add-tag -q $(CORE_DRIVER_IMG):$(TAG) $(CORE_DRIVER_IMG):$(RELEASE_ALIAS_TAG)
 
 .PHONY: release-staging
