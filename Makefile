@@ -35,7 +35,7 @@ CORE_DRIVER_IMG ?= $(REGISTRY)/$(CORE_IMAGE_NAME)
 
 TAG ?= dev
 ARCH ?= amd64
-ALL_ARCH ?= ppc64le
+ALL_ARCH ?= amd64 ppc64le
 
 
 
@@ -163,7 +163,8 @@ docker-push-manifest:
 
 .PHONY: release-alias-tag
 release-alias-tag: # Adds the tag to the last build tag.
-	gcloud container images add-tag -q $(CORE_DRIVER_IMG):$(TAG) $(CORE_DRIVER_IMG):$(RELEASE_ALIAS_TAG)
+	#gcloud container images add-tag -q $(CORE_DRIVER_IMG):$(TAG) $(CORE_DRIVER_IMG):$(RELEASE_ALIAS_TAG)
+	docker tag $(CORE_DRIVER_IMG):$(TAG) $(CORE_DRIVER_IMG):$(RELEASE_ALIAS_TAG)
 
 .PHONY: release-staging
 release-staging: ## Builds and push container images to the staging image registry.
