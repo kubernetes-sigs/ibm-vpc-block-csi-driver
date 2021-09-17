@@ -123,11 +123,18 @@ clean:
 ## --------------------------------------
 
 .PHONY: docker-build
-docker-build: buildimage ## Build the docker image for ibm-vpc-block-csi-driver
+docker-build: docker-pull-prerequisites buildimage ## Build the docker image for ibm-vpc-block-csi-driver
 
 .PHONY: docker-push
 docker-push: ## Push the docker image
 	docker push $(CORE_DRIVER_IMG):$(ARCH)-$(TAG)
+
+.PHONY: docker-pull-prerequisites
+docker-pull-prerequisites:
+	docker pull docker.io/docker/dockerfile:1.1-experimental
+	docker pull docker.io/library/golang:$(GOLANG_VERSION)
+	docker pull gcr.io/distroless/static:latest
+
 
 ## --------------------------------------
 ## Docker - All ARCH
