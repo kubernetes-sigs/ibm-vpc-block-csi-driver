@@ -171,6 +171,7 @@ docker-push-manifest:
 .PHONY: release-alias-tag
 release-alias-tag: # Adds the tag to the last build tag.
 	#gcloud container images add-tag -q $(CORE_DRIVER_IMG):$(TAG) $(CORE_DRIVER_IMG):$(RELEASE_ALIAS_TAG)
+	docker pull $(CORE_DRIVER_IMG):$(TAG)
 	docker tag $(CORE_DRIVER_IMG):$(TAG) $(CORE_DRIVER_IMG):$(RELEASE_ALIAS_TAG)
 
 .PHONY: release-staging
