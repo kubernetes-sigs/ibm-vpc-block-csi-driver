@@ -41,8 +41,8 @@ import (
 	//mountManager "github.com/IBM/ibm-csi-common/pkg/mountmanager"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 
-	csiConfig "github.com/IBM/ibm-vpc-block-csi-driver/config"
-	csiDriver "github.com/IBM/ibm-vpc-block-csi-driver/pkg/ibmcsidriver"
+	csiConfig "github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/config"
+	csiDriver "github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/pkg/ibmcsidriver"
 )
 
 const (

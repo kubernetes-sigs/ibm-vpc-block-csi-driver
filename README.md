@@ -1,7 +1,7 @@
 # ibm-vpc-block-csi-driver
 
-[![Build Status](https://app.travis-ci.com/IBM/ibm-vpc-block-csi-driver.svg?branch=master)](https://app.travis-ci.com/IBM/ibm-vpc-block-csi-driver)
-[![code-coverage](https://github.com/IBM/ibm-vpc-block-csi-driver/blob/gh-pages/coverage/testbadge/badge.svg)](https://github.com/IBM/ibm-vpc-block-csi-driver/blob/gh-pages/coverage/testbadge/cover.html)
+[![Build Status](https://prow.k8s.io/badge.svg?jobs=pull-ibm-vpc-block-csi-driver-build)](https://prow.k8s.io)
+[![Coverage Status](https://coveralls.io/repos/github/kubernetes-sigs/ibm-vpc-block-csi-driver/badge.svg?branch=master)](https://coveralls.io/github/kubernetes-sigs/ibm-vpc-block-csi-driver?branch=master)
 
 ibm-vpc-block-csi-driver is a CSI plugin for creating and mounting VPC block storage on IBM VPC infrastructure based openshift or kubernetes cluster
 
@@ -37,7 +37,7 @@ For building the driver `docker` and `GO` should be installed
    ```
    $ mkdir -p $GOPATH/src/github.com/IBM
    $ cd $GOPATH/src/github.com/IBM/
-   $ git clone https://github.com/IBM/ibm-vpc-block-csi-driver.git
+   $ git clone https://github.com/kubernetes-sigs/ibm-vpc-block-csi-driver.git
    $ cd ibm-vpc-block-csi-driver
    ```
    ## Build project and runs testcases
@@ -106,7 +106,7 @@ For building the driver `docker` and `GO` should be installed
 
 # How to contribute
 
-If you have any questions or issues you can create a new issue [ here ](https://github.com/IBM/ibm-vpc-block-csi-driver/issues/new).
+If you have any questions or issues you can create a new issue [ here ](https://github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/issues/new).
 
 Pull requests are very welcome! Make sure your patches are well tested. Ideally create a topic branch for every separate change you make. For example:
 
