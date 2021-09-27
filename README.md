@@ -11,11 +11,7 @@ The following table details orchestration platforms suitable for deployment of t
 
 |Orchestration platform|Version|Architecture|
 |----------------------|-------|------------|
-|Kubernetes|1.21|x86|
-|Kubernetes|1.20|x86|
-|Kubernetes|1.19|x86|
 |Red Hat® OpenShift®|4.7|x86|
-|Red Hat OpenShift|4.6|x86|
 
 # Prerequisites
 
