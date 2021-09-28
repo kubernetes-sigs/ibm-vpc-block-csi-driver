@@ -7,11 +7,13 @@ spec:
     spec:
       containers:
         - name: csi-provisioner
-          image: icr.io/ext/k8scsi/csi-provisioner:v1.6.0
+          image: k8s.gcr.io/sig-storage/csi-provisioner:v2.2.2
         - name: csi-attacher
-          image: icr.io/ext/k8scsi/csi-attacher:v2.2.0
+          image:  k8s.gcr.io/sig-storage/csi-attacher:v3.2.1
         - name: liveness-probe
-          image: icr.io/ext/k8scsi/livenessprobe:v1.1.0
+          image: k8s.gcr.io/sig-storage/livenessprobe:v2.3.0
         - name: iks-vpc-block-driver
           imagePullPolicy: Always
-          image: (( concat "{{ DOCKER_REGISTRY }}/armada-master/ibm-vpc-block-csi-driver:" $RELEASE_TAG ))
+          image: k8s.gcr.io/cloud-provider-ibm/ibm-vpc-block-csi-driver:v0.0.0
+        - name: csi-resizer
+          image: k8s.gcr.io/sig-storage/csi-resizer:v1.2.0

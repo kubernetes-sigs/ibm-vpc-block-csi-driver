@@ -11,11 +11,7 @@ The following table details orchestration platforms suitable for deployment of t
 
 |Orchestration platform|Version|Architecture|
 |----------------------|-------|------------|
-|Kubernetes|1.21|x86|
-|Kubernetes|1.20|x86|
-|Kubernetes|1.19|x86|
 |Red Hat® OpenShift®|4.7|x86|
-|Red Hat OpenShift|4.6|x86|
 
 # Prerequisites
 
@@ -35,8 +31,8 @@ For building the driver `docker` and `GO` should be installed
    ## Clone the repo or your forked repo
 
    ```
-   $ mkdir -p $GOPATH/src/github.com/IBM
-   $ cd $GOPATH/src/github.com/IBM/
+   $ mkdir -p $GOPATH/src/github.com/kubernetes-sigs
+   $ cd $GOPATH/src/github.com/kubernetes-sigs/
    $ git clone https://github.com/kubernetes-sigs/ibm-vpc-block-csi-driver.git
    $ cd ibm-vpc-block-csi-driver
    ```
@@ -80,7 +76,10 @@ For building the driver `docker` and `GO` should be installed
 
 
 # Deploy CSI driver on your cluster
+- Edit [slclient_Gen2.toml](https://github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/blob/master/deploy/kubernetes/driver/kubernetes/slclient_Gen2.toml) for VPC Gen2 clusters.
 
+
+  VPC endpoints which supports Gen2 is documented [here](https://cloud.ibm.com/docs/vpc?topic=vpc-service-endpoints-for-vpc)
 - Install `kustomize` tool. The instructions are available [here](https://kubectl.docs.kubernetes.io/installation/kustomize/)
 - Export cluster config
 - Deploy CSI plugin on your cluster
@@ -89,7 +88,7 @@ For building the driver `docker` and `GO` should be installed
      - Change `iks-vpc-block-driver` image name in `deploy/kubernetes/driver/kubernetes/overlays/stage/controller-server-images.yaml`
      - Change `iks-vpc-block-driver` image name in `deploy/kubernetes/driver/kubernetes/overlays/stage/node-server-images.yaml`
   - Deploy plugin
-    - `sh deploy/kubernetes/driver/kubernetes/deploy-vpc-block-driver.sh stage`
+    - `bash deploy/kubernetes/driver/kubernetes/deploy-vpc-block-driver.sh stage`
 
 ## Testing
 

@@ -4,20 +4,22 @@
 
 set -o nounset
 set -o errexit
-#set -x
+# set -x
 
 if [ $# != 1 ]; then
-  echo "This will install 'stable' version of vpc csi driver!"
+  echo "This will install 'stable' version of vpc csi driveri for gen2 cluster configuration!"
 else
   readonly IKS_VPC_BLOCK_DRIVER_VERSION=$1
-  echo "This will install '${IKS_VPC_BLOCK_DRIVER_VERSION}' version of vpc csi driver!"
+  echo "This will install '${IKS_VPC_BLOCK_DRIVER_VERSION}' version of vpc csi driver!" 
 fi
 
 readonly VERSION="${IKS_VPC_BLOCK_DRIVER_VERSION:-stable}"
 readonly PKG_DIR="${GOPATH}/src/github.com/kubernetes-sigs/ibm-vpc-block-csi-driver"
-#source "${PKG_DIR}/deploy/kubernetes/driver/common.sh"
 
-#ensure_kustomize
+encodeVal=$(base64 -w 0 ${PKG_DIR}/deploy/kubernetes/driver/kubernetes/slclient_Gen2.toml)
 
-#${KUSTOMIZE_PATH}
+sed -i "s/REPLACE_ME/$encodeVal/g" ${PKG_DIR}/deploy/kubernetes/driver/kubernetes/manifests/storage-secret-store.yaml
+
+# ensure_kustomize
+
 kustomize build ${PKG_DIR}/deploy/kubernetes/driver/kubernetes/overlays/${VERSION} | kubectl apply -f -
