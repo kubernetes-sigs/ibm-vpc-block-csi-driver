@@ -3,7 +3,7 @@
 [![Build Status](https://prow.k8s.io/badge.svg?jobs=pull-ibm-vpc-block-csi-driver-build)](https://prow.k8s.io)
 [![Coverage Status](https://coveralls.io/repos/github/kubernetes-sigs/ibm-vpc-block-csi-driver/badge.svg?branch=master)](https://coveralls.io/github/kubernetes-sigs/ibm-vpc-block-csi-driver?branch=master)
 
-[`IBM VPC Block CSI Driver`](https://cloud.ibm.com/docs/openshift?topic=openshift-vpc-block) Container Storage Interface (CSI) Driver provides a [`CSI`](https://github.com/container-storage-interface/spec/blob/master/spec.md) based used by Container Orchestrators to manage the lifecycle of IBM VPC Block Data volumes.
+[`IBM VPC Block`](https://cloud.ibm.com/docs/openshift?topic=openshift-vpc-block) Container Storage Interface (CSI) Driver provides a [`CSI`](https://github.com/container-storage-interface/spec/blob/master/spec.md) interface used by Container Orchestrators to manage the lifecycle of IBM VPC Block Data volumes.
 
 # Supported orchestration platforms
 
