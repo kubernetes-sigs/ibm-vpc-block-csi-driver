@@ -10,3 +10,4 @@ resources:
 - controller-server.yaml
 - setup-vpc-block-sa.yaml
 - csidriver.yaml
+- storage-secret-store.yaml
