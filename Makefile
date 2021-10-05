@@ -16,7 +16,6 @@
 
 EXE_DRIVER_NAME=ibm-vpc-block-csi-driver
 DRIVER_NAME=vpcBlockDriver
-GOPACKAGES=$(shell go list ./... | grep -v /vendor/ | grep -v /cmd | grep -v /tests)
 GIT_COMMIT_SHA="$(shell git rev-parse HEAD 2>/dev/null)"
 GIT_REMOTE_URL="$(shell git config --get remote.origin.url 2>/dev/null)"
 BUILD_DATE="$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")"
@@ -59,9 +58,6 @@ driver: deps buildimage
 .PHONY: deps
 deps:
 	echo "Installing dependencies ..."
-	#glide install --strip-vendor
-	go mod download
-	go get github.com/pierrre/gotestcover
 	@if ! which golangci-lint >/dev/null || [[ "$$(golangci-lint --version)" != *${LINT_VERSION}* ]]; then \
 		curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v${LINT_VERSION}; \
 	fi
@@ -83,13 +79,18 @@ lint:
 build:
 	CGO_ENABLED=0 GOOS=$(shell go env GOOS) GOARCH=$(shell go env GOARCH) go build -mod=mod -a -ldflags '-X main.vendorVersion='"${DRIVER_NAME}-${GIT_COMMIT_SHA}"' -extldflags "-static"' -o ${GOPATH}/bin/${EXE_DRIVER_NAME} ./cmd/
 
+.PHONY: verify
+verify:
+	echo "Verifying and linting files ..."
+	./hack/verify-all.sh
+	echo "Congratulations! All Go source files have been linted."
+
 .PHONY: test
-test: deps
-	$(GOPATH)/bin/gotestcover -v -race -short -coverprofile=cover.out ${GOPACKAGES}
+test:
+	go test -v -race ./cmd/... ./pkg/...
 
 .PHONY: ut-coverage
 ut-coverage:
-
 	go tool cover -html=cover.out -o=cover.html
 
 .PHONY: buildimage
