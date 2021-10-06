@@ -148,3 +148,7 @@ Pull requests are very welcome! Make sure your patches are well tested. Ideally 
 5. Create new Pull Request
 
 6. Add the test results in the PR
+
+## Vendor changes
+
+For any changes to `go.mod` or `go.sum`, be sure to run `go mod vendor` to update dependencies in the `vendor/` directory. You can verify that the vendor directory is up-to-date before filing a PR by running `hack/verify-vendor.sh`.
