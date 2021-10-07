@@ -23,7 +23,7 @@ Following are the prerequisites to use the IBM VPC Block CSI Driver:
 
 1. User should have either Red Hat® OpenShift® or kubernetes cluster on IBM VPC Gen 2 infrastructure.
 2. Should have compatible orchestration platform.
-3. Install and configure `ibmcloud is` CLI or get the required worker/node details from cloud.ibm.com
+3. Install and configure `ibmcloud is` CLI or get the required worker/node details by using [`IBM Cloud Console`](https://cloud.ibm.com)
 4. Cluster's worker node should have following labels, if not please apply labels before deploying IBM VPC Block CSI Driver.
 ```
 "ibm-cloud.kubernetes.io/worker-id"
@@ -38,10 +38,14 @@ Following are the prerequisites to use the IBM VPC Block CSI Driver:
 Please use [`apply-required-setup.sh`](https://github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/blob/master/scripts/apply-required-setup.sh) script for all the nodes in the cluster which will need couple of inputs like 
 
 `instanceID`:  That you can get from `ibmcloud is ins` 
+
 `node-name`: this is as per node name in the kubernetes node check by using `kubectl get nodes`
+
 `region-of-instanceID`:  region of the instanceID, this you can get the by using `ibmcloud is in <instanceID>`
+
 `zone-of-instanceID`: Zone of the instanceID, this you can get the by using `ibmcloud is in <instanceID>`
-ex :- ./apply-required-setup.sh <node-name> <instanceID> <region-of-instanceID> <zone-of-instanceID>
+
+Example :- ./apply-required-setup.sh <node-name> <instanceID> <region-of-instanceID> <zone-of-instanceID>
 
 # Build the driver
 
@@ -102,7 +106,7 @@ For building the driver `docker` and `GO` should be installed on the system
 # Deploy CSI driver on your cluster
 - Edit [slclient_Gen2.toml](https://github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/blob/master/deploy/kubernetes/driver/kubernetes/slclient_Gen2.toml) for your cluster.
 
-  VPC endpoints which supports Gen2 is documented [here](https://cloud.ibm.com/docs/vpc?topic=vpc-service-endpoints-for-vpc)
+IBM VPC endpoints which supports Gen2 is documented [here](https://cloud.ibm.com/docs/vpc?topic=vpc-service-endpoints-for-vpc)
 - Install `kustomize` tool. The instructions are available [here](https://kubectl.docs.kubernetes.io/installation/kustomize/)
 - Export cluster config i.e configuring kubectl command
 - Deploy IBM VPC Block CSI Driver on your cluster
@@ -120,7 +124,7 @@ For building the driver `docker` and `GO` should be installed on the system
   - `ls deploy/kubernetes/storageclass/ | xargs -I classfile kubectl apply -f deploy/kubernetes/storageclass/classfile`
 - Create PVC
   - `kubectl create -f examples/kubernetes/validPVC.yaml`
-- .Create POD with volume
+- Create POD with volume
   - `kubectl create -f examples/kubernetes/validPOD.yaml`
 
 # E2E Tests
@@ -144,3 +148,7 @@ Pull requests are very welcome! Make sure your patches are well tested. Ideally 
 5. Create new Pull Request
 
 6. Add the test results in the PR
+
+## Vendor changes
+
+For any changes to `go.mod` or `go.sum`, be sure to run `go mod vendor` to update dependencies in the `vendor/` directory. You can verify that the vendor directory is up-to-date before filing a PR by running `hack/verify-vendor.sh`.
