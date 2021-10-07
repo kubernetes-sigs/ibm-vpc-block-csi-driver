@@ -1,0 +1,18 @@
+[header]
+  id = 1
+  name = "test"
+  yesOrNo = true
+  pi = 3.14
+  list = "1, 2"
+[vpc]
+  vpc_enabled = true
+  vpc_block_provider_name = "vpc-classic"
+  gc_token_exchange_endpoint_url = "https://iam.bluemix.net"
+  gc_riaas_endpoint_url = "https://us-south.iaas.cloud.ibm.com:443"
+  gc_resource_group_id = "RESOURCEGROUP"
+  gc_api_key = "IAM_API_KEY"
+  encryption = false
+  vpc_timeout = "120s"
+  max_retry_attempt  = 10
+  max_retry_gap =  60
+  api_version = "2019-07-02"
