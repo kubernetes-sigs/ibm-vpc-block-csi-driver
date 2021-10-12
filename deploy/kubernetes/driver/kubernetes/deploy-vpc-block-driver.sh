@@ -22,7 +22,7 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
         sed -i "s/REPLACE_ME/$encodeVal/g" ${PKG_DIR}/deploy/kubernetes/driver/kubernetes/manifests/storage-secret-store.yaml
 
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-
+	echo $OSTYPE
 	encodeVal=$(base64 ${PKG_DIR}/deploy/kubernetes/driver/kubernetes/slclient_Gen2.toml)
         sed -i '.bak' "s/REPLACE_ME/$encodeVal/g" ${PKG_DIR}/deploy/kubernetes/driver/kubernetes/manifests/storage-secret-store.yaml
 fi
