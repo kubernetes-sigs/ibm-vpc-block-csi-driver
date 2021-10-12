@@ -5,14 +5,11 @@ aliases:
     - bradtopol
     - spzala
   ibmcloud-paas-storage-leads:
-    - sandaymin123
     - arahamad
   ibmcloud-paas-storage-reviewers:
-    - sandaymin123
     - arahamad
     - ambiknai
   ibm-vpc-csi-driver-admins:
-    - sandaymin123
     - arahamad
   ibm-vpc-csi-driver-maintainers:
     - arahamad
