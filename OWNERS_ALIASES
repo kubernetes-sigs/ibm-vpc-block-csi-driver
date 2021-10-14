@@ -1,0 +1,16 @@
+# See the OWNERS docs: https://git.k8s.io/community/docs/devel/owners.md
+
+aliases:
+  provider-ibmcloud-leads:
+    - bradtopol
+    - spzala
+  ibmcloud-paas-storage-leads:
+    - arahamad
+  ibmcloud-paas-storage-reviewers:
+    - arahamad
+    - ambiknai
+  ibm-vpc-csi-driver-admins:
+    - arahamad
+  ibm-vpc-csi-driver-maintainers:
+    - arahamad
+    - ambiknai

@@ -1,9 +1,14 @@
 
-# See the OWNERS docs at https://go.k8s.io/owners
+# See the OWNERS docs: https://git.k8s.io/community/contributors/guide/owners.md
 
 approvers:
-  - arahamad
-  - ambiknai
+  - provider-ibmcloud-leads
+  - ibmcloud-paas-storage-leads
+  - ibm-vpc-csi-driver-admins
+  - ibm-vpc-csi-driver-maintainers
+
 reviewers:
-  - arahamad
-  - ambiknai
+  - provider-ibmcloud-leads
+  - ibmcloud-paas-storage-leads
+  - ibm-vpc-csi-driver-admins
+  - ibmcloud-paas-storage-reviewers
