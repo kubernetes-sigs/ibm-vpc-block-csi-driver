@@ -4,21 +4,12 @@ github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/IBM-Cloud/ibm-cloud-cli-sdk v0.6.7 h1:eHgfQl6IeSmzWUyiSi13CvoFYsovoyqWlpHX0pa9J54=
 github.com/IBM-Cloud/ibm-cloud-cli-sdk v0.6.7/go.mod h1:RiUvKuHKTBmBApDMUQzBL14pQUGKcx/IioKQPIcRQjs=
-<<<<<<< HEAD
-github.com/IBM/ibm-csi-common v1.0.0-beta6 h1:FTZNuQjVmYNtVm7mlbuC2Sg45fSTEz7s4iSqnRHLZhg=
-github.com/IBM/ibm-csi-common v1.0.0-beta6/go.mod h1:DswvI7yUVfsLiFYQ/ADjrSqSMijujk3CZpFSbwolQQQ=
-github.com/IBM/ibmcloud-volume-interface v1.0.0-beta7 h1:cl1situtbkJwEsRDw1CW2KpJkmznmjzhWWnSPH3TzvM=
-github.com/IBM/ibmcloud-volume-interface v1.0.0-beta7/go.mod h1:2LxqkERml3eBxfRkQniuiRmKkAnl5tfC0ttlP2gupJM=
-github.com/IBM/ibmcloud-volume-vpc v1.0.0-beta11 h1:C3xhQZocc2zhmhyJlB2bVSbowy2sSIgsByBADTk4eIc=
-github.com/IBM/ibmcloud-volume-vpc v1.0.0-beta11/go.mod h1:W7x7R58nPNBFO2HwebpDSkbCOYMkdsxKW1+7bA7r+Uk=
-=======
-github.com/IBM/ibm-csi-common v1.0.0-beta3 h1:G/AiqlYomVCHvI3YuVLxC3K1Zv+R9ONN3GyAlOEMAeY=
-github.com/IBM/ibm-csi-common v1.0.0-beta3/go.mod h1:4zi8m/dSBHfngNI0i/4Vk8Ma1g73aNUMxIHlwAC42HY=
-github.com/IBM/ibmcloud-volume-interface v1.0.0-beta7 h1:cl1situtbkJwEsRDw1CW2KpJkmznmjzhWWnSPH3TzvM=
-github.com/IBM/ibmcloud-volume-interface v1.0.0-beta7/go.mod h1:2LxqkERml3eBxfRkQniuiRmKkAnl5tfC0ttlP2gupJM=
-github.com/IBM/ibmcloud-volume-vpc v1.0.0-beta9 h1:ykvdvg8bbseyWPdNfvZ1upPOojW5DKvVDNSePJNMJkA=
-github.com/IBM/ibmcloud-volume-vpc v1.0.0-beta9/go.mod h1:W7x7R58nPNBFO2HwebpDSkbCOYMkdsxKW1+7bA7r+Uk=
->>>>>>> c58ba10 (Pass new user Error)
+github.com/IBM/ibm-csi-common v1.0.0-beta9 h1:gMn6tow1f6TohCY3QEwNDXCScGC0qiZc1yL9SaaClKw=
+github.com/IBM/ibm-csi-common v1.0.0-beta9/go.mod h1:ED7Dwg3MjYyHu5cQ0TlLJ3eXwm3Kb0nQvk8vH1kVbbM=
+github.com/IBM/ibmcloud-volume-interface v1.0.0-beta8 h1:0oCBQidejAlLI5f5PlBHIytArhJI1aEOBCCOMoxNOPs=
+github.com/IBM/ibmcloud-volume-interface v1.0.0-beta8/go.mod h1:2LxqkERml3eBxfRkQniuiRmKkAnl5tfC0ttlP2gupJM=
+github.com/IBM/ibmcloud-volume-vpc v1.0.0-beta12 h1:Hfw7XvHpexffDfvD50wFJCwUmhKeVUlKEFi7JMcSSZI=
+github.com/IBM/ibmcloud-volume-vpc v1.0.0-beta12/go.mod h1:MEyNF/zxHl2Zw/kBy7qykGPt8X+U+kDEJV1kimrvCbs=
 github.com/NYTimes/gziphandler v0.0.0-20170623195520-56545f4a5d46/go.mod h1:3wb06e3pkSAbeQ52E9H9iFoQsEEwGN64994WTCIhntQ=
 github.com/PuerkitoBio/purell v1.0.0/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
 github.com/PuerkitoBio/urlesc v0.0.0-20160726150825-5bd2802263f2/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
