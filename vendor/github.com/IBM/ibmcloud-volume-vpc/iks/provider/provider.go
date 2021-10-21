@@ -21,6 +21,8 @@ import (
 	"context"
 
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
+	util "github.com/IBM/ibmcloud-volume-interface/lib/utils"
+	utilReasonCode "github.com/IBM/ibmcloud-volume-interface/lib/utils/reasoncode"
 	"github.com/IBM/ibmcloud-volume-interface/provider/local"
 	vpcprovider "github.com/IBM/ibmcloud-volume-vpc/block/provider"
 	vpcconfig "github.com/IBM/ibmcloud-volume-vpc/block/vpcconfig"
@@ -75,8 +77,15 @@ func (iksp *IksVpcBlockProvider) OpenSession(ctx context.Context, contextCredent
 	vpcContextCredentials, err := ccf.ForIAMAccessToken(iksp.iksBlockProvider.Config.VPCConfig.APIKey, ctxLogger)
 	if err != nil {
 		ctxLogger.Error("Error occurred while generating IAM token for VPC", zap.Error(err))
-		userErr := userError.GetUserError(string(userError.AuthenticationFailed), err)
-		return nil, userErr
+		if util.ErrorReasonCode(err) == utilReasonCode.EndpointNotReachable {
+			userErr := userError.GetUserError(string(userError.EndpointNotReachable), err)
+			return nil, userErr
+		}
+		if util.ErrorReasonCode(err) == utilReasonCode.Timeout {
+			userErr := userError.GetUserError(string(userError.Timeout), err)
+			return nil, userErr
+		}
+		return nil, err
 	}
 	session, err := iksp.vpcBlockProvider.OpenSession(ctx, vpcContextCredentials, ctxLogger)
 	if err != nil {

@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	util "github.com/IBM/ibmcloud-volume-interface/lib/utils"
+	"github.com/IBM/ibmcloud-volume-interface/lib/utils/reasoncode"
 )
 
 // MessagesEn ...
@@ -54,4 +55,14 @@ func GetUserError(code string, err error, args ...interface{}) error {
 		userMsg.BackendError = err.Error()
 	}
 	return userMsg
+}
+
+// GetUserErrorCode returns reason code string if a util.Message, else ErrorUnclassified string
+func GetUserErrorCode(err error) string {
+	if uErr, isPerr := err.(util.Message); isPerr {
+		if code := uErr.Code; code != "" {
+			return code
+		}
+	}
+	return string(reasoncode.ErrorUnclassified)
 }

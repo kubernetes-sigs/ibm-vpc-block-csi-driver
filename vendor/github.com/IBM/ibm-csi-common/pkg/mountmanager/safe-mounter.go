@@ -18,13 +18,39 @@
 package mountmanager
 
 import (
-	"k8s.io/kubernetes/pkg/util/mount"
+	mount "k8s.io/mount-utils"
+	exec "k8s.io/utils/exec"
 )
 
+type mountInterface = mount.Interface
+
+// Mounter is the interface implemented by Mounter
+type Mounter interface {
+	mountInterface
+
+	NewSafeFormatAndMount() *mount.SafeFormatAndMount
+	MakeFile(path string) error
+	MakeDir(path string) error
+	PathExists(path string) (bool, error)
+}
+
+// NodeMounter implements Mounter.
+// A superstruct of SafeFormatAndMount.
+type NodeMounter struct {
+	*mount.SafeFormatAndMount
+}
+
+// NewNodeMounter ...
+func NewNodeMounter() Mounter {
+	// mounter.newSafeMounter returns a SafeFormatAndMount
+	safeMounter := newSafeMounter()
+	return &NodeMounter{safeMounter}
+}
+
 // NewSafeMounter ...
-func NewSafeMounter() *mount.SafeFormatAndMount {
+func newSafeMounter() *mount.SafeFormatAndMount {
 	realMounter := mount.New("")
-	realExec := mount.NewOsExec()
+	realExec := exec.New()
 	return &mount.SafeFormatAndMount{
 		Interface: realMounter,
 		Exec:      realExec,

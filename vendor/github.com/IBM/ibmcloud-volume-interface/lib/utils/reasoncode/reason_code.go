@@ -62,6 +62,12 @@ const (
 
 const (
 
+	//Timeout indicates that there was timeout reaching token exchange endpoint
+	Timeout = ReasonCode("Timeout")
+
+	//EndpointNotReachable indicates that token exchange endpoint is incorrect
+	EndpointNotReachable = ReasonCode("EndpointNotReachable")
+
 	// ErrorUnknownProvider indicates the named provider is not known
 	ErrorUnknownProvider = ReasonCode("ErrorUnknownProvider")
 

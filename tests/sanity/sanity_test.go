@@ -35,12 +35,14 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"k8s.io/kubernetes/pkg/util/mount"
+	mount "k8s.io/mount-utils"
+	"k8s.io/utils/exec"
+	testExec "k8s.io/utils/exec/testing"
 
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	nodeMetadata "github.com/IBM/ibm-csi-common/pkg/metadata"
 
-	//mountManager "github.com/IBM/ibm-csi-common/pkg/mountmanager"
+	mountManager "github.com/IBM/ibm-csi-common/pkg/mountmanager"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 
 	csiConfig "github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/config"
@@ -518,9 +520,9 @@ func createTargetDir(targetPath string) error {
 
 // NewFakeSafeMounter ...
 func NewFakeSafeMounter() *mount.SafeFormatAndMount {
-	execCallback := func(cmd string, args ...string) ([]byte, error) {
-		return nil, nil
-	}
+	// execCallback := func(cmd string, args ...string) ([]byte, error) {
+	// 	return nil, nil
+	// }
 	fakeMounter := &mount.FakeMounter{MountPoints: []mount.MountPoint{{
 		Device: "/tmp/csi",
 		Path:   "/tmp/csi/tmp/csi/mount/target",
@@ -528,8 +530,11 @@ func NewFakeSafeMounter() *mount.SafeFormatAndMount {
 		Opts:   []string{"defaults"},
 		Freq:   1,
 		Pass:   2,
-	}}, Log: []mount.FakeAction{}}
-	fakeExec := mount.NewFakeExec(execCallback)
+	}}}
+	//fakeExec := mount.NewFakeExec(execCallback)
+	var fakeExec exec.Interface = &testExec.FakeExec{
+		DisableScripts: true,
+	}
 	return &mount.SafeFormatAndMount{
 		Interface: fakeMounter,
 		Exec:      fakeExec,

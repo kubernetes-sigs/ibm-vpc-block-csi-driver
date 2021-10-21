@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/IBM-Cloud/ibm-cloud-cli-sdk/common/rest"
@@ -151,10 +152,16 @@ func (r *tokenExchangeIKSRequest) sendTokenExchangeRequest() (*tokenExchangeIKSR
 	r.logger.Info("Sending IAM token exchange request to container api server")
 	resp, err := r.client.Do(r.request, &successV, &errorV)
 	if err != nil {
+		errString := err.Error()
 		r.logger.Error("IAM token exchange request failed", zap.Reflect("Response", resp), zap.Error(err))
-		return nil,
-			util.NewError("ErrorUnclassified",
+		if strings.Contains(errString, "no such host") {
+			return nil, util.NewError("EndpointNotReachable", errString)
+		} else if strings.Contains(errString, "Timeout") {
+			return nil, util.NewError("Timeout", errString)
+		} else {
+			return nil, util.NewError("ErrorUnclassified",
 				"IAM token exchange request failed", err)
+		}
 	}
 
 	if resp != nil && resp.StatusCode == 200 {

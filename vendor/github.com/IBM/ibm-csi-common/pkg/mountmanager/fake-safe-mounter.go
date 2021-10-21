@@ -18,14 +18,25 @@
 package mountmanager
 
 import (
-	"k8s.io/kubernetes/pkg/util/mount"
+	mount "k8s.io/mount-utils"
+	exec "k8s.io/utils/exec"
+	testExec "k8s.io/utils/exec/testing"
 )
+
+// FakeNodeMounter ...
+type FakeNodeMounter struct {
+	*mount.SafeFormatAndMount
+}
+
+// NewFakeNodeMounter ...
+func NewFakeNodeMounter() Mounter {
+	//Have to make changes here to pass the Mock functions
+	fakesafemounter := NewFakeSafeMounter()
+	return &FakeNodeMounter{fakesafemounter}
+}
 
 // NewFakeSafeMounter ...
 func NewFakeSafeMounter() *mount.SafeFormatAndMount {
-	execCallback := func(cmd string, args ...string) ([]byte, error) {
-		return nil, nil
-	}
 	fakeMounter := &mount.FakeMounter{MountPoints: []mount.MountPoint{{
 		Device: "valid-devicePath",
 		Path:   "valid-vol-path",
@@ -33,10 +44,38 @@ func NewFakeSafeMounter() *mount.SafeFormatAndMount {
 		Opts:   []string{"defaults"},
 		Freq:   1,
 		Pass:   2,
-	}}, Log: []mount.FakeAction{}}
-	fakeExec := mount.NewFakeExec(execCallback)
+	}},
+	}
+
+	var fakeExec exec.Interface = &testExec.FakeExec{
+		DisableScripts: true,
+	}
+
 	return &mount.SafeFormatAndMount{
 		Interface: fakeMounter,
 		Exec:      fakeExec,
 	}
+}
+
+// MakeDir ...
+func (f *FakeNodeMounter) MakeDir(pathname string) error {
+	return nil
+}
+
+// MakeFile ...
+func (f *FakeNodeMounter) MakeFile(pathname string) error {
+	return nil
+}
+
+// PathExists ...
+func (f *FakeNodeMounter) PathExists(pathname string) (bool, error) {
+	if pathname == "fake" {
+		return true, nil
+	}
+	return false, nil
+}
+
+// NewSafeFormatAndMount ...
+func (f *FakeNodeMounter) NewSafeFormatAndMount() *mount.SafeFormatAndMount {
+	return NewFakeSafeMounter()
 }

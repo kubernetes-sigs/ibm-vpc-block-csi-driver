@@ -5,21 +5,20 @@ go 1.16
 require (
 	github.com/IBM/ibm-csi-common v1.0.0-beta9.0.20211021070925-e17614c7c291
 	github.com/IBM/ibmcloud-volume-interface v1.0.0-beta8
-	github.com/IBM/ibmcloud-volume-vpc v1.0.0-beta12
-	github.com/container-storage-interface/spec v1.3.0
+	github.com/container-storage-interface/spec v1.5.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/uuid v1.1.2
-	github.com/kubernetes-csi/csi-test/v3 v3.0.0
-	github.com/onsi/gomega v1.10.3 // indirect
+	github.com/kubernetes-csi/csi-test/v4 v4.3.0
 	github.com/prometheus/client_golang v1.7.1
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/zap v1.15.0
 	golang.org/x/net v0.0.0-20210224082022-3d97a244fca7
 	golang.org/x/sys v0.0.0-20210225134936-a50acf3fe073
-	google.golang.org/grpc v1.27.1
+	google.golang.org/grpc v1.34.0
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	k8s.io/kubernetes v1.21.0
 	k8s.io/mount-utils v0.21.0
+	k8s.io/utils v0.0.0-20210820185131-d34e5cb4466e
 )
 
 replace (
