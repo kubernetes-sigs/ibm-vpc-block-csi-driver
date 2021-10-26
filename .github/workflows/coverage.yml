@@ -23,7 +23,7 @@ jobs:
         go mod download
     - name: Run Unit tests
       run: |
-        go test $(go list ./... | grep -v /vendor/ | grep -v /cmd | grep -v /tests) -race -covermode atomic -coverprofile=covprofile ./...
+        go test $(go list ./... | grep -v /vendor/ | grep -v /cmd | grep -v /tests) -race -v -covermode=count -coverprofile=coverage.out
     - name: Install goveralls
       env:
         GOPATH: ${{ github.workspace }}
@@ -36,7 +36,7 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
       
     - name: Send coverage
-      run: $GOPATH/bin/goveralls -coverprofile=covprofile -service=github
+      run: $GOPATH/bin/goveralls -coverprofile=coverage.out -service=github
       env:
         COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GOPATH: ${{ github.workspace }}
