@@ -27,13 +27,17 @@ jobs:
     - name: Install goveralls
       env:
         GOPATH: ${{ github.workspace }}
-      run: go install github.com/mattn/goveralls@latest
+      run: |
+         go install github.com/mattn/goveralls@latest 
+         go get golang.org/x/tools/cmd/cover
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+      
     - name: Send coverage
       run: $GOPATH/bin/goveralls -coverprofile=covprofile -service=github
       env:
         COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GOPATH: ${{ github.workspace }}
-    - name: Coveralls
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+
