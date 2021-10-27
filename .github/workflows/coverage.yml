@@ -30,10 +30,6 @@ jobs:
       run: |
          go install github.com/mattn/goveralls@latest 
          go get golang.org/x/tools/cmd/cover
-    - name: Coveralls
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
       
     - name: Send coverage
       run: $GOPATH/bin/goveralls -coverprofile=coverage.out -service=github
