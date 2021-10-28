@@ -1,4 +1,4 @@
-name: Quality
+name: Code Coverage
 on: [push, pull_request]
 jobs:
   test:
@@ -7,7 +7,7 @@ jobs:
     defaults:
       run:
         working-directory: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
-    name: Test with Coverage
+    name: Post
     runs-on: ubuntu-latest
     steps:
     - name: Set up Go
