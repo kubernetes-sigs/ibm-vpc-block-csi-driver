@@ -1,5 +1,5 @@
 kind: CSIDriver
-apiVersion: storage.k8s.io/v1beta1
+apiVersion: storage.k8s.io/v1
 metadata:
   name: vpc.block.csi.ibm.io
 spec:

@@ -94,7 +94,7 @@ spec:
             failureThreshold: 5
           volumeMounts:
             - name: kubelet-data-dir
-              mountPath: /var/data/kubelet
+              mountPath: /var/lib/kubelet
               mountPropagation: "Bidirectional"
             - name: plugin-dir
               mountPath: /csi
@@ -139,7 +139,7 @@ spec:
             type: Directory
         - name: kubelet-data-dir
           hostPath:
-            path: /var/data/kubelet # IKS worker
+            path: /var/lib/kubelet # IKS worker
             type: Directory
         - name: plugin-dir
           hostPath:
