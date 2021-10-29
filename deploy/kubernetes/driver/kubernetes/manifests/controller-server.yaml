@@ -135,9 +135,6 @@ spec:
             - name: customer-auth
               readOnly: true
               mountPath: /etc/storage_ibmc
-            - name: cluster-info
-              readOnly: true
-              mountPath: /etc/storage_ibmc/cluster_info
         - name: liveness-probe
           image: MUSTPATCHWITHKUSTOMIZE
           securityContext:
@@ -161,7 +158,4 @@ spec:
         - name: customer-auth
           secret:
             secretName: storage-secret-store
-        - name: cluster-info
-          configMap:
-            name: cluster-info
   volumeClaimTemplates: []
