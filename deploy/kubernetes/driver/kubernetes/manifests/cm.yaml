@@ -1,9 +1,0 @@
-apiVersion: v1
-data:
-  cluster-config.json: |
-    {}
-kind: ConfigMap
-metadata:
-  annotations:
-  name: cluster-info
-  namespace: kube-system

@@ -11,4 +11,3 @@ resources:
 - setup-vpc-block-sa.yaml
 - csidriver.yaml
 - storage-secret-store.yaml
-- cm.yaml

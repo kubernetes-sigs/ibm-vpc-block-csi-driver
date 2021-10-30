@@ -94,7 +94,7 @@ spec:
             failureThreshold: 5
           volumeMounts:
             - name: kubelet-data-dir
-              mountPath: /var/lib/kubelet
+              mountPath: /var/data/kubelet
               mountPropagation: "Bidirectional"
             - name: plugin-dir
               mountPath: /csi
@@ -111,9 +111,6 @@ spec:
             - name: customer-auth
               readOnly: true
               mountPath: /etc/storage_ibmc
-            - name: cluster-info
-              readOnly: true
-              mountPath: /etc/storage_ibmc/cluster_info
         - name: liveness-probe
           image: MUSTPATCHWITHKUSTOMIZE
           securityContext:
@@ -139,7 +136,7 @@ spec:
             type: Directory
         - name: kubelet-data-dir
           hostPath:
-            path: /var/lib/kubelet # IKS worker
+            path: /var/lib/kubelet # OpenShift worker, for kubernetes /var/data/kubelet
             type: Directory
         - name: plugin-dir
           hostPath:
@@ -168,6 +165,3 @@ spec:
         - name: customer-auth # altough its not required, This is just to finish lib configuration which is a common code in the driver
           secret:
             secretName: storage-secret-store
-        - name: cluster-info # To get the cluster info
-          configMap:
-            name: cluster-info
