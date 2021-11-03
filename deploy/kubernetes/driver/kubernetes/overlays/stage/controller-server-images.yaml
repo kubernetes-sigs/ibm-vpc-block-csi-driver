@@ -14,6 +14,6 @@ spec:
           image: k8s.gcr.io/sig-storage/livenessprobe:v2.3.0
         - name: iks-vpc-block-driver
           imagePullPolicy: Always
-          image: k8s.gcr.io/cloud-provider-ibm/ibm-vpc-block-csi-driver:v0.0.0
+          image: gcr.io/k8s-staging-cloud-provider-ibm/ibm-vpc-block-csi-driver:master
         - name: csi-resizer
           image: k8s.gcr.io/sig-storage/csi-resizer:v1.2.0

@@ -8,7 +8,7 @@ spec:
       containers:
         - name: iks-vpc-block-node-driver
           imagePullPolicy: Always
-          image: k8s.gcr.io/cloud-provider-ibm/ibm-vpc-block-csi-driver:v0.0.0
+          image: gcr.io/k8s-staging-cloud-provider-ibm/ibm-vpc-block-csi-driver:master
         - name: csi-driver-registrar
           image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.2.0
         - name: liveness-probe
