@@ -19,6 +19,8 @@ package util
 
 // These are the error types which all provider should categorize their errors
 const (
+	// FailedAccessToken ...
+	FailedAccessToken = "FailedAccessToken"
 
 	// ProvisioningFailed volume or snapshot provisioning failed
 	ProvisioningFailed = "ProvisioningFailed"

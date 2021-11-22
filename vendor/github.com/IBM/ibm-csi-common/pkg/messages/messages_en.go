@@ -95,6 +95,18 @@ var messagesEn = map[string]Message{
 		Type:        codes.InvalidArgument,
 		Action:      "Please check all node's labels by using kubectl command",
 	},
+	EndpointNotReachable: {
+		Code:        EndpointNotReachable,
+		Description: "IAM TOKEN exchange request failed.",
+		Type:        codes.Unavailable,
+		Action:      "Verify that iks_token_exchange_endpoint_private_url is reachable from the cluster. You can find this url by running 'kubectl get secret storage-secret-storage -n kube-system'.",
+	},
+	Timeout: {
+		Code:        Timeout,
+		Description: "IAM Token exchange endpoint is not reachable.",
+		Type:        codes.DeadlineExceeded,
+		Action:      "Wait for a few minutes and try again. If the error persists user can open a container network issue.",
+	},
 	FailedPrecondition: {
 		Code:        FailedPrecondition,
 		Description: "Provider is not ready to responde",
@@ -142,6 +154,12 @@ var messagesEn = map[string]Message{
 		Description: "Failed to find '%s' device path",
 		Type:        codes.Internal,
 		Action:      "Please check if there is any error in POD describe related with volume attach",
+	},
+	DevicePathNotFound: {
+		Code:        DevicePathNotFound,
+		Description: "Device path '%s' is not present",
+		Type:        codes.Internal,
+		Action:      "List volume attachments by using `ibmcloud ks storage attachments --worker <worker-ID> --cluster <cluster-ID> | grep <volume-ID>`. If the volume is attached, open a ticket and select VPC for the Problem type. Otherwise, select IBM Cloud Kubernetes service as Problem type.",
 	},
 	TargetPathCheckFailed: {
 		Code:        TargetPathCheckFailed,
