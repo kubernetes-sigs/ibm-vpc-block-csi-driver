@@ -42,25 +42,17 @@ github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym
 github.com/GoogleCloudPlatform/k8s-cloud-provider v0.0.0-20200415212048-7901bc822317/go.mod h1:DF8FZRxMHMGv/vP2lQP6h+dYzzjpuRn24VeRiYn3qjQ=
 github.com/IBM-Cloud/ibm-cloud-cli-sdk v0.6.7 h1:eHgfQl6IeSmzWUyiSi13CvoFYsovoyqWlpHX0pa9J54=
 github.com/IBM-Cloud/ibm-cloud-cli-sdk v0.6.7/go.mod h1:RiUvKuHKTBmBApDMUQzBL14pQUGKcx/IioKQPIcRQjs=
-<<<<<<< HEAD
-github.com/IBM/ibm-csi-common v1.0.0-beta9 h1:gMn6tow1f6TohCY3QEwNDXCScGC0qiZc1yL9SaaClKw=
-github.com/IBM/ibm-csi-common v1.0.0-beta9/go.mod h1:ED7Dwg3MjYyHu5cQ0TlLJ3eXwm3Kb0nQvk8vH1kVbbM=
-=======
-github.com/IBM/ibm-csi-common v1.0.0-beta10 h1:PyLDxzH6TdrhhNKBV5Cz22l2Yy5iEgryevHJbfok8c8=
-github.com/IBM/ibm-csi-common v1.0.0-beta10/go.mod h1:GN3PKBJeuSuDuosuSZyrptPI1Yv9254Ly/LZ8fNDLr4=
->>>>>>> 25ac11d (Upgrade k8s package)
+github.com/IBM/ibm-csi-common v1.0.0-beta9.0.20211124091840-7aa0b072e28d h1:j6C6uFHCmBWCBaWSFqEKHMaWlV4Rd+fqSHpCDjRo+Ok=
+github.com/IBM/ibm-csi-common v1.0.0-beta9.0.20211124091840-7aa0b072e28d/go.mod h1:GN3PKBJeuSuDuosuSZyrptPI1Yv9254Ly/LZ8fNDLr4=
 github.com/IBM/ibmcloud-volume-interface v1.0.0-beta8 h1:0oCBQidejAlLI5f5PlBHIytArhJI1aEOBCCOMoxNOPs=
 github.com/IBM/ibmcloud-volume-interface v1.0.0-beta8/go.mod h1:2LxqkERml3eBxfRkQniuiRmKkAnl5tfC0ttlP2gupJM=
 github.com/IBM/ibmcloud-volume-vpc v1.0.0-beta12 h1:Hfw7XvHpexffDfvD50wFJCwUmhKeVUlKEFi7JMcSSZI=
 github.com/IBM/ibmcloud-volume-vpc v1.0.0-beta12/go.mod h1:MEyNF/zxHl2Zw/kBy7qykGPt8X+U+kDEJV1kimrvCbs=
-<<<<<<< HEAD
-=======
 github.com/JeffAshton/win_pdh v0.0.0-20161109143554-76bb4ee9f0ab/go.mod h1:3VYc5hodBMJ5+l/7J4xAyMeuM2PNuepvHlGs8yilUCA=
 github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd/go.mod h1:64YHyfSL2R96J44Nlwm39UHepQbyR5q10x7iYa1ks2E=
 github.com/Microsoft/go-winio v0.4.15-0.20190919025122-fc70bd9a86b5/go.mod h1:tTuCMEN+UleMWgg9dVx4Hu52b1bJo+59jBh3ajtinzw=
 github.com/Microsoft/go-winio v0.4.15/go.mod h1:tTuCMEN+UleMWgg9dVx4Hu52b1bJo+59jBh3ajtinzw=
 github.com/Microsoft/hcsshim v0.8.10-0.20200715222032-5eafd1556990/go.mod h1:ay/0dTb7NsG8QMDfsRfLHgZo/6xAJShLe1+ePPflihk=
->>>>>>> 25ac11d (Upgrade k8s package)
 github.com/NYTimes/gziphandler v0.0.0-20170623195520-56545f4a5d46/go.mod h1:3wb06e3pkSAbeQ52E9H9iFoQsEEwGN64994WTCIhntQ=
 github.com/NYTimes/gziphandler v1.1.1/go.mod h1:n/CVRwUEOgIxrgPvAQhUUr9oeUtvrhMomdKFjzJNB0c=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=

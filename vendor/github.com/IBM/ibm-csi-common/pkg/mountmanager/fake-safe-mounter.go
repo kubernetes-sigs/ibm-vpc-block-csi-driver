@@ -44,10 +44,6 @@ func NewFakeSafeMounter() *mount.SafeFormatAndMount {
 		Opts:   []string{"defaults"},
 		Freq:   1,
 		Pass:   2,
-<<<<<<< HEAD
-	}}, Log: []mount.FakeAction{}, Filesystem: map[string]mount.FileType{"fake": "Direectory"}}
-	fakeExec := mount.NewFakeExec(execCallback)
-=======
 	}},
 	}
 
@@ -55,7 +51,6 @@ func NewFakeSafeMounter() *mount.SafeFormatAndMount {
 		DisableScripts: true,
 	}
 
->>>>>>> 25ac11d (Upgrade k8s package)
 	return &mount.SafeFormatAndMount{
 		Interface: fakeMounter,
 		Exec:      fakeExec,
