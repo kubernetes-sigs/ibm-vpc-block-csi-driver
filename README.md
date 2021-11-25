@@ -93,9 +93,7 @@ For building the driver `docker` and `GO` should be installed on the system
 
    3. Run - ibmcloud cr login
 
-   4. Run - ibmcloud ks cluster config --cluster \<cluster-name\> admin
-
-   5. Review and retrieve the following values for your image pull secret.
+   4. Review and retrieve the following values for your image pull secret.
 
       `<docker-username>` - Enter the string: `iamapikey`.
 
@@ -103,7 +101,7 @@ For building the driver `docker` and `GO` should be installed on the system
 
       `<docker-email>` - Enter the string: iamapikey.
 
-   6. Run the following command to create the image pull secret in your cluster. Note that your secret must be named icr-io-secret
+   5. Run the following command to create the image pull secret in your cluster. Note that your secret must be named icr-io-secret
 
 
       ```
