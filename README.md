@@ -87,7 +87,15 @@ For building the driver `docker` and `GO` should be installed on the system
 
    Create an image pull secret in your cluster
 
-   1. Review and retrieve the following values for your image pull secret.
+   1. ibmcloud login to the target region
+
+   2. Run - ibmcloud cr region-set global
+
+   3. Run - ibmcloud cr login
+
+   4. Run - ibmcloud ks cluster config --cluster \<cluster-name\> admin
+
+   5. Review and retrieve the following values for your image pull secret.
 
       `<docker-username>` - Enter the string: `iamapikey`.
 
@@ -95,7 +103,7 @@ For building the driver `docker` and `GO` should be installed on the system
 
       `<docker-email>` - Enter the string: iamapikey.
 
-   2. Run the following command to create the image pull secret in your cluster. Note that your secret must be named icr-io-secret
+   6. Run the following command to create the image pull secret in your cluster. Note that your secret must be named icr-io-secret
 
 
       ```
@@ -103,7 +111,6 @@ For building the driver `docker` and `GO` should be installed on the system
        kubectl create secret docker-registry icr-io-secret --docker-server=icr.io --docker-username=iamapikey --docker-password=-<iam-api-key> --docker-email=iamapikey -n kube-system
 
       ```
-
 
 # Deploy CSI driver on your cluster
 - Edit [slclient_Gen2.toml](https://github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/blob/master/deploy/kubernetes/driver/kubernetes/slclient_Gen2.toml) for your cluster.
@@ -129,6 +136,11 @@ IBM VPC endpoints which supports Gen2 is documented [here](https://cloud.ibm.com
   - `kubectl create -f examples/kubernetes/validPVC.yaml`
 - Create POD with volume
   - `kubectl create -f examples/kubernetes/validPOD.yaml`
+
+# Delete CSI driver from your cluster
+
+  - Delete plugin
+    - `bash deploy/kubernetes/driver/kubernetes/delete-vpc-csi-driver.sh stage`
 
 # E2E Tests
 
