@@ -156,7 +156,7 @@ type VPCProviderConfig struct {
 	VPCTypeEnabled       string `toml:"vpc_type_enabled" envconfig:"VPC_TYPE_ENABLED"`
 	VPCBlockProviderName string `toml:"vpc_block_provider_name" envconfig:"VPC_BLOCK_PROVIDER_NAME"`
 	VPCBlockProviderType string `toml:"provider_type"`
-	VPCVolumeType        string `toml:"vpc_volume_type"`
+	VPCVolumeType        string `toml:"vpc_volume_type" envconfig:"VPC_VOLUME_TYPE"`
 
 	EndpointURL        string `toml:"gc_riaas_endpoint_url"`
 	PrivateEndpointURL string `toml:"gc_riaas_endpoint_private_url"`

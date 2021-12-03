@@ -3,6 +3,7 @@
 [![Build Status](https://prow.k8s.io/badge.svg?jobs=pull-ibm-vpc-block-csi-driver-build)](https://prow.k8s.io)
 [![Coverage Status](https://coveralls.io/repos/github/kubernetes-sigs/ibm-vpc-block-csi-driver/badge.svg?branch=master)](https://coveralls.io/github/kubernetes-sigs/ibm-vpc-block-csi-driver?branch=master)
 
+
 [`IBM VPC Block`](https://cloud.ibm.com/docs/openshift?topic=openshift-vpc-block) Container Storage Interface (CSI) Driver provides a [`CSI`](https://github.com/container-storage-interface/spec/blob/master/spec.md) interface used by Container Orchestrators to manage the lifecycle of IBM VPC Block Data volumes.
 
 # Supported orchestration platforms
@@ -13,6 +14,7 @@ The following are the supported orchestration platforms suitable for deployment 
 |----------------------|-------|------------|
 |Red Hat® OpenShift®|4.7|x86|
 |Red Hat® OpenShift®|4.8|x86|
+|Red Hat® OpenShift®|4.9|x86|
 |Kubernetes| 1.19|x86|
 |Kubernetes| 1.20|x86|
 |Kubernetes| 1.21|x86|
@@ -111,7 +113,8 @@ IBM VPC endpoints which supports Gen2 is documented [here](https://cloud.ibm.com
 - Export cluster config i.e configuring kubectl command
 - Deploy IBM VPC Block CSI Driver on your cluster
   - You can use any overlays available under `deploy/kubernetes/driver/kubernetes/overlays/` and edit the image tag if you want to use your own build image from this source code, although defualt overalys are already using released IBM VPC Block CSI Driver image 
-	
+
+  - `gcr.io/k8s-staging-cloud-provider-ibm/ibm-vpc-block-csi-driver:master` image is always the latest image build using `master` branch code.	
   - Example using `stage` overlay to update the image tag
      - Change `iks-vpc-block-driver` image name in `deploy/kubernetes/driver/kubernetes/overlays/stage/controller-server-images.yaml`
      - Change `iks-vpc-block-driver` image name in `deploy/kubernetes/driver/kubernetes/overlays/stage/node-server-images.yaml`

@@ -34,9 +34,6 @@ var maxRetryAttempt = 10
 // maxRetryGap ...
 var maxRetryGap = 60
 
-// retryGap ...
-var retryGap = 10
-
 //ConstantRetryGap ...
 const (
 	ConstantRetryGap = 10 // seconds
@@ -70,7 +67,7 @@ var skipErrorCodes = map[string]bool{
 // retry ...
 func retry(logger *zap.Logger, retryfunc func() error) error {
 	var err error
-
+	retryGap := 10
 	for i := 0; i < maxRetryAttempt; i++ {
 		if i > 0 {
 			time.Sleep(time.Duration(retryGap) * time.Second)
@@ -166,6 +163,7 @@ func NewFlexyRetry(maxRtyAtmpt int, maxrRtyGap int) FlexyRetry {
 func (fRetry *FlexyRetry) FlexyRetry(logger *zap.Logger, funcToRetry func() (error, bool)) error {
 	var err error
 	var stopRetry bool
+	retryGap := 10
 	for i := 0; i < fRetry.maxRetryAttempt; i++ {
 		if i > 0 {
 			time.Sleep(time.Duration(retryGap) * time.Second)
