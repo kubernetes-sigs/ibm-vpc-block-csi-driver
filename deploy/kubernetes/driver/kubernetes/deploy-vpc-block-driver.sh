@@ -16,10 +16,16 @@ fi
 readonly VERSION="${IKS_VPC_BLOCK_DRIVER_VERSION:-stable}"
 readonly PKG_DIR="${GOPATH}/src/github.com/kubernetes-sigs/ibm-vpc-block-csi-driver"
 
-encodeVal=$(base64 -w 0 ${PKG_DIR}/deploy/kubernetes/driver/kubernetes/slclient_Gen2.toml)
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+	echo $OSTYPE	
+	encodeVal=$(base64 -w 0 ${PKG_DIR}/deploy/kubernetes/driver/kubernetes/slclient_Gen2.toml)
+        sed -i "s/REPLACE_ME/$encodeVal/g" ${PKG_DIR}/deploy/kubernetes/driver/kubernetes/manifests/storage-secret-store.yaml
 
-sed -i "s/REPLACE_ME/$encodeVal/g" ${PKG_DIR}/deploy/kubernetes/driver/kubernetes/manifests/storage-secret-store.yaml
-
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+	echo $OSTYPE
+	encodeVal=$(base64 ${PKG_DIR}/deploy/kubernetes/driver/kubernetes/slclient_Gen2.toml)
+        sed -i '.bak' "s/REPLACE_ME/$encodeVal/g" ${PKG_DIR}/deploy/kubernetes/driver/kubernetes/manifests/storage-secret-store.yaml
+fi
 # ensure_kustomize
 
 kustomize build ${PKG_DIR}/deploy/kubernetes/driver/kubernetes/overlays/${VERSION} | kubectl apply -f -

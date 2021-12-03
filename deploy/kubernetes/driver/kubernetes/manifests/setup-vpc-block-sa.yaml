@@ -21,8 +21,12 @@ rules:
   - apiGroups: [""]
     resources: ["nodes"]
     verbs: ["get", "list", "watch"]
-
-
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update"]
 ---
 
 kind: ClusterRoleBinding
@@ -32,7 +36,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: ibm-vpc-block-node-sa
-    namespace: default
+    namespace: kube-system
 roleRef:
   kind: ClusterRole
   name: vpc-block-driver-registrar-role
@@ -83,6 +87,9 @@ rules:
   - apiGroups: [""]
     resources: ["nodes"]
     verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch"]
 
 ---
 
@@ -93,7 +100,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: ibm-vpc-block-controller-sa
-    namespace: default
+    namespace: kube-system
 roleRef:
   kind: ClusterRole
   name: vpc-block-provisioner-role
@@ -118,7 +125,9 @@ rules:
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments"]
     verbs: ["get", "list", "watch", "update", "patch"]
-
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments/status"]
+    verbs: ["patch"]
 ---
 
 kind: ClusterRoleBinding
@@ -128,7 +137,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: ibm-vpc-block-controller-sa
-    namespace: default
+    namespace: kube-system
 roleRef:
   kind: ClusterRole
   name: vpc-block-external-attacher-role
@@ -152,7 +161,7 @@ rules:
     verbs: ["get", "list", "watch", "update", "patch"]
   - apiGroups: [""]
     resources: ["persistentvolumeclaims/status"]
-    verbs: ["patch"]
+    verbs: ["patch", "update"]
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["list", "watch", "create", "update", "patch"]
@@ -166,7 +175,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: ibm-vpc-block-controller-sa
-    namespace: default
+    namespace: kube-system
 roleRef:
   kind: ClusterRole
   name: vpc-block-external-resizer-role
