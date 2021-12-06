@@ -110,7 +110,7 @@ func (d *APIKeyImpl) UpdateIAMKeys(config *config.Config) error {
 
 	if config.Bluemix.Encryption {
 		d.logger.Info("Getting bluemix section...")
-		r, err := c.GetContainerAPIKey(ctx, &pb.Cipher{Cipher: config.Bluemix.IamAPIKey})
+		r, err := c.GetContainerAPIKey(ctx, &pb.Provider{})
 		if err != nil {
 			return err
 		}
@@ -119,7 +119,7 @@ func (d *APIKeyImpl) UpdateIAMKeys(config *config.Config) error {
 	if config.VPC.Encryption {
 		if config.VPC.APIKey != "" {
 			d.logger.Info("Getting VPC section...")
-			r, err := c.GetVPCAPIKey(ctx, &pb.Cipher{Cipher: config.VPC.APIKey})
+			r, err := c.GetVPCAPIKey(ctx, &pb.Provider{})
 			if err != nil {
 				return err
 			}
@@ -127,7 +127,7 @@ func (d *APIKeyImpl) UpdateIAMKeys(config *config.Config) error {
 		}
 		if config.VPC.G2APIKey != "" {
 			d.logger.Info("Getting VPC G2 section...")
-			r, err := c.GetVPCAPIKey(ctx, &pb.Cipher{Cipher: config.VPC.G2APIKey})
+			r, err := c.GetVPCAPIKey(ctx, &pb.Provider{})
 			if err != nil {
 				return err
 			}

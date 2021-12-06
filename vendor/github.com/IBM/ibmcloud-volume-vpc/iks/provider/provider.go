@@ -19,6 +19,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	util "github.com/IBM/ibmcloud-volume-interface/lib/utils"
@@ -135,4 +136,31 @@ func (iksp *IksVpcBlockProvider) OpenSession(ctx context.Context, contextCredent
 // ContextCredentialsFactory ...
 func (iksp *IksVpcBlockProvider) ContextCredentialsFactory(zone *string) (local.ContextCredentialsFactory, error) {
 	return vpcauth.NewVPCContextCredentialsFactory(iksp.vpcBlockProvider.Config)
+}
+
+// UpdateAPIKey ...
+func (iksp *IksVpcBlockProvider) UpdateAPIKey(conf interface{}, logger *zap.Logger) error {
+	logger.Info("Updating api key in iks vpc provider")
+	vpcConfig, ok := conf.(*vpcconfig.VPCBlockConfig)
+	if !ok {
+		logger.Error("Error fetching vpc block config from interface")
+		return errors.New("error unmarshaling vpc block config")
+	}
+	if iksp.vpcBlockProvider == nil {
+		logger.Error("VPC Block provider not initialized, hence unable to update api key")
+		return errors.New("vpc block provider not initialized")
+	}
+	err := iksp.vpcBlockProvider.UpdateAPIKey(vpcConfig, logger)
+	if err != nil {
+		logger.Error("Error updating api key in vpc block provider", zap.Error(err))
+		return err
+	}
+	err = iksp.iksBlockProvider.UpdateAPIKey(vpcConfig, logger)
+	if err != nil {
+		logger.Error("Error updating api key in iks block provider", zap.Error(err))
+		return err
+	}
+
+	iksp.VPCBlockProvider = *iksp.vpcBlockProvider
+	return nil
 }

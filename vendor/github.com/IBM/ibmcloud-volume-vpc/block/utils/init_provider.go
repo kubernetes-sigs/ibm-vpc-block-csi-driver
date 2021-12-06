@@ -20,9 +20,6 @@ package utils
 import (
 	"errors"
 
-	"go.uber.org/zap"
-	"golang.org/x/net/context"
-
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	util "github.com/IBM/ibmcloud-volume-interface/lib/utils"
 	"github.com/IBM/ibmcloud-volume-interface/provider/local"
@@ -30,6 +27,8 @@ import (
 	vpcconfig "github.com/IBM/ibmcloud-volume-vpc/block/vpcconfig"
 	"github.com/IBM/ibmcloud-volume-vpc/common/registry"
 	iks_vpc_provider "github.com/IBM/ibmcloud-volume-vpc/iks/provider"
+	"go.uber.org/zap"
+	"golang.org/x/net/context"
 )
 
 // InitProviders initialization for all providers as per configurations
@@ -70,35 +69,33 @@ func InitProviders(conf *vpcconfig.VPCBlockConfig, logger *zap.Logger) (registry
 }
 
 // OpenProviderSession ...
-func OpenProviderSession(conf *vpcconfig.VPCBlockConfig, providers registry.Providers, providerID string, ctxLogger *zap.Logger) (session provider.Session, fatal bool, err error) {
-	return OpenProviderSessionWithContext(context.TODO(), conf, providers, providerID, ctxLogger)
+func OpenProviderSession(prov local.Provider, vpcBlockConfig *vpcconfig.VPCBlockConfig, providers registry.Providers, providerID string, ctxLogger *zap.Logger) (session provider.Session, fatal bool, err error) {
+	return OpenProviderSessionWithContext(context.TODO(), prov, vpcBlockConfig, providerID, ctxLogger)
 }
 
 // OpenProviderSessionWithContext ...
-func OpenProviderSessionWithContext(ctx context.Context, conf *vpcconfig.VPCBlockConfig, providers registry.Providers, providerID string, ctxLogger *zap.Logger) (session provider.Session, fatal bool, err error) {
-	prov, err := providers.Get(providerID)
-	if err != nil {
-		ctxLogger.Error("Not able to get the said provider, might be its not registered", local.ZapError(err))
-		fatal = true
-		return
-	}
-
+func OpenProviderSessionWithContext(ctx context.Context, prov local.Provider, vpcBlockConfig *vpcconfig.VPCBlockConfig, providerID string, ctxLogger *zap.Logger) (provider.Session, bool, error) {
+	ctxLogger.Info("Fetching provider session")
 	ccf, err := prov.ContextCredentialsFactory(nil)
 	if err != nil {
-		fatal = true
-		return
+		ctxLogger.Error("Unable to fetch credentials", local.ZapError(err))
+		return nil, true, err
 	}
 	ctxLogger.Info("Calling provider/utils/init_provider.go GenerateContextCredentials")
-	contextCredentials, err := GenerateContextCredentials(conf, providerID, ccf, ctxLogger)
-	if err == nil {
-		session, err = prov.OpenSession(ctx, contextCredentials, ctxLogger)
+	contextCredentials, err := GenerateContextCredentials(vpcBlockConfig, providerID, ccf, ctxLogger)
+	if err != nil {
+		ctxLogger.Error("Unable to generate credentials", local.ZapError(err))
+		return nil, true, err
 	}
 
+	session, err := prov.OpenSession(ctx, contextCredentials, ctxLogger)
 	if err != nil {
-		fatal = true
-		ctxLogger.Error("Failed to open provider session", local.ZapError(err), zap.Bool("Fatal", fatal))
+		ctxLogger.Error("Failed to open provider session", local.ZapError(err))
+		return nil, true, err
 	}
-	return
+
+	ctxLogger.Info("Successfully fetched provider session")
+	return session, false, nil
 }
 
 // GenerateContextCredentials ...
