@@ -13,5 +13,3 @@ spec:
           image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.2.0
         - name: liveness-probe
           image: k8s.gcr.io/sig-storage/livenessprobe:v2.3.0
-        - name: csi-resizer
-          image: k8s.gcr.io/sig-storage/csi-resizer:v1.2.0
