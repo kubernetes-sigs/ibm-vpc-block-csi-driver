@@ -92,8 +92,8 @@ For building the driver `docker` and `GO` should be installed on the system
    2. Run - ibmcloud cr region-set global
 
    3. Run - ibmcloud cr login
-   
-   4. Run - ibmcloud ks cluster config --cluster \<cluster-name\> admin
+
+   4. Make sure kubectl is configured to use the cluster
 
    5. Review and retrieve the following values for your image pull secret.
 
