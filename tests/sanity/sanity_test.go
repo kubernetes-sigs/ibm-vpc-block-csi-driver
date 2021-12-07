@@ -21,6 +21,12 @@ package sanity
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"os"
+	"path"
+	"strings"
+	"testing"
+
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	providerError "github.com/IBM/ibmcloud-volume-interface/lib/utils"
@@ -29,16 +35,11 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"k8s.io/kubernetes/pkg/util/mount"
-	"net/http"
-	"os"
-	"path"
-	"strings"
-	"testing"
 
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	nodeMetadata "github.com/IBM/ibm-csi-common/pkg/metadata"
-	//mountManager "github.com/IBM/ibm-csi-common/pkg/mountmanager"
+
+	mountManager "github.com/IBM/ibm-csi-common/pkg/mountmanager"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 
 	csiConfig "github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/config"
@@ -146,7 +147,7 @@ func initCSIDriverForSanity(t *testing.T) *csiDriver.IBMCSIDriver {
 
 	// Create fake provider and mounter
 	provider, _ := NewFakeSanityCloudProvider("", logger)
-	mounter := NewFakeSafeMounter()
+	mounter := mountManager.NewFakeNodeMounter()
 
 	statsUtil := &MockStatSanity{}
 
@@ -194,10 +195,11 @@ func (su *MockStatSanity) IsDevicePathNotExist(devicePath string) bool {
 
 // FakeSanityCloudProvider Provider
 type FakeSanityCloudProvider struct {
-	ProviderName   string
-	ProviderConfig *config.Config
-	ClusterInfo    *utils.ClusterInfo
-	fakeSession    *fakeProviderSession
+	ProviderName     string
+	ProviderConfig   *config.Config
+	ClusterInfo      *utils.ClusterInfo
+	fakeSession      *fakeProviderSession
+	FakeUpdateAPIKey error
 }
 
 var _ cloudProvider.CloudProviderInterface = &FakeSanityCloudProvider{}
@@ -206,7 +208,8 @@ var _ cloudProvider.CloudProviderInterface = &FakeSanityCloudProvider{}
 func NewFakeSanityCloudProvider(configPath string, logger *zap.Logger) (*FakeSanityCloudProvider, error) {
 	return &FakeSanityCloudProvider{ProviderName: "FakeSanityCloudProvider",
 		ProviderConfig: &config.Config{VPC: &config.VPCProviderConfig{VPCBlockProviderName: "VPCFakeProvider"}},
-		ClusterInfo:    &utils.ClusterInfo{}, fakeSession: newFakeProviderSession()}, nil
+		ClusterInfo:    &utils.ClusterInfo{}, fakeSession: newFakeProviderSession(),
+		FakeUpdateAPIKey: nil}, nil
 }
 
 // GetProviderSession ...
@@ -222,6 +225,11 @@ func (ficp *FakeSanityCloudProvider) GetConfig() *config.Config {
 // GetClusterInfo ...
 func (ficp *FakeSanityCloudProvider) GetClusterInfo() *utils.ClusterInfo {
 	return ficp.ClusterInfo
+}
+
+// UpdateAPIKey ...
+func (ficp *FakeSanityCloudProvider) UpdateAPIKey(logger *zap.Logger) error {
+	return ficp.FakeUpdateAPIKey
 }
 
 type fakeVolume struct {
@@ -512,24 +520,4 @@ func createTargetDir(targetPath string) error {
 	}
 
 	return nil
-}
-
-// NewFakeSafeMounter ...
-func NewFakeSafeMounter() *mount.SafeFormatAndMount {
-	execCallback := func(cmd string, args ...string) ([]byte, error) {
-		return nil, nil
-	}
-	fakeMounter := &mount.FakeMounter{MountPoints: []mount.MountPoint{{
-		Device: "/tmp/csi",
-		Path:   "/tmp/csi/tmp/csi/mount/target",
-		Type:   "ext4",
-		Opts:   []string{"defaults"},
-		Freq:   1,
-		Pass:   2,
-	}}, Log: []mount.FakeAction{}}
-	fakeExec := mount.NewFakeExec(execCallback)
-	return &mount.SafeFormatAndMount{
-		Interface: fakeMounter,
-		Exec:      fakeExec,
-	}
 }

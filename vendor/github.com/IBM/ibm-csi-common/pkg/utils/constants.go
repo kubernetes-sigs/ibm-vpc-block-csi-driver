@@ -32,6 +32,8 @@ const (
 	MaximumVolumeDiskSizeInGb = 2048
 	// DefaultVolumeDiskSizeinGb default size of the volume in GB
 	DefaultVolumeDiskSizeinGb = 10
+	// MaxRetryAttemptForSessions ...
+	MaxRetryAttemptForSessions = 2
 )
 
 const (
@@ -73,4 +75,7 @@ const (
 
 	// ZoneLabel ...
 	ZoneLabel = "zone"
+
+	// ConfigFileName ...
+	ConfigFileName = "slclient.toml"
 )

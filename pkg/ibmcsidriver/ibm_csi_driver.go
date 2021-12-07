@@ -23,10 +23,10 @@ import (
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	commonError "github.com/IBM/ibm-csi-common/pkg/messages"
 	nodeMetadata "github.com/IBM/ibm-csi-common/pkg/metadata"
+	mountManager "github.com/IBM/ibm-csi-common/pkg/mountmanager"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 	"go.uber.org/zap"
-	"k8s.io/kubernetes/pkg/util/mount"
 )
 
 // IBMCSIDriver ...
@@ -50,7 +50,7 @@ func GetIBMCSIDriver() *IBMCSIDriver {
 }
 
 // SetupIBMCSIDriver ...
-func (icDriver *IBMCSIDriver) SetupIBMCSIDriver(provider cloudProvider.CloudProviderInterface, mounter *mount.SafeFormatAndMount, statsUtil StatsUtils, metadata nodeMetadata.NodeMetadata, lgr *zap.Logger, name, vendorVersion string) error {
+func (icDriver *IBMCSIDriver) SetupIBMCSIDriver(provider cloudProvider.CloudProviderInterface, mounter mountManager.Mounter, statsUtil StatsUtils, metadata nodeMetadata.NodeMetadata, lgr *zap.Logger, name, vendorVersion string) error {
 	icDriver.logger = lgr
 	icDriver.logger.Info("IBMCSIDriver-SetupIBMCSIDriver setting up IBM CSI Driver...")
 
@@ -171,7 +171,7 @@ func NewIdentityServer(icDriver *IBMCSIDriver) *CSIIdentityServer {
 }
 
 // NewNodeServer ...
-func NewNodeServer(icDriver *IBMCSIDriver, mounter *mount.SafeFormatAndMount, statsUtil StatsUtils, nodeMetadata nodeMetadata.NodeMetadata) *CSINodeServer {
+func NewNodeServer(icDriver *IBMCSIDriver, mounter mountManager.Mounter, statsUtil StatsUtils, nodeMetadata nodeMetadata.NodeMetadata) *CSINodeServer {
 	return &CSINodeServer{
 		Driver:   icDriver,
 		Mounter:  mounter,

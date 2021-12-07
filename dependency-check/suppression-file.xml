@@ -102,6 +102,13 @@
   </suppress>
   <suppress>
       <notes><![CDATA[
+      file name: "k8s.io/kubernetes:1.21.0"
+      ]]></notes>
+      <packageUrl regex="true">pkg:golang/k8s.io/kubernetes@1.21.0</packageUrl>
+      <cve>CVE-2021-25737</cve>
+   </suppress>
+  <suppress>
+      <notes><![CDATA[
       file name: github.com/IBM-Cloud/go-etcd-rules:1.3.0
       ]]></notes>
       <packageUrl regex="true">^pkg:golang/github\.com/coreos/go-etcd@.*$</packageUrl>
