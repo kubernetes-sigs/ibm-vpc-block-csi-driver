@@ -30,4 +30,5 @@ type CloudProviderInterface interface {
 	GetProviderSession(ctx context.Context, logger *zap.Logger) (provider.Session, error)
 	GetConfig() *config.Config
 	GetClusterInfo() *utils.ClusterInfo
+	UpdateAPIKey(logger *zap.Logger) error
 }

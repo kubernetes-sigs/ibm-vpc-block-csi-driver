@@ -21,7 +21,6 @@ import (
 	"context"
 
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
-
 	"go.uber.org/zap"
 )
 
@@ -36,6 +35,9 @@ type Provider interface {
 
 	// Returns a configured ContextCredentialsFactory for this provider
 	ContextCredentialsFactory(datacenter *string) (ContextCredentialsFactory, error)
+
+	// UpdateAPIKey updates api key in the provider
+	UpdateAPIKey(interface{}, *zap.Logger) error
 }
 
 // ContextCredentialsFactory is a factory which can generate ContextCredentials instances
@@ -49,4 +51,7 @@ type ContextCredentialsFactory interface {
 
 	// ForIAMAccessToken returns a config derived from an IAM API key (if applicable)
 	ForIAMAccessToken(apiKey string, logger *zap.Logger) (provider.ContextCredentials, error)
+
+	// UpdateAPIKey updates api key in the credentials
+	UpdateAPIKey(apiKey string, logger *zap.Logger) error
 }

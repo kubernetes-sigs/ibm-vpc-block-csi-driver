@@ -26,13 +26,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/IBM/ibm-csi-common/pkg/mountmanager"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"k8s.io/kubernetes/pkg/util/mount"
 )
 
 const defaultVolumeID = "csiprovidervolumeid"
@@ -51,7 +51,7 @@ type MockMountUtils struct {
 }
 
 // Resize expands the fs
-func (mu *MockMountUtils) Resize(mounter *mount.SafeFormatAndMount, devicePath string, deviceMountPath string) (bool, error) {
+func (mu *MockMountUtils) Resize(mounter mountmanager.Mounter, devicePath string, deviceMountPath string) (bool, error) {
 	if strings.Contains(deviceMountPath, "fake-") {
 		return false, fmt.Errorf("failed to resize fs")
 	} else if strings.Contains(deviceMountPath, "valid-") {
