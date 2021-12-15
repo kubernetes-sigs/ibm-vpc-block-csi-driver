@@ -172,6 +172,12 @@ func (tes *tokenExchangeService) newTokenExchangeRequest(logger *zap.Logger) *to
 	}
 }
 
+// UpdateAPIKey ...
+func (tes *tokenExchangeService) UpdateAPIKey(apiKey string, logger *zap.Logger) error {
+	// This method need not be implemented
+	return nil
+}
+
 // sendTokenExchangeRequest ...
 func (r *tokenExchangeRequest) sendTokenExchangeRequest() (*tokenExchangeResponse, error) {
 	// Set headers

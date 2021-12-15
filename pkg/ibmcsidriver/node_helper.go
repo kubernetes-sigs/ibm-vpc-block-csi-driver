@@ -32,14 +32,14 @@ import (
 // findDevicePath finds path of device and verifies its existence
 func (csiNS *CSINodeServer) findDevicePathSource(ctxLogger *zap.Logger, devicePath string, volumeID string /*TODO may be required in future*/) (string, error) {
 	ctxLogger.Info("CSINodeServer-findDevicePathSource...")
-	exists, err := csiNS.Mounter.ExistsPath(devicePath)
+	exists, err := csiNS.Mounter.PathExists(devicePath)
 	if err != nil || !exists {
 		ctxLogger.Warn("Device path not found, trying to fix by udevadm trigger", zap.String("DevicePath", devicePath))
 		if err = csiNS.udevadmTrigger(ctxLogger); err != nil {
 			ctxLogger.Error("Failed to execute udevadm trigger, will try to check device path again", zap.Error(err))
 		}
 		// Re-verifying device path and returning error accordingly
-		exists, err = csiNS.Mounter.ExistsPath(devicePath)
+		exists, err = csiNS.Mounter.PathExists(devicePath)
 		if err != nil {
 			return "", err
 		}
@@ -60,20 +60,20 @@ func (csiNS *CSINodeServer) processMount(ctxLogger *zap.Logger, requestID, stagi
 	fsTypeField := zap.String("fsType", fsType)
 	optionsField := zap.Reflect("options", options)
 	ctxLogger.Info("CSINodeServer-processMount...", stagingTargetPathField, targetPathField, fsTypeField, optionsField)
-	if err := csiNS.Mounter.Interface.MakeDir(targetPath); err != nil {
+	if err := csiNS.Mounter.MakeDir(targetPath); err != nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.TargetPathCreateFailed, requestID, err, targetPath)
 	}
-	err := csiNS.Mounter.Interface.Mount(stagingTargetPath, targetPath, fsType, options)
+	err := csiNS.Mounter.Mount(stagingTargetPath, targetPath, fsType, options)
 	if err != nil {
-		notMnt, mntErr := csiNS.Mounter.Interface.IsLikelyNotMountPoint(targetPath)
+		notMnt, mntErr := csiNS.Mounter.IsLikelyNotMountPoint(targetPath)
 		if mntErr != nil {
 			return nil, commonError.GetCSIError(ctxLogger, commonError.MountPointValidateError, requestID, mntErr, targetPath)
 		}
 		if !notMnt {
-			if mntErr = csiNS.Mounter.Interface.Unmount(targetPath); mntErr != nil {
+			if mntErr = csiNS.Mounter.Unmount(targetPath); mntErr != nil {
 				return nil, commonError.GetCSIError(ctxLogger, commonError.UnmountFailed, requestID, mntErr, targetPath)
 			}
-			notMnt, mntErr = csiNS.Mounter.Interface.IsLikelyNotMountPoint(targetPath)
+			notMnt, mntErr = csiNS.Mounter.IsLikelyNotMountPoint(targetPath)
 			if mntErr != nil {
 				return nil, commonError.GetCSIError(ctxLogger, commonError.MountPointValidateError, requestID, mntErr, targetPath)
 			}
@@ -110,7 +110,7 @@ func (csiNS *CSINodeServer) processMountForBlock(ctxLogger *zap.Logger, requestI
 	ctxLogger.Info("Found device path ", zap.String("devicePath", devicePath), zap.String("source", source))
 
 	targetDir := filepath.Dir(target)
-	exists, err := csiNS.Mounter.ExistsPath(targetDir)
+	exists, err := csiNS.Mounter.PathExists(targetDir)
 	if err != nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.TargetPathCheckFailed, requestID, err, targetDir)
 	}
@@ -132,7 +132,7 @@ func (csiNS *CSINodeServer) processMountForBlock(ctxLogger *zap.Logger, requestI
 	}
 
 	ctxLogger.Info("Mounting source to target", zap.String("source", source), zap.String("target", target))
-	if err := csiNS.Mounter.Interface.Mount(source, target, "", options); err != nil {
+	if err := csiNS.Mounter.Mount(source, target, "", options); err != nil {
 		if removeErr := os.Remove(target); removeErr != nil {
 			return nil, commonError.GetCSIError(ctxLogger, commonError.RemoveMountTargetFailed, requestID, removeErr, target)
 		}

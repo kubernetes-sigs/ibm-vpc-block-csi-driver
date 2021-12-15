@@ -265,6 +265,24 @@ var messagesEn = map[string]Message{
 	},
 }
 
+// Following are the error messages expected while opening a session
+const (
+	// APIKeyNotFound ...
+	APIKeyNotFound = "api key could not be found"
+
+	// UserNotFound ...
+	UserNotFound = "user not found or active"
+)
+
+// Following are the error messages published in when api key update fails
+const (
+	// ErrAPIKeyNotFound ...
+	ErrAPIKeyNotFound = "API key is not found, reset the api key. If reset, retry after few minutes"
+
+	// ErrUpdatingAPIKey ...
+	ErrUpdatingAPIKey = "Error updating the new API key"
+)
+
 // InitMessages ...
 func InitMessages() map[string]Message {
 	return messagesEn

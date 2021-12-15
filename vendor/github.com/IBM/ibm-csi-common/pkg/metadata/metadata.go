@@ -18,6 +18,7 @@
 package metadata
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/IBM/ibm-csi-common/pkg/utils"
@@ -59,7 +60,7 @@ func NewNodeMetadata(nodeName string, logger *zap.Logger) (NodeMetadata, error) 
 		return nil, err
 	}
 
-	node, err := clientset.CoreV1().Nodes().Get(nodeName, metav1.GetOptions{})
+	node, err := clientset.CoreV1().Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

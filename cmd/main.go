@@ -99,8 +99,8 @@ func handle(logger *zap.Logger) {
 	// Setup CSI Driver
 	ibmCSIDriver := driver.GetIBMCSIDriver()
 
-	// Get and instance for the Mount Manager
-	mounter := mountManager.NewSafeMounter()
+	// Get new instance for the Mount Manager
+	mounter := mountManager.NewNodeMounter()
 
 	statUtil := &(driver.VolumeStatUtils{})
 

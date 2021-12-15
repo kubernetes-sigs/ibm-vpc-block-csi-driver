@@ -18,6 +18,7 @@
 package auth
 
 import (
+	"errors"
 	"strconv"
 
 	"go.uber.org/zap"
@@ -80,6 +81,17 @@ func (ccf *ContextCredentialsFactory) ForIAMAccessToken(apiKey string, logger *z
 	}
 
 	return forIAMAccessToken(iamAccountID, iamAccessToken), nil
+}
+
+// UpdateAPIKey ...
+func (ccf *ContextCredentialsFactory) UpdateAPIKey(apiKey string, logger *zap.Logger) error {
+	logger.Info("Updating api key")
+	if ccf.TokenExchangeService == nil {
+		logger.Error("Failed to update api key in context credentials")
+		return errors.New("failed to update api key")
+	}
+	err := ccf.TokenExchangeService.UpdateAPIKey(apiKey, logger)
+	return err
 }
 
 // forIMSToken ...
