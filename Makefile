@@ -20,7 +20,7 @@ GIT_COMMIT_SHA="$(shell git rev-parse HEAD 2>/dev/null)"
 GIT_REMOTE_URL="$(shell git config --get remote.origin.url 2>/dev/null)"
 BUILD_DATE="$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")"
 OSS_FILES := go.mod Dockerfile
-GOLANG_VERSION="1.16.7"
+GOLANG_VERSION="1.16.13"
 
 
 STAGING_REGISTRY ?= gcr.io/k8s-staging-cloud-provider-ibm
