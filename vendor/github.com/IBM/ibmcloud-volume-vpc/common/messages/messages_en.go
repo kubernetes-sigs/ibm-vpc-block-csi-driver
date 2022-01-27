@@ -67,7 +67,7 @@ var messagesEn = map[string]util.Message{
 	},
 	"FailedToExpandVolume": {
 		Code:        "FailedToExpandVolume",
-		Description: "The volume ID '%d' could not be expanded from your VPC.",
+		Description: "The volume ID '%d' could not be expanded from VPC.",
 		Type:        util.ExpansionFailed,
 		RC:          500,
 		Action:      "Verify that the volume ID exists and attached to an instance. Run 'ibmcloud is volumes' to list available volumes in your account. If the ID is correct, check that expected capacity is valid and supported",
