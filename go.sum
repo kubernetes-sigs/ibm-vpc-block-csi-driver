@@ -46,8 +46,9 @@ github.com/IBM/ibm-csi-common v1.0.0-beta13 h1:4LQqnIdbUvvA9RakQqcI5A8QwmcW3dIjj
 github.com/IBM/ibm-csi-common v1.0.0-beta13/go.mod h1:t1KQ24caG5Hhot550dOU/bcVHEUe9OQWhgpIGH05AL0=
 github.com/IBM/ibmcloud-volume-interface v1.0.0-beta9 h1:MZ8IH//+p35IWLYhRRUpmHyvyIsXbpahd8Ye2yj27Kc=
 github.com/IBM/ibmcloud-volume-interface v1.0.0-beta9/go.mod h1:9uP4Q8Y5S2439Elw7BwEsjas2Rhl1ca2hJ9QcH5eUI8=
-github.com/IBM/ibmcloud-volume-vpc v1.0.0-beta13 h1:wSMDrI7ych4Gxuq9IhTGm5dha9VVvU8S7R1/soyBQSk=
 github.com/IBM/ibmcloud-volume-vpc v1.0.0-beta13/go.mod h1:mYFepXXfNGH6joYmR6sxDATsdY4yX28fjjuRt7shaQo=
+github.com/IBM/ibmcloud-volume-vpc v1.0.0-beta14 h1:oSoBHQnppoapbIsQ6E8wqPzQhNkqYYeM3XOITUlIsAg=
+github.com/IBM/ibmcloud-volume-vpc v1.0.0-beta14/go.mod h1:mYFepXXfNGH6joYmR6sxDATsdY4yX28fjjuRt7shaQo=
 github.com/JeffAshton/win_pdh v0.0.0-20161109143554-76bb4ee9f0ab/go.mod h1:3VYc5hodBMJ5+l/7J4xAyMeuM2PNuepvHlGs8yilUCA=
 github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd/go.mod h1:64YHyfSL2R96J44Nlwm39UHepQbyR5q10x7iYa1ks2E=
 github.com/Microsoft/go-winio v0.4.15-0.20190919025122-fc70bd9a86b5/go.mod h1:tTuCMEN+UleMWgg9dVx4Hu52b1bJo+59jBh3ajtinzw=

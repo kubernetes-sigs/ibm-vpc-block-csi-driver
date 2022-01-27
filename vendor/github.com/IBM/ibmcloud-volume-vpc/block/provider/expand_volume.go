@@ -65,7 +65,7 @@ func (vpcs *VPCSession) ExpandVolume(expandVolumeRequest provider.ExpandVolumeRe
 
 	if err != nil {
 		vpcs.Logger.Debug("Failed to expand volume from VPC provider", zap.Reflect("BackendError", err))
-		return -1, userError.GetUserError("FailedToExpandVolume", err)
+		return -1, userError.GetUserError("FailedToExpandVolume", err, volume.ID)
 	}
 
 	vpcs.Logger.Info("Successfully accepted volume expansion request, now waiting for volume state equal to available")
