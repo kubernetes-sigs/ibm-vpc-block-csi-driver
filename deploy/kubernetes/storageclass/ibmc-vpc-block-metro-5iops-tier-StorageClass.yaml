@@ -16,3 +16,4 @@ parameters:
   classVersion: "1"
 reclaimPolicy: "Delete"
 volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true

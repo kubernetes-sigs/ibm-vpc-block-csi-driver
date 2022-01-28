@@ -15,3 +15,4 @@ parameters:
   tags: ""                            # A list of tags "a, b, c" that will be created when the volume is created. This can be overidden by user
   classVersion: "1"
 reclaimPolicy: "Retain"
+allowVolumeExpansion: true

@@ -17,3 +17,4 @@ parameters:
   csi.storage.k8s.io/fstype: "ext4" # ext4 is the default filesytem used.
 reclaimPolicy: "Retain"
 volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true

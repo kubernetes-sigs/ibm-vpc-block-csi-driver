@@ -18,3 +18,4 @@ parameters:
   csi.storage.k8s.io/provisioner-secret-name: ${pvc.name}
   csi.storage.k8s.io/provisioner-secret-namespace: ${pvc.namespace}
 reclaimPolicy: "Retain"
+allowVolumeExpansion: true
