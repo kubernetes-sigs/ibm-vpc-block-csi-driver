@@ -4,15 +4,7 @@ metadata:
   name: ibmc-vpc-block-custom
 provisioner: vpc.block.csi.ibm.io
 parameters:
-  profile: "custom"                 # The VPC Storage profile used.
-  sizeRange: "[10-2000]GiB"         # The size range in GiB that is supported. Just for information
-  sizeIOPSRange: |-                 # Size vs IOPS range just for information
-      [10-39]GiB:[100-1000]
-      [40-79]GiB:[100-2000]
-      [80-99]GiB:[100-4000]
-      [100-499]GiB:[100-6000]
-      [500-999]GiB:[100-10000]
-      [1000-1999]GiB:[100-20000]
+  profile: "custom"                 # The VPC Storage profile used. https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui#tiers-beta
   iops: "400"                       # Default IOPS. User can override from secrets
   billingType: "hourly"             # The default billing policy used. User can override this default
   encrypted: "false"                # By default, all PVC using this class will only be provider managed encrypted. The user can override this default
@@ -26,3 +18,4 @@ parameters:
   csi.storage.k8s.io/provisioner-secret-name: ${pvc.name}
   csi.storage.k8s.io/provisioner-secret-namespace: ${pvc.namespace}
 reclaimPolicy: "Delete"
+allowVolumeExpansion: true
