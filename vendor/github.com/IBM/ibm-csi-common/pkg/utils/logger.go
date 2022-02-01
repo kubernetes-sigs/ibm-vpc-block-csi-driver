@@ -20,7 +20,7 @@ package utils
 import (
 	"os"
 
-	uid "github.com/satori/go.uuid"
+	uid "github.com/gofrs/uuid"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/net/context"
@@ -58,7 +58,8 @@ func GetContextLoggerWithRequestID(ctx context.Context, isDebug bool, requestIDI
 	// generating a unique request ID so that logs can be filter
 	if requestIDIn == nil {
 		// Generate New RequestID if not provided
-		requestID := uid.NewV4().String()
+		uuid, _ := uid.NewV4() // #nosec G104: Attempt to randomly generate uuid
+		requestID := uuid.String()
 		requestIDIn = &requestID
 	}
 	logger = logger.With(zap.String("RequestID", *requestIDIn))
