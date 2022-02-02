@@ -171,6 +171,10 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 			// Not needed by RIaaS, this is just info for the user
 			logger.Info("Ignoring storage class parameter", zap.Any("ClassParameter", ClassVersion))
 
+		case SizeRangeSupported:
+			// Ignore... Provided in SC just as user information
+			logger.Info("Ignoring storage class parameter", zap.Any("ClassParameter", SizeRangeSupported))
+
 		case SizeIopsRange:
 			// Ignore... Provided in SC just as user information
 			logger.Info("Ignoring storage class parameter", zap.Any("ClassParameter", SizeIopsRange))
