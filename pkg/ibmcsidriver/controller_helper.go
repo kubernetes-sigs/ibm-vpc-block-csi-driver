@@ -251,8 +251,8 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 		volume.Iops = nil
 	}
 
-	//If the zone is not provided in storage class parameters then we pick from the Topology
-	if len(strings.TrimSpace(volume.Az)) == 0 || len(strings.TrimSpace(volume.Region)) == 0 {
+	//If the zone and region not provided in storage class parameters then we pick from the Topology
+	if len(strings.TrimSpace(volume.Az)) == 0 && len(strings.TrimSpace(volume.Region)) == 0 {
 		zones, err := pickTargetTopologyParams(req.GetAccessibilityRequirements())
 		if err != nil {
 			err = fmt.Errorf("unable to fetch zone information: '%v'", err)
@@ -263,6 +263,22 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 		volume.Az = zones[utils.NodeZoneLabel]
 	}
 
+	//if region is provided in storage class parameters, but zone is not given, error out
+	if len(strings.TrimSpace(volume.Az)) == 0 && len(strings.TrimSpace(volume.Region)) != 0 {
+		err = fmt.Errorf("zone parameter is not provided for the region - '%s':", strings.TrimSpace(volume.Region))
+		return volume, err
+	}
+
+	//if zone is provided but region is not provided, fetch region for specified zone
+	if len(strings.TrimSpace(volume.Az)) != 0 && len(strings.TrimSpace(volume.Region)) == 0 {
+		zones, err := pickTargetTopologyParams(req.GetAccessibilityRequirements())
+		if err != nil {
+			err = fmt.Errorf("unable to fetch zone information: '%v'", err)
+			logger.Error("getVolumeParameters", zap.NamedError("InvalidParameter", err))
+			return volume, err
+		}
+		volume.Region = zones[utils.NodeRegionLabel]
+	}
 	return volume, nil
 }
 
