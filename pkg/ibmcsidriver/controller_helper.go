@@ -251,7 +251,7 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 		volume.Iops = nil
 	}
 
-	//If the zone and region not provided in storage class parameters then we pick from the Topology
+	//If both zone and region not provided in storage class parameters then we pick from the Topology
 	if len(strings.TrimSpace(volume.Az)) == 0 && len(strings.TrimSpace(volume.Region)) == 0 {
 		zones, err := pickTargetTopologyParams(req.GetAccessibilityRequirements())
 		if err != nil {
