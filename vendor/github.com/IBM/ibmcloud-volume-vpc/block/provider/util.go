@@ -52,6 +52,7 @@ var skipErrorCodes = map[string]bool{
 	"volume_name_not_found":            true,
 	"internal_error":                   false,
 	"invalid_route":                    false,
+	"snapshots_not_found":              true,
 
 	// IKS ms error code for skip re-try
 	"ST0008": true, //resources not found
@@ -291,6 +292,11 @@ func SetRetryParameters(maxAttempts int, maxGap int) {
 
 func roundUpSize(volumeSizeBytes int64, allocationUnitBytes int64) int64 {
 	return (volumeSizeBytes + allocationUnitBytes - 1) / allocationUnitBytes
+}
+
+// GiBToBytes converts GiB to Bytes
+func GiBToBytes(volumeSizeGiB int64) int64 {
+	return volumeSizeGiB * GiB
 }
 
 // isValidServiceSession check if Service Session is valid

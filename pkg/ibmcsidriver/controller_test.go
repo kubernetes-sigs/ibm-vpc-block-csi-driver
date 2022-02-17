@@ -23,7 +23,9 @@ import (
 	"reflect"
 	"strconv"
 	"testing"
+	"time"
 
+	"github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
 
 	"github.com/IBM/ibm-csi-common/pkg/utils"
@@ -197,51 +199,46 @@ func TestCreateVolumeArguments(t *testing.T) {
 			libVolumeError:    providerError.Message{Code: "FailedToPlaceOrder", Description: "Volume creation failed", Type: providerError.Unauthenticated},
 		},
 		{
-			name: "Zone provided but region not provided as parameter",
+			name: "Invalid sourcesnapshot request",
 			req: &csi.CreateVolumeRequest{
 				Name:               volName,
 				CapacityRange:      stdCapRange,
 				VolumeCapabilities: stdVolCap,
-				Parameters: map[string]string{
-					//"type": "ext2",
-					Profile: "general-purpose",
-					Zone:    "myzone",
-				},
-				AccessibilityRequirements: &csi.TopologyRequirement{Preferred: []*csi.Topology{{Segments: map[string]string{
-					utils.NodeRegionLabel: "myregion",
-					utils.NodeZoneLabel:   "myzone",
-				},
-				},
-				},
+				Parameters:         stdParams,
+				VolumeContentSource: &csi.VolumeContentSource{
+					Type: &csi.VolumeContentSource_Volume{},
 				},
 			},
-			expVol: &csi.Volume{
-				CapacityBytes:      20 * 1024 * 1024 * 1024, // In byte
-				VolumeId:           "testVolumeId",
-				VolumeContext:      map[string]string{utils.NodeRegionLabel: "myregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: ""},
-				AccessibleTopology: stdTopology,
-			},
-			libVolumeResponse: &provider.Volume{Capacity: &cap, Name: &volName, VolumeID: "testVolumeId", Iops: &iopsStr, Az: "myzone", Region: "myregion"},
-			expErrCode:        codes.OK,
-			libVolumeError:    nil,
+			expErrCode: codes.InvalidArgument,
 		},
-
 		{
-			name: "Zone and region not provided as parameter",
+			name: "Source snapshot nil",
 			req: &csi.CreateVolumeRequest{
 				Name:               volName,
 				CapacityRange:      stdCapRange,
 				VolumeCapabilities: stdVolCap,
-				Parameters: map[string]string{
-					//"type": "ext2",
-					Profile: "general-purpose",
+				Parameters:         stdParams,
+				VolumeContentSource: &csi.VolumeContentSource{
+					Type: &csi.VolumeContentSource_Snapshot{
+						Snapshot: nil,
+					},
 				},
-				AccessibilityRequirements: &csi.TopologyRequirement{Preferred: []*csi.Topology{{Segments: map[string]string{
-					utils.NodeRegionLabel: "myregion",
-					utils.NodeZoneLabel:   "myzone",
-				},
-				},
-				},
+			},
+			expErrCode: codes.InvalidArgument,
+		},
+		{
+			name: "snapshot id given in request",
+			req: &csi.CreateVolumeRequest{
+				Name:               volName,
+				CapacityRange:      stdCapRange,
+				VolumeCapabilities: stdVolCap,
+				Parameters:         stdParams,
+				VolumeContentSource: &csi.VolumeContentSource{
+					Type: &csi.VolumeContentSource_Snapshot{
+						Snapshot: &csi.VolumeContentSource_SnapshotSource{
+							SnapshotId: "snapshot-id",
+						},
+					},
 				},
 			},
 			expVol: &csi.Volume{
@@ -915,18 +912,114 @@ func TestControllerGetCapabilities(t *testing.T) {
 }
 
 func TestCreateSnapshot(t *testing.T) {
+	timeNow := time.Now()
+	creationTime, _ := ptypes.TimestampProto(timeNow)
 	// test cases
 	testCases := []struct {
 		name        string
 		req         *csi.CreateSnapshotRequest
 		expResponse *csi.CreateSnapshotResponse
 		expErrCode  codes.Code
+		//		libSnapshotResponse    *http.Response
+		libSnapshotResponse          *provider.Snapshot
+		libSnapshotresponseErr       error
+		libSnapshotByNameResponse    *provider.Snapshot
+		libSnapshotByNameResponseErr error
 	}{
 		{
-			name:        "Success create snapshot",
-			req:         &csi.CreateSnapshotRequest{},
+			name: "Success create snapshot",
+			req: &csi.CreateSnapshotRequest{
+				SourceVolumeId: "testVolumeId",
+				Name:           "Snapshot-success",
+			},
+			expResponse: &csi.CreateSnapshotResponse{
+				Snapshot: &csi.Snapshot{
+					SnapshotId:     "snap-id",
+					SourceVolumeId: "testVolumeId",
+					SizeBytes:      stdCapRange.RequiredBytes,
+					ReadyToUse:     false,
+					CreationTime:   creationTime,
+				},
+			},
+			expErrCode: codes.OK,
+			libSnapshotResponse: &provider.Snapshot{
+				SnapshotID:           "snap-id",
+				VolumeID:             "testVolumeId",
+				SnapshotSize:         stdCapRange.RequiredBytes,
+				ReadyToUse:           false,
+				SnapshotCreationTime: timeNow,
+			},
+			libSnapshotByNameResponse: nil,
+		},
+		{
+			name: "Snapshot name empty",
+			req: &csi.CreateSnapshotRequest{
+				SourceVolumeId: "testVolumeId",
+				Name:           "",
+			},
 			expResponse: nil,
-			expErrCode:  codes.OK,
+			expErrCode:  codes.InvalidArgument,
+		},
+		{
+			name: "Snapshot soure volume ID empty",
+			req: &csi.CreateSnapshotRequest{
+				SourceVolumeId: "",
+				Name:           "snap-test",
+			},
+			expResponse: nil,
+			expErrCode:  codes.InvalidArgument,
+		},
+		{
+			name: "Snapshot with name already present for different volume",
+			req: &csi.CreateSnapshotRequest{
+				SourceVolumeId: "testVolumeId",
+				Name:           "Snapshot-success",
+			},
+			expResponse:         nil,
+			expErrCode:          codes.AlreadyExists,
+			libSnapshotResponse: nil,
+			libSnapshotByNameResponse: &provider.Snapshot{
+				SnapshotID:           "snap-id",
+				VolumeID:             "testVolumeId1",
+				SnapshotSize:         stdCapRange.RequiredBytes,
+				ReadyToUse:           false,
+				SnapshotCreationTime: timeNow,
+			},
+		},
+		{
+			name: "Snapshot with name already present for same volume",
+			req: &csi.CreateSnapshotRequest{
+				SourceVolumeId: "testVolumeId",
+				Name:           "Snapshot-success",
+			},
+			expResponse: &csi.CreateSnapshotResponse{
+				Snapshot: &csi.Snapshot{
+					SnapshotId:     "snap-id",
+					SourceVolumeId: "testVolumeId",
+					SizeBytes:      stdCapRange.RequiredBytes,
+					ReadyToUse:     false,
+					CreationTime:   creationTime,
+				},
+			},
+			expErrCode: codes.OK,
+			libSnapshotByNameResponse: &provider.Snapshot{
+				SnapshotID:           "snap-id",
+				VolumeID:             "testVolumeId",
+				SnapshotSize:         stdCapRange.RequiredBytes,
+				ReadyToUse:           false,
+				SnapshotCreationTime: timeNow,
+			},
+			libSnapshotResponse: nil,
+		},
+		{
+			name: "Create snapshot failed due to lib error",
+			req: &csi.CreateSnapshotRequest{
+				SourceVolumeId: "testVolumeId",
+				Name:           "Snapshot-success",
+			},
+			expErrCode:             codes.Internal,
+			libSnapshotResponse:    nil,
+			libSnapshotresponseErr: providerError.Message{Code: "SnapshotSpaceOrderFailed", Description: "Snapshot creation failed", Type: providerError.ProvisioningFailed},
 		},
 	}
 
@@ -942,13 +1035,14 @@ func TestCreateSnapshot(t *testing.T) {
 
 		fakeSession, err := icDriver.cs.CSIProvider.GetProviderSession(context.Background(), logger)
 		assert.Nil(t, err)
-		/*fakeStructSession*/ _, ok := fakeSession.(*fake.FakeSession)
+		fakeStructSession, ok := fakeSession.(*fake.FakeSession)
 		assert.Equal(t, true, ok)
+		fakeStructSession.CreateSnapshotReturns(tc.libSnapshotResponse, tc.libSnapshotresponseErr)
+		fakeStructSession.GetSnapshotByNameReturns(tc.libSnapshotByNameResponse, tc.libSnapshotByNameResponseErr)
 
-		// Call CSI CreateVolume
+		// Call CSI CreateSnapshot
 		response, err := icDriver.cs.CreateSnapshot(context.Background(), tc.req)
 		if tc.expErrCode != codes.OK {
-			t.Logf("Error code")
 			assert.NotNil(t, err)
 		}
 		assert.Equal(t, tc.expResponse, response)
@@ -958,16 +1052,49 @@ func TestCreateSnapshot(t *testing.T) {
 func TestDeleteSnapshot(t *testing.T) {
 	// test cases
 	testCases := []struct {
-		name        string
-		req         *csi.DeleteSnapshotRequest
-		expResponse *csi.DeleteSnapshotResponse
-		expErrCode  codes.Code
+		name                           string
+		req                            *csi.DeleteSnapshotRequest
+		expResponse                    *csi.DeleteSnapshotResponse
+		expErrCode                     codes.Code
+		libGetSnapshotResponse         *provider.Snapshot
+		libGetSnapshotResponseErr      error
+		libDeleteSnapshotResponseError error
 	}{
 		{
-			name:        "Success delete snapshot",
-			req:         &csi.DeleteSnapshotRequest{},
+			name: "Success delete snapshot",
+			req: &csi.DeleteSnapshotRequest{
+				SnapshotId: "snap-id",
+			},
+			expResponse:                    &csi.DeleteSnapshotResponse{},
+			libGetSnapshotResponseErr:      nil,
+			expErrCode:                     codes.OK,
+			libDeleteSnapshotResponseError: nil,
+		},
+		{
+			name: "Snapshot ID empty",
+			req: &csi.DeleteSnapshotRequest{
+				SnapshotId: "",
+			},
 			expResponse: nil,
-			expErrCode:  codes.OK,
+			expErrCode:  codes.InvalidArgument,
+		},
+		{
+			name: "Snapshot to be deleted not present",
+			req: &csi.DeleteSnapshotRequest{
+				SnapshotId: "snap-id",
+			},
+			expResponse:               &csi.DeleteSnapshotResponse{},
+			expErrCode:                codes.OK,
+			libGetSnapshotResponseErr: providerError.Message{Code: "StorageFindFailedWithSnapshotId", Description: "Snapshot not found", Type: providerError.RetrivalFailed},
+		},
+		{
+			name: "Delete snapshot failed due to lib error",
+			req: &csi.DeleteSnapshotRequest{
+				SnapshotId: "snap-id",
+			},
+			expErrCode:                     codes.Internal,
+			libGetSnapshotResponseErr:      nil,
+			libDeleteSnapshotResponseError: providerError.Message{Code: "FailedToDeleteSnapshot", Description: "Snapshot deletion failed", Type: providerError.DeletionFailed},
 		},
 	}
 
@@ -983,59 +1110,60 @@ func TestDeleteSnapshot(t *testing.T) {
 
 		fakeSession, err := icDriver.cs.CSIProvider.GetProviderSession(context.Background(), logger)
 		assert.Nil(t, err)
-		/*fakeStructSession*/ _, ok := fakeSession.(*fake.FakeSession)
+		fakeStructSession, ok := fakeSession.(*fake.FakeSession)
 		assert.Equal(t, true, ok)
+		fakeStructSession.GetSnapshotReturns(tc.libGetSnapshotResponse, tc.libDeleteSnapshotResponseError)
+		fakeStructSession.DeleteSnapshotReturns(tc.libDeleteSnapshotResponseError)
 
-		// Call CSI CreateVolume
+		// Call CSI DeleteSnapshot
 		response, err := icDriver.cs.DeleteSnapshot(context.Background(), tc.req)
 		if tc.expErrCode != codes.OK {
-			t.Logf("Error code")
 			assert.NotNil(t, err)
 		}
 		assert.Equal(t, tc.expResponse, response)
 	}
 }
 
-func TestListSnapshots(t *testing.T) {
-	// test cases
-	testCases := []struct {
-		name        string
-		req         *csi.ListSnapshotsRequest
-		expResponse *csi.ListSnapshotsResponse
-		expErrCode  codes.Code
-	}{
-		{
-			name:        "Success list snapshots",
-			req:         &csi.ListSnapshotsRequest{},
-			expResponse: nil,
-			expErrCode:  codes.OK,
-		},
-	}
+// func TestListSnapshots(t *testing.T) {
+// 	// test cases
+// 	testCases := []struct {
+// 		name        string
+// 		req         *csi.ListSnapshotsRequest
+// 		expResponse *csi.ListSnapshotsResponse
+// 		expErrCode  codes.Code
+// 	}{
+// 		{
+// 			name:        "Success list snapshots",
+// 			req:         &csi.ListSnapshotsRequest{},
+// 			expResponse: nil,
+// 			expErrCode:  codes.OK,
+// 		},
+// 	}
 
-	// Creating test logger
-	logger, teardown := cloudProvider.GetTestLogger(t)
-	defer teardown()
+// 	// Creating test logger
+// 	logger, teardown := cloudProvider.GetTestLogger(t)
+// 	defer teardown()
 
-	// Run test cases
-	for _, tc := range testCases {
-		t.Logf("test case: %s", tc.name)
-		// Setup new driver each time so no interference
-		icDriver := initIBMCSIDriver(t)
+// 	// Run test cases
+// 	for _, tc := range testCases {
+// 		t.Logf("test case: %s", tc.name)
+// 		// Setup new driver each time so no interference
+// 		icDriver := initIBMCSIDriver(t)
 
-		fakeSession, err := icDriver.cs.CSIProvider.GetProviderSession(context.Background(), logger)
-		assert.Nil(t, err)
-		/*fakeStructSession*/ _, ok := fakeSession.(*fake.FakeSession)
-		assert.Equal(t, true, ok)
+// 		fakeSession, err := icDriver.cs.CSIProvider.GetProviderSession(context.Background(), logger)
+// 		assert.Nil(t, err)
+// 		/*fakeStructSession*/ _, ok := fakeSession.(*fake.FakeSession)
+// 		assert.Equal(t, true, ok)
 
-		// Call CSI CreateVolume
-		response, err := icDriver.cs.ListSnapshots(context.Background(), tc.req)
-		if tc.expErrCode != codes.OK {
-			t.Logf("Error code")
-			assert.NotNil(t, err)
-		}
-		assert.Equal(t, tc.expResponse, response)
-	}
-}
+// 		// Call CSI CreateVolume
+// 		response, err := icDriver.cs.ListSnapshots(context.Background(), tc.req)
+// 		if tc.expErrCode != codes.OK {
+// 			t.Logf("Error code")
+// 			assert.NotNil(t, err)
+// 		}
+// 		assert.Equal(t, tc.expResponse, response)
+// 	}
+// }
 
 func TestGetSnapshots(t *testing.T) {
 	// test cases
@@ -1227,4 +1355,169 @@ func createVolume(maxEntries int) *provider.VolumeList {
 		}
 	}
 	return volList
+}
+
+func createSnapshot(maxEntries int) *provider.SnapshotList {
+	snapList := &provider.SnapshotList{}
+	timeNow := time.Now()
+	for i := 0; i <= maxEntries; i++ {
+		snapshotID := "unit-test-Snapshot" + strconv.Itoa(i)
+		snaps := &provider.Snapshot{
+			SnapshotID: snapshotID,
+			VolumeID:   "test-vol", SnapshotSize: stdCapRange.RequiredBytes,
+			ReadyToUse:           false,
+			SnapshotCreationTime: timeNow,
+		}
+		if i == maxEntries {
+			snapList.Next = snaps.SnapshotID
+		} else {
+			snapList.Snapshots = append(snapList.Snapshots, snaps)
+		}
+	}
+	return snapList
+}
+
+func TestListSnapshots(t *testing.T) {
+	limit := 100
+	testCases := []struct {
+		name              string
+		maxEntries        int32
+		expectedEntries   int
+		expectedErr       bool
+		expErrCode        codes.Code
+		libSnapshotError  error
+		snapshotID        string
+		libGetSnapshotErr bool
+	}{
+		{
+			name:             "normal",
+			expectedEntries:  50,
+			expectedErr:      false,
+			expErrCode:       codes.OK,
+			libSnapshotError: nil,
+		},
+		{
+			name:             "fine amount of entries",
+			maxEntries:       40,
+			expectedEntries:  40,
+			expectedErr:      false,
+			expErrCode:       codes.OK,
+			libSnapshotError: nil,
+		},
+		{
+			name:             "too many entries, but defaults to 100",
+			maxEntries:       101,
+			expectedEntries:  100,
+			expectedErr:      false,
+			expErrCode:       codes.OK,
+			libSnapshotError: nil,
+		},
+		{
+			name:             "negative entries",
+			maxEntries:       -1,
+			expectedErr:      true,
+			expErrCode:       codes.InvalidArgument,
+			libSnapshotError: providerError.Message{Code: "InvalidListSnapshotLimit", Description: "The value '-1' specified in the limit parameter of the list snapshot call is not valid.", Type: providerError.InvalidRequest},
+		},
+		{
+			name:             "Invalid start Snapshot ID",
+			maxEntries:       10,
+			expectedErr:      true,
+			expErrCode:       codes.Aborted,
+			libSnapshotError: providerError.Message{Code: "StartSnapshotIDNotFound", Description: "The snapshot ID specified in the start parameter of the list snapshots call could not be found.", Type: providerError.InvalidRequest},
+		},
+		{
+			name:             "internal error",
+			maxEntries:       10,
+			expectedErr:      true,
+			expErrCode:       codes.Internal,
+			libSnapshotError: providerError.Message{Code: "ListSnapshotsFailed", Description: "Unable to fetch list of snapshots.", Type: providerError.RetrivalFailed},
+		},
+		{
+			name:              "List snapshot with snapshotID",
+			snapshotID:        "snapshot-id",
+			expectedEntries:   1,
+			libGetSnapshotErr: false,
+			expErrCode:        codes.OK,
+			libSnapshotError:  nil,
+		},
+		{
+			name:              "List snapshot with snapshotID failed as snapshotID not found",
+			snapshotID:        "snapshot-id",
+			expectedEntries:   0,
+			libGetSnapshotErr: true,
+			expErrCode:        codes.OK,
+			libSnapshotError:  nil,
+		},
+	}
+	timeNow := time.Now()
+	// Creating test logger
+	logger, teardown := cloudProvider.GetTestLogger(t)
+	defer teardown()
+
+	for _, tc := range testCases {
+		t.Logf("test case: %s", tc.name)
+		// Setup new driver each time so no interference
+		icDriver := initIBMCSIDriver(t)
+
+		// Set the response for CreateVolume
+		fakeSession, err := icDriver.cs.CSIProvider.GetProviderSession(context.Background(), logger)
+		assert.Nil(t, err)
+		fakeStructSession, ok := fakeSession.(*fake.FakeSession)
+		assert.Equal(t, true, ok)
+
+		maxEntries := int(tc.maxEntries)
+		if maxEntries == 0 {
+			maxEntries = 50
+		} else if maxEntries > limit {
+			maxEntries = limit
+		}
+
+		snapList := &provider.SnapshotList{}
+		lsr := &csi.ListSnapshotsRequest{
+			MaxEntries: tc.maxEntries,
+		}
+
+		if tc.snapshotID != "" {
+			lsr.SnapshotId = tc.snapshotID
+			snap := &provider.Snapshot{
+				SnapshotID: "snap-id",
+				VolumeID:   "test-vol", SnapshotSize: stdCapRange.RequiredBytes,
+				ReadyToUse:           false,
+				SnapshotCreationTime: timeNow,
+			}
+			if !tc.libGetSnapshotErr {
+				fakeStructSession.GetSnapshotReturns(snap, nil)
+			} else {
+				err := providerError.Message{Code: "StorageFindFailedWithSnapshotId", Description: "Unable to get snashot.", Type: providerError.RetrivalFailed}
+				fakeStructSession.GetSnapshotReturns(nil, err)
+			}
+
+		}
+
+		if !tc.expectedErr {
+			snapList = createSnapshot(maxEntries)
+		}
+		fakeStructSession.ListSnapshotsReturns(snapList, tc.libSnapshotError)
+
+		resp, err := icDriver.cs.ListSnapshots(context.TODO(), lsr)
+		if tc.expErrCode != codes.OK {
+			assert.NotNil(t, err)
+		}
+		if tc.expectedErr && err == nil {
+			t.Fatalf("Got no error when expecting an error")
+		}
+		if err != nil {
+			if !tc.expectedErr {
+				t.Fatalf("Got error '%v', expecting none", err)
+			}
+		} else {
+			if len(resp.Entries) != tc.expectedEntries {
+				t.Fatalf("Got '%v' entries, expected '%v'", len(resp.Entries), tc.expectedEntries)
+			}
+			if tc.expectedEntries > 1 && resp.NextToken != snapList.Next {
+				t.Fatalf("Got '%v' next_token, expected '%v'", resp.NextToken, snapList.Next)
+			}
+		}
+	}
 }

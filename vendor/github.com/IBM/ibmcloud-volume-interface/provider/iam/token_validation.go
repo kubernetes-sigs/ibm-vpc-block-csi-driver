@@ -20,7 +20,7 @@ package iam
 import (
 	"errors"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/dgrijalva/jwt-go"
 
 	"go.uber.org/zap"
 )

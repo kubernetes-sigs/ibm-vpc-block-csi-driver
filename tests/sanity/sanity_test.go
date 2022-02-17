@@ -473,13 +473,9 @@ func (c *fakeProviderSession) GetVolumeAttachment(attachRequest provider.VolumeA
 	return nil, nil
 }
 
-func (c *fakeProviderSession) OrderSnapshot(VolumeRequest provider.Volume) error {
-	return nil
-}
-
 // Snapshot operations
 // Create the snapshot on the volume
-func (c *fakeProviderSession) CreateSnapshot(volume *provider.Volume, tags map[string]string) (*provider.Snapshot, error) {
+func (c *fakeProviderSession) CreateSnapshot(sourceVolumeID string, snapshotParameters provider.SnapshotParameters) (*provider.Snapshot, error) {
 	return nil, nil
 }
 
@@ -493,18 +489,13 @@ func (c *fakeProviderSession) GetSnapshot(snapshotID string) (*provider.Snapshot
 	return nil, nil
 }
 
-// Get the snapshot with volume ID
-func (c *fakeProviderSession) GetSnapshotWithVolumeID(volumeID string, snapshotID string) (*provider.Snapshot, error) {
-	return nil, nil
-}
-
 // Snapshot list by using tags
-func (c *fakeProviderSession) ListSnapshots() ([]*provider.Snapshot, error) {
+func (c *fakeProviderSession) ListSnapshots(limit int, start string, tags map[string]string) (*provider.SnapshotList, error) {
 	return nil, nil
 }
 
-//List all the  snapshots for a given volume
-func (c *fakeProviderSession) ListAllSnapshots(volumeID string) ([]*provider.Snapshot, error) {
+// Get the snapshot By name
+func (c *fakeProviderSession) GetSnapshotByName(snapshotName string) (*provider.Snapshot, error) {
 	return nil, nil
 }
 
