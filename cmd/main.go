@@ -38,6 +38,7 @@ import (
 	"github.com/IBM/ibm-csi-common/pkg/watcher"
 	csiConfig "github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/config"
 	driver "github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/pkg/ibmcsidriver"
+	"github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/pkg/common"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -51,6 +52,7 @@ func init() {
 var (
 	endpoint       = flag.String("endpoint", "unix:/tmp/csi.sock", "CSI endpoint")
 	metricsAddress = flag.String("metrics-address", "0.0.0.0:9080", "Metrics address")
+	volLabelsStr = flag.String("extra-labels", "", "Extra labels for all VPC Volumes. Comma separated list of key value pairs like '<key1>=<value1>,<key2>=<value2>'.")
 	vendorVersion  string
 	logger         *zap.Logger
 )
@@ -94,6 +96,14 @@ func handle(logger *zap.Logger) {
 	ibmcloudProvider, err := cloudProvider.NewIBMCloudStorageProvider(configPath, logger)
 	if err != nil {
 		logger.Fatal("Failed to instantiate IKS-Storage provider", zap.Error(err))
+	}
+
+	if len(*volLabelsStr) > 0 {
+		logger.Fatal("Extra volume labels provided but not running controller")
+	}
+	/*extraVolumeLabels*/_, err = common.ConvertLabelsStringToMap(*volLabelsStr)
+	if err != nil {
+		logger.Fatal("Bad extra volume labels provided in the VPC CSI block driver deployment", zap.Error(err))
 	}
 
 	// Setup CSI Driver

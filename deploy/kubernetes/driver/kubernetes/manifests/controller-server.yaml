@@ -97,6 +97,7 @@ spec:
           args:
             - "--v=5"
             - "--endpoint=$(CSI_ENDPOINT)"
+            - "--extra-labels=kubernetes-io-cluster-$(CLUSTER_ID)=owned"
             - "--lock_enabled=false"
           envFrom:
           - configMapRef:
