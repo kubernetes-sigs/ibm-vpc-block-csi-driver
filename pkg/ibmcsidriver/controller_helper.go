@@ -27,8 +27,8 @@ import (
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	providerError "github.com/IBM/ibmcloud-volume-interface/lib/utils"
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
+	"github.com/golang/protobuf/ptypes"
 )
 
 // Capacity vs IOPS range for Custom Class
@@ -172,14 +172,6 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 			// Not needed by RIaaS, this is just info for the user
 			logger.Info("Ignoring storage class parameter", zap.Any("ClassParameter", ClassVersion))
 
-		case SizeRangeSupported:
-			// Ignore... Provided in SC just as user information
-			logger.Info("Ignoring storage class parameter", zap.Any("ClassParameter", SizeRangeSupported))
-
-		case SizeIopsRange:
-			// Ignore... Provided in SC just as user information
-			logger.Info("Ignoring storage class parameter", zap.Any("ClassParameter", SizeIopsRange))
-
 		case Generation:
 			// Ignore... Provided in SC just for backward compatibility
 			logger.Info("Ignoring storage class parameter, for backward compatibility", zap.Any("ClassParameter", Generation))
@@ -260,16 +252,26 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 		volume.Iops = nil
 	}
 
-	//If the zone is not provided in storage class parameters then we pick from the Topology
-	if len(strings.TrimSpace(volume.Az)) == 0 {
+	//if zone is not given in SC parameters, but region is given, error out
+	if len(strings.TrimSpace(volume.Az)) == 0 && len(strings.TrimSpace(volume.Region)) != 0 {
+		err = fmt.Errorf("zone parameter is empty in storage class for region %s", strings.TrimSpace(volume.Region))
+		return volume, err
+	}
+
+	//If both zone and region not provided in storage class parameters then we pick from the Topology
+	//if zone is provided but region is not provided, fetch region for specified zone
+	if len(strings.TrimSpace(volume.Region)) == 0 {
 		zones, err := pickTargetTopologyParams(req.GetAccessibilityRequirements())
 		if err != nil {
-			err = fmt.Errorf("unable to fetch zone information: '%v'", err)
+			err = fmt.Errorf("unable to fetch zone information from topology: '%v'", err)
 			logger.Error("getVolumeParameters", zap.NamedError("InvalidParameter", err))
 			return volume, err
 		}
 		volume.Region = zones[utils.NodeRegionLabel]
-		volume.Az = zones[utils.NodeZoneLabel]
+		if len(strings.TrimSpace(volume.Az)) == 0 {
+			volume.Az = zones[utils.NodeZoneLabel]
+		}
+
 	}
 
 	return volume, nil
