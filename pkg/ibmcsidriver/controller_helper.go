@@ -27,8 +27,8 @@ import (
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	providerError "github.com/IBM/ibmcloud-volume-interface/lib/utils"
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
-	"go.uber.org/zap"
 	"github.com/golang/protobuf/ptypes"
+	"go.uber.org/zap"
 )
 
 // Capacity vs IOPS range for Custom Class
