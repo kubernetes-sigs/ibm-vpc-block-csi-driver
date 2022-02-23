@@ -2,7 +2,7 @@
 github.com/BurntSushi/toml
 # github.com/IBM-Cloud/ibm-cloud-cli-sdk v0.6.7
 github.com/IBM-Cloud/ibm-cloud-cli-sdk/common/rest
-# github.com/IBM/ibm-csi-common v1.0.0-beta12
+# github.com/IBM/ibm-csi-common v1.0.0-beta15
 ## explicit
 github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider
 github.com/IBM/ibm-csi-common/pkg/messages
@@ -13,7 +13,7 @@ github.com/IBM/ibm-csi-common/pkg/utils
 github.com/IBM/ibm-csi-common/pkg/utils/grpc-client
 github.com/IBM/ibm-csi-common/pkg/watcher
 github.com/IBM/ibm-csi-common/provider
-# github.com/IBM/ibmcloud-volume-interface v1.0.0-beta9
+# github.com/IBM/ibmcloud-volume-interface v1.0.0-beta10
 ## explicit
 github.com/IBM/ibmcloud-volume-interface/config
 github.com/IBM/ibmcloud-volume-interface/lib/metrics
@@ -24,7 +24,7 @@ github.com/IBM/ibmcloud-volume-interface/lib/utils/reasoncode
 github.com/IBM/ibmcloud-volume-interface/provider/auth
 github.com/IBM/ibmcloud-volume-interface/provider/iam
 github.com/IBM/ibmcloud-volume-interface/provider/local
-# github.com/IBM/ibmcloud-volume-vpc v1.0.0-beta13
+# github.com/IBM/ibmcloud-volume-vpc v1.0.0-beta15
 ## explicit
 github.com/IBM/ibmcloud-volume-vpc/block/provider
 github.com/IBM/ibmcloud-volume-vpc/block/utils
@@ -49,17 +49,19 @@ github.com/cespare/xxhash/v2
 github.com/container-storage-interface/spec/lib/go/csi
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/dgrijalva/jwt-go v3.2.0+incompatible
-github.com/dgrijalva/jwt-go
 # github.com/fatih/structs v1.1.0
 github.com/fatih/structs
 # github.com/fsnotify/fsnotify v1.4.9
 github.com/fsnotify/fsnotify
 # github.com/go-logr/logr v0.4.0
 github.com/go-logr/logr
+# github.com/gofrs/uuid v4.2.0+incompatible
+github.com/gofrs/uuid
 # github.com/gogo/protobuf v1.3.2
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
+# github.com/golang-jwt/jwt/v4 v4.2.0
+github.com/golang-jwt/jwt/v4
 # github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 ## explicit
 github.com/golang/glog
@@ -163,8 +165,6 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/satori/go.uuid v1.2.0
-github.com/satori/go.uuid
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
 # github.com/stretchr/testify v1.7.0
@@ -564,6 +564,7 @@ sigs.k8s.io/structured-merge-diff/v4/typed
 sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0
 sigs.k8s.io/yaml
+# github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.1.0
 # k8s.io/api => k8s.io/api v0.21.0
 # k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.21.0
 # k8s.io/apimachinery => k8s.io/apimachinery v0.21.0

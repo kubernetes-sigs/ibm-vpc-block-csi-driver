@@ -4,9 +4,7 @@ metadata:
   name: ibmc-vpc-block-metro-retain-5iops-tier
 provisioner: vpc.block.csi.ibm.io
 parameters:
-  profile: "5iops-tier"               # The VPC Storage profile used.
-  # iopsPerGB: "5"                    # The IOPS per Gigabyte that is supported for this profile. This is just for the user info.
-  sizeRange: "[10-2000]GiB"           # The size range in GiB that is supported. The user will specify a size on the PVC
+  profile: "5iops-tier"               # The VPC Storage profile used. https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=ui#tiers-beta
   csi.storage.k8s.io/fstype: "ext4"   # ext4 is the default filesytem used. The user can override this default
   billingType: "hourly"               # The default billing policy used. The uer can override this default
   encrypted: "false"                  # By default, all PVC using this class will only be provider managed encrypted. The user can override this default
@@ -18,3 +16,4 @@ parameters:
   classVersion: "1"
 reclaimPolicy: "Retain"
 volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
