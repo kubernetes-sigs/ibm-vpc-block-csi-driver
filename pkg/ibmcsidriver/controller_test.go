@@ -25,7 +25,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
 
 	"github.com/IBM/ibm-csi-common/pkg/utils"
@@ -39,6 +38,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var (
@@ -971,7 +971,7 @@ func TestControllerGetCapabilities(t *testing.T) {
 
 func TestCreateSnapshot(t *testing.T) {
 	timeNow := time.Now()
-	creationTime, _ := ptypes.TimestampProto(timeNow)
+	creationTime := timestamppb.New(timeNow)
 	// test cases
 	testCases := []struct {
 		name        string

@@ -27,8 +27,8 @@ import (
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	providerError "github.com/IBM/ibmcloud-volume-interface/lib/utils"
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Capacity vs IOPS range for Custom Class
@@ -459,7 +459,7 @@ func createCSIVolumeResponse(vol provider.Volume, capBytes int64, zones []string
 
 // createCSISnapshotResponse ...
 func createCSISnapshotResponse(snapshot provider.Snapshot) *csi.CreateSnapshotResponse {
-	ts, _ := ptypes.TimestampProto(snapshot.SnapshotCreationTime)
+	ts := timestamppb.New(snapshot.SnapshotCreationTime)
 	return &csi.CreateSnapshotResponse{
 		Snapshot: &csi.Snapshot{
 			SnapshotId:     snapshot.SnapshotID,
