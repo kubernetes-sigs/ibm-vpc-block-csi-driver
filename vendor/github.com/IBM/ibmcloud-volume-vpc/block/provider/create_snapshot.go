@@ -61,23 +61,10 @@ func (vpcs *VPCSession) CreateSnapshot(sourceVolumeID string, snapshotParameters
 	}
 
 	vpcs.Logger.Info("Successfully created snapshot with backend (vpcclient) call. Snapshot details", zap.Reflect("Snapshot", snapshotResult))
-	var createdTime time.Time
-	if snapshotResult.CreatedAt != nil {
-		createdTime = *snapshotResult.CreatedAt
-	}
-	respSnapshot := &provider.Snapshot{
-		VolumeID:             snapshotResult.SourceVolume.ID,
-		SnapshotID:           snapshotResult.ID,
-		SnapshotCreationTime: createdTime,
-		SnapshotSize:         GiBToBytes(snapshotResult.Size),
-		VPC:                  provider.VPC{Href: snapshotResult.Href},
-	}
-	if snapshotResult.LifecycleState == snapshotReadyState {
-		respSnapshot.ReadyToUse = true
-	} else {
-		respSnapshot.ReadyToUse = false
-	}
-	return respSnapshot, nil
+	// Converting volume to lib snapshot type
+	snapshotResponse := FromProviderToLibSnapshot(snapshotResult, vpcs.Logger)
+	vpcs.Logger.Info("SnapshotResponse", zap.Reflect("snapshotResponse", snapshotResponse))
+	return snapshotResponse, err
 }
 
 // validateSnapshotRequest validates request for snapshot

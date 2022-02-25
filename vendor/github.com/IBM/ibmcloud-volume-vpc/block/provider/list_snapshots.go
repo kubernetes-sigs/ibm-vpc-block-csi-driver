@@ -85,23 +85,8 @@ func (vpcs *VPCSession) ListSnapshots(limit int, start string, filters map[strin
 
 		snapshotslist := snapshots.Snapshots
 		for _, snapItem := range snapshotslist {
-			var createdTime time.Time
-			if snapItem.CreatedAt != nil {
-				createdTime = *snapItem.CreatedAt
-			}
-			respSnapshot := &provider.Snapshot{
-				VolumeID:             snapItem.SourceVolume.ID,
-				SnapshotID:           snapItem.ID,
-				SnapshotCreationTime: createdTime,
-				SnapshotSize:         GiBToBytes(snapItem.Size),
-				VPC:                  provider.VPC{Href: snapItem.Href},
-			}
-			if snapItem.LifecycleState == snapshotReadyState {
-				respSnapshot.ReadyToUse = true
-			} else {
-				respSnapshot.ReadyToUse = false
-			}
-			respSnapshotList.Snapshots = append(respSnapshotList.Snapshots, respSnapshot)
+			snapshotResponse := FromProviderToLibSnapshot(snapItem, vpcs.Logger)
+			respSnapshotList.Snapshots = append(respSnapshotList.Snapshots, snapshotResponse)
 		}
 	}
 	return respSnapshotList, err

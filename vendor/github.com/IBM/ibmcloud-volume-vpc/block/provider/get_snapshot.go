@@ -18,8 +18,6 @@
 package provider
 
 import (
-	"time"
-
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	userError "github.com/IBM/ibmcloud-volume-vpc/common/messages"
 	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/models"
@@ -45,23 +43,9 @@ func (vpcs *VPCSession) GetSnapshot(snapshotID string) (*provider.Snapshot, erro
 	}
 
 	vpcs.Logger.Info("Successfully retrieved snpashot details from VPC backend", zap.Reflect("snapshotDetails", snapshot))
-	var createdTime time.Time
-	if snapshot.CreatedAt != nil {
-		createdTime = *snapshot.CreatedAt
-	}
-	respSnapshot := &provider.Snapshot{
-		VolumeID:             snapshot.SourceVolume.ID,
-		SnapshotID:           snapshot.ID,
-		SnapshotCreationTime: createdTime,
-		SnapshotSize:         GiBToBytes(snapshot.Size),
-		VPC:                  provider.VPC{Href: snapshot.Href},
-	}
-	if snapshot.LifecycleState == snapshotReadyState {
-		respSnapshot.ReadyToUse = true
-	} else {
-		respSnapshot.ReadyToUse = false
-	}
-	return respSnapshot, nil
+	snapshotResponse := FromProviderToLibSnapshot(snapshot, vpcs.Logger)
+	vpcs.Logger.Info("SnapshotResponse", zap.Reflect("snapshotResponse", snapshotResponse))
+	return snapshotResponse, err
 }
 
 // GetSnapshotByName ...
@@ -88,21 +72,7 @@ func (vpcs *VPCSession) GetSnapshotByName(name string) (respSnap *provider.Snaps
 	}
 
 	vpcs.Logger.Info("Successfully retrieved snpashot details from VPC backend", zap.Reflect("snapshotDetails", snapshot))
-	var createdTime time.Time
-	if snapshot.CreatedAt != nil {
-		createdTime = *snapshot.CreatedAt
-	}
-	respSnapshot := &provider.Snapshot{
-		VolumeID:             snapshot.SourceVolume.ID,
-		SnapshotID:           snapshot.ID,
-		SnapshotCreationTime: createdTime,
-		SnapshotSize:         GiBToBytes(snapshot.Size),
-		VPC:                  provider.VPC{Href: snapshot.Href},
-	}
-	if snapshot.LifecycleState == snapshotReadyState {
-		respSnapshot.ReadyToUse = true
-	} else {
-		respSnapshot.ReadyToUse = false
-	}
-	return respSnapshot, nil
+	snapshotResponse := FromProviderToLibSnapshot(snapshot, vpcs.Logger)
+	vpcs.Logger.Info("SnapshotResponse", zap.Reflect("snapshotResponse", snapshotResponse))
+	return snapshotResponse, err
 }
