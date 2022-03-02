@@ -500,7 +500,15 @@ func (csiCS *CSIControllerServer) ControllerExpandVolume(ctx context.Context, re
 	if err != nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
 	}
-	return &csi.ControllerExpandVolumeResponse{CapacityBytes: capacity, NodeExpansionRequired: true}, nil
+
+	nodeExpansionRequired := true
+	// if this is a raw block device, no expansion should be necessary on the node
+	cap := req.GetVolumeCapability()
+	if cap != nil && cap.GetBlock() != nil {
+		nodeExpansionRequired = false
+	}
+
+	return &csi.ControllerExpandVolumeResponse{CapacityBytes: capacity, NodeExpansionRequired: nodeExpansionRequired}, nil
 }
 
 // ControllerGetVolume ...
