@@ -50,9 +50,6 @@ type Volume struct {
 	// The Capacity of the volume, in GiB
 	Capacity *int `json:"capacity"`
 
-	// The size of the snapshot space, in GiB
-	SnapshotSpace *int `json:"snapshotSpace,omitempty"`
-
 	// Volume IOPS for performance storage type only
 	Iops *string `json:"iops"`
 
@@ -98,26 +95,38 @@ type Volume struct {
 
 	// Only for VPC volume provider
 	VPCVolume
+
+	// ID of snapshot to be restored
+	SnapshotID string `json:"snapshotID,omitempty"`
 }
 
 // Snapshot ...
 type Snapshot struct {
-	Volume
+	VolumeID string `json:"volumeID"`
 
 	// a unique Snapshot ID which created by the provider
-	SnapshotID string `json:"snapshotID,omitempty"`
+	SnapshotID string `json:"snapshotID"`
 
-	// The size of the snapshot, in GiB
-	SnapshotSize *int `json:"snapshotSize,omitempty"`
-
-	// Source volume details
-	//SnapshotedVolume *Volume `json:"SnapshotedVolume"`
+	// The size of the snapshot, in bytes
+	SnapshotSize int64 `json:"snapshotSize"`
 
 	// Time stamp when snapshot creation was initiated
-	SnapshotCreationTime time.Time `json:"snapCreationTime,omitempty"`
+	SnapshotCreationTime time.Time `json:"snapCreationTime"`
 
 	// tags for the snapshot
 	SnapshotTags SnapshotTags `json:"tags,omitempty"`
+
+	// status of snapshot
+	ReadyToUse bool `json:"readyToUse"`
+
+	// VPC contains vpc fields
+	VPC
+}
+
+// SnapshotList ...
+type SnapshotList struct {
+	Next      string      `json:"next,omitempty"`
+	Snapshots []*Snapshot `json:"snapshots"`
 }
 
 // VolumeAuthorization capture details of autorization to be made
@@ -147,4 +156,13 @@ type ExpandVolumeRequest struct {
 
 	// The new Capacity of the volume, in GiB
 	Capacity int64 `json:"capacity"`
+}
+
+// SnapshotParameters ...
+type SnapshotParameters struct {
+	// Name of snapshot
+	Name string `json:"name,omitempty"`
+
+	// tags for the snapshot
+	SnapshotTags SnapshotTags `json:"tags,omitempty"`
 }

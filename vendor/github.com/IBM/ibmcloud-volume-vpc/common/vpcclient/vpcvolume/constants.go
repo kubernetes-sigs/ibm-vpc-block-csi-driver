@@ -24,7 +24,7 @@ const (
 	volumeIDParam = "volume-id"
 	volumeIDPath  = volumesPath + "/{" + volumeIDParam + "}"
 
-	snapshotsPath   = volumesPath + "/{" + volumeIDParam + "}/" + "snapshots"
+	snapshotsPath   = Version + "/snapshots"
 	snapshotIDParam = "snapshot-id"
 	snapshotIDPath  = snapshotsPath + "/{" + snapshotIDParam + "}"
 

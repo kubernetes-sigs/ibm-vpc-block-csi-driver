@@ -102,10 +102,17 @@ var messagesEn = map[string]util.Message{
 	},
 	"StorageFindFailedWithSnapshotId": {
 		Code:        "StorageFindFailedWithSnapshotId",
-		Description: "No volume could be found for the specified snapshot ID '%s'. Description: %s",
+		Description: "A snapshot with the specified snapshot ID '%s' could not be found.",
 		Type:        util.RetrivalFailed,
 		RC:          400,
 		Action:      "Please check the snapshot ID once, You many need to verify by using 'ibmcloud is' cli.",
+	},
+	"StorageFindFailedWithSnapshotName": {
+		Code:        "StorageFindFailedWithSnapshotName",
+		Description: "A snapshot with the specified snapshot name '%s' could not be found.",
+		Type:        util.RetrivalFailed,
+		RC:          400,
+		Action:      "Please check the snapshot name once, You many need to verify by using 'ibmcloud is' cli.",
 	},
 	"VolumeAttachFindFailed": {
 		Code:        VolumeAttachFindFailed,
@@ -219,6 +226,13 @@ var messagesEn = map[string]util.Message{
 		RC:          500,
 		Action:      "Wait for volume deletion",
 	},
+	"ListSnapshotsFailed": {
+		Code:        "ListSnapshotsFailed",
+		Description: "Unable to fetch list of volumes.",
+		Type:        util.RetrivalFailed,
+		RC:          404,
+		Action:      "Run 'ibmcloud is snapshots' to list available snapshots in your account.",
+	},
 	"ListVolumesFailed": {
 		Code:        "ListVolumesFailed",
 		Description: "Unable to fetch list of volumes.",
@@ -233,12 +247,26 @@ var messagesEn = map[string]util.Message{
 		RC:          400,
 		Action:      "Verify the limit parameter's value. The limit must be a positive number between 0 and 100.",
 	},
+	"InvalidListSnapshotLimit": {
+		Code:        "InvalidListSnapshotLimit",
+		Description: "The value '%v' specified in the limit parameter of the list snapshot call is not valid.",
+		Type:        util.InvalidRequest,
+		RC:          400,
+		Action:      "Verify the limit parameter's value. The limit must be a positive number between 0 and 100.",
+	},
 	"StartVolumeIDNotFound": {
 		Code:        "StartVolumeIDNotFound",
 		Description: "The volume ID '%s' specified in the start parameter of the list volume call could not be found.",
 		Type:        util.InvalidRequest,
 		RC:          400,
 		Action:      "Please verify that the start volume ID is correct and whether you have access to the volume ID.",
+	},
+	"StartSnapshotIDNotFound": {
+		Code:        "StartSnapshotIDNotFound",
+		Description: "The snapshot ID '%s' specified in the start parameter of the list volume call could not be found.",
+		Type:        util.InvalidRequest,
+		RC:          400,
+		Action:      "Please verify that the start snapshot ID is correct and whether you have access to the snapshot ID.",
 	},
 	"InvalidServiceSession": {
 		Code:        "InvalidServiceSession",

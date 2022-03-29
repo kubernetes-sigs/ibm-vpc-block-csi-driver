@@ -18,6 +18,7 @@
 package vpcvolume
 
 import (
+	"strconv"
 	"time"
 
 	util "github.com/IBM/ibmcloud-volume-interface/lib/utils"
@@ -26,8 +27,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// ListSnapshots GETs /volumes/snapshots
-func (ss *SnapshotService) ListSnapshots(volumeID string, ctxLogger *zap.Logger) (*models.SnapshotList, error) {
+// ListSnapshots GETs /snapshots
+func (ss *SnapshotService) ListSnapshots(limit int, start string, filters *models.LisSnapshotFilters, ctxLogger *zap.Logger) (*models.SnapshotList, error) {
 	ctxLogger.Debug("Entry Backend ListSnapshots")
 	defer ctxLogger.Debug("Exit Backend ListSnapshots")
 
@@ -45,7 +46,29 @@ func (ss *SnapshotService) ListSnapshots(volumeID string, ctxLogger *zap.Logger)
 	request := ss.client.NewRequest(operation)
 	ctxLogger.Info("Equivalent curl command", zap.Reflect("URL", request.URL()), zap.Reflect("Operation", operation))
 
-	_, err := request.PathParameter(volumeIDParam, volumeID).JSONSuccess(&snapshots).JSONError(&apiErr).Invoke()
+	req := request.JSONSuccess(&snapshots).JSONError(&apiErr)
+
+	if limit > 0 {
+		req.AddQueryValue("limit", strconv.Itoa(limit))
+	}
+
+	if start != "" {
+		req.AddQueryValue("start", start)
+	}
+
+	if filters != nil {
+		if filters.ResourceGroupID != "" {
+			req.AddQueryValue("resource_group.id", filters.ResourceGroupID)
+		}
+		if filters.Name != "" {
+			req.AddQueryValue("name", filters.Name)
+		}
+		if filters.SourceVolumeID != "" {
+			req.AddQueryValue("source_volume.id", filters.SourceVolumeID)
+		}
+	}
+
+	_, err := req.Invoke()
 	if err != nil {
 		return nil, err
 	}

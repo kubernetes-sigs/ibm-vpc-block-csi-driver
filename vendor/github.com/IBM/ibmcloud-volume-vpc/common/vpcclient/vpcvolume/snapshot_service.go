@@ -26,16 +26,19 @@ import (
 // SnapshotManager operations
 type SnapshotManager interface {
 	// Create the snapshot on the volume
-	CreateSnapshot(volumeID string, snapshotTemplate *models.Snapshot, ctxLogger *zap.Logger) (*models.Snapshot, error)
+	CreateSnapshot(snapshotTemplate *models.Snapshot, ctxLogger *zap.Logger) (*models.Snapshot, error)
 
 	// Delete the snapshot
-	DeleteSnapshot(volumeID string, snapshotID string, ctxLogger *zap.Logger) error
+	DeleteSnapshot(snapshotID string, ctxLogger *zap.Logger) error
 
 	// Get the snapshot
-	GetSnapshot(volumeID string, snapshotID string, ctxLogger *zap.Logger) (*models.Snapshot, error)
+	GetSnapshot(snapshotID string, ctxLogger *zap.Logger) (*models.Snapshot, error)
+
+	// Get the snapshot by using snapshot name
+	GetSnapshotByName(snapshotName string, ctxLogger *zap.Logger) (*models.Snapshot, error)
 
 	// List all the  snapshots for a given volume
-	ListSnapshots(volumeID string, ctxLogger *zap.Logger) (*models.SnapshotList, error)
+	ListSnapshots(limit int, start string, filters *models.LisSnapshotFilters, ctxLogger *zap.Logger) (*models.SnapshotList, error)
 
 	// Set tag for a snapshot
 	SetSnapshotTag(volumeID string, snapshotID string, tagName string, ctxLogger *zap.Logger) error
