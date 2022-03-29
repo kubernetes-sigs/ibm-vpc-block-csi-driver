@@ -82,7 +82,10 @@ func (csiNS *CSINodeServer) processMount(ctxLogger *zap.Logger, requestID, stagi
 				return nil, commonError.GetCSIError(ctxLogger, commonError.UnmountFailed, requestID, err, targetPath)
 			}
 		}
-		_ = os.Remove(targetPath)
+		err = os.Remove(targetPath)
+		if err != nil {
+			ctxLogger.Warn("processMount: Remove targePath Failed", zap.String("targetPath", targetPath), zap.Error(err))
+		}
 		return nil, commonError.GetCSIError(ctxLogger, commonError.CreateMountTargetFailed, requestID, err, targetPath)
 	}
 
@@ -153,7 +156,10 @@ func (csiNS *CSINodeServer) udevadmTrigger(ctxLogger *zap.Logger) error {
 	}
 
 	// Sleep for 20 seconds so that udevadm trigger will do its magic
-	duration, _ := time.ParseDuration("20s")
+	duration, err := time.ParseDuration("20s")
+	if err != nil {
+		ctxLogger.Warn("udevadmTrigger: time.ParseDuration failed", zap.Error(err))
+	}
 	time.Sleep(duration)
 
 	ctxLogger.Info("udevadmTrigger: Successfully executed udevadm trigger to referesh all devices.")
