@@ -78,7 +78,7 @@ func (icDriver *IBMCSIDriver) SetupIBMCSIDriver(provider cloudProvider.CloudProv
 		csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER,
 	}
 
-	_ = icDriver.AddVolumeCapabilityAccessModes(vcam)
+	_ = icDriver.AddVolumeCapabilityAccessModes(vcam) // #nosec G104: Attempt to AddVolumeCapabilityAccessModes only on best-effort basis.Error cannot be usefully handled.
 	csc := []csi.ControllerServiceCapability_RPC_Type{
 		csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME,
 		csi.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME,
@@ -89,14 +89,14 @@ func (icDriver *IBMCSIDriver) SetupIBMCSIDriver(provider cloudProvider.CloudProv
 		// csi.ControllerServiceCapability_RPC_PUBLISH_READONLY,
 		csi.ControllerServiceCapability_RPC_EXPAND_VOLUME,
 	}
-	_ = icDriver.AddControllerServiceCapabilities(csc)
+	_ = icDriver.AddControllerServiceCapabilities(csc) // #nosec G104: Attempt to AddControllerServiceCapabilities only on best-effort basis.Error cannot be usefully handled.
 
 	ns := []csi.NodeServiceCapability_RPC_Type{
 		csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME,
 		csi.NodeServiceCapability_RPC_GET_VOLUME_STATS,
 		csi.NodeServiceCapability_RPC_EXPAND_VOLUME,
 	}
-	_ = icDriver.AddNodeServiceCapabilities(ns)
+	_ = icDriver.AddNodeServiceCapabilities(ns) // #nosec G104: Attempt to AddNodeServiceCapabilities only on best-effort basis.Error cannot be usefully handled.
 
 	// Set up CSI RPC Servers
 	icDriver.ids = NewIdentityServer(icDriver)
