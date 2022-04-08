@@ -135,7 +135,7 @@ func TestAreVolumeCapabilitiesSupported(t *testing.T) {
 	}
 }
 
-func isVolumeSame(actual *provider.Volume, expected *provider.Volume) bool {
+func isVolumeSame(expected *provider.Volume, actual *provider.Volume) bool {
 	if actual == nil && expected == nil {
 		return true
 	}
@@ -143,7 +143,6 @@ func isVolumeSame(actual *provider.Volume, expected *provider.Volume) bool {
 	if actual == nil || expected == nil {
 		return false
 	}
-
 	return *actual.Name == *expected.Name &&
 		*actual.Capacity == *expected.Capacity &&
 		actual.Az == expected.Az &&
@@ -166,17 +165,15 @@ func TestGetVolumeParameters(t *testing.T) {
 			request: &csi.CreateVolumeRequest{Name: volumeName, CapacityRange: &csi.CapacityRange{RequiredBytes: 11811160064, LimitBytes: utils.MinimumVolumeSizeInBytes + utils.MinimumVolumeSizeInBytes},
 				VolumeCapabilities: []*csi.VolumeCapability{{AccessMode: &csi.VolumeCapability_AccessMode{Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}}},
 				Parameters: map[string]string{Profile: "general-purpose",
-					Zone:               "testzone",
-					Region:             "us-south-test",
-					Tag:                "test-tag",
-					ResourceGroup:      "myresourcegroups",
-					Encrypted:          "false",
-					EncryptionKey:      "key",
-					ClassVersion:       "",
-					SizeIopsRange:      "",
-					SizeRangeSupported: "",
-					Generation:         "generation",
-					IOPS:               noIops,
+					Zone:          "testzone",
+					Region:        "us-south-test",
+					Tag:           "test-tag",
+					ResourceGroup: "myresourcegroups",
+					Encrypted:     "false",
+					EncryptionKey: "key",
+					ClassVersion:  "",
+					Generation:    "generation",
+					IOPS:          noIops,
 				},
 			},
 			expectedVolume: &provider.Volume{Name: &volumeName,
@@ -302,6 +299,72 @@ func TestGetVolumeParameters(t *testing.T) {
 			expectedVolume: &provider.Volume{},
 			expectedStatus: true,
 			expectedError:  fmt.Errorf("volume capabilities are empty"),
+		},
+		{
+			testCaseName: "Region present but zone not given as parameter",
+			request: &csi.CreateVolumeRequest{Name: volumeName, CapacityRange: &csi.CapacityRange{RequiredBytes: 11811160064, LimitBytes: utils.MinimumVolumeSizeInBytes + utils.MinimumVolumeSizeInBytes},
+				VolumeCapabilities: []*csi.VolumeCapability{{AccessMode: &csi.VolumeCapability_AccessMode{Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}}},
+				Parameters: map[string]string{Profile: "general-purpose",
+					Region:        "us-south-test",
+					Tag:           "test-tag",
+					ResourceGroup: "myresourcegroups",
+					Encrypted:     "false",
+					EncryptionKey: "key",
+					ClassVersion:  "",
+					Generation:    "generation",
+					IOPS:          noIops,
+				},
+			},
+			expectedVolume: &provider.Volume{Name: &volumeName,
+				Capacity: &volumeSize,
+				VPCVolume: provider.VPCVolume{VPCBlockVolume: provider.VPCBlockVolume{
+					Tags: []string{createdByIBM},
+				},
+					Profile:       &provider.Profile{Name: "general-purpose"},
+					ResourceGroup: &provider.ResourceGroup{ID: "myresourcegroups"},
+				},
+				Region: "us-south-test",
+				Iops:   &noIops,
+				Az:     "testzone",
+			},
+			expectedStatus: true,
+			expectedError:  fmt.Errorf("zone parameter is empty in storage class for region us-south-test"),
+		},
+		{
+			testCaseName: "Region and Zone not given as parameter from SC",
+			request: &csi.CreateVolumeRequest{Name: volumeName, CapacityRange: &csi.CapacityRange{RequiredBytes: 11811160064, LimitBytes: utils.MinimumVolumeSizeInBytes + utils.MinimumVolumeSizeInBytes},
+				VolumeCapabilities: []*csi.VolumeCapability{{AccessMode: &csi.VolumeCapability_AccessMode{Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}}},
+				Parameters: map[string]string{Profile: "general-purpose",
+					Tag:           "test-tag",
+					ResourceGroup: "myresourcegroups",
+					Encrypted:     "false",
+					EncryptionKey: "key",
+					ClassVersion:  "",
+					Generation:    "generation",
+					IOPS:          noIops,
+				},
+				AccessibilityRequirements: &csi.TopologyRequirement{Preferred: []*csi.Topology{{Segments: map[string]string{
+					utils.NodeRegionLabel: "myregion",
+					utils.NodeZoneLabel:   "myzone",
+				},
+				},
+				},
+				},
+			},
+			expectedVolume: &provider.Volume{Name: &volumeName,
+				Capacity: &volumeSize,
+				VPCVolume: provider.VPCVolume{VPCBlockVolume: provider.VPCBlockVolume{
+					Tags: []string{createdByIBM},
+				},
+					Profile:       &provider.Profile{Name: "general-purpose"},
+					ResourceGroup: &provider.ResourceGroup{ID: "myresourcegroups"},
+				},
+				Region: "myregion",
+				Iops:   &noIops,
+				Az:     "myzone",
+			},
+			expectedStatus: true,
+			expectedError:  nil,
 		},
 	}
 
