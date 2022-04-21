@@ -18,6 +18,7 @@
 package ibmcloudprovider
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
@@ -58,6 +59,23 @@ func NewIBMCloudStorageProvider(configPath string, logger *zap.Logger) (*IBMClou
 		logger.Fatal("Error loading configuration")
 		return nil, err
 	}
+
+	//Decode g2 API Key if it is a satellite cluster.
+	if isSatellite := os.Getenv(strings.ToUpper("IS_SATELLITE")); isSatellite == "True" {
+		logger.Info("Decoding apiKey since its a satellite cluster")
+		apiKey, err := base64.StdEncoding.DecodeString(conf.VPC.G2APIKey)
+		if err != nil {
+			return nil, err
+		}
+		conf.VPC.G2APIKey = string(apiKey)
+	}
+
+	// Correct if the G2EndpointURL is of the form "http://".
+	conf.VPC.G2EndpointURL = getEndpointURL(conf.VPC.G2EndpointURL, logger)
+
+	// Correct if the G2TokenExchangeURL is of the form "http://"
+	conf.VPC.G2TokenExchangeURL = getEndpointURL(conf.VPC.G2TokenExchangeURL, logger)
+
 	// Get only VPC_API_VERSION, in "2019-07-02T00:00:00.000Z" case vpc need only 2019-07-02"
 	dateTime, err := time.Parse(time.RFC3339, conf.VPC.APIVersion)
 	if err == nil {
@@ -272,4 +290,13 @@ func (icp *IBMCloudStorageProvider) UpdateAPIKey(logger *zap.Logger) error {
 	}
 
 	return nil
+}
+
+// CorrectEndpointURL corrects endpoint url if it is of form "http://"
+func getEndpointURL(url string, logger *zap.Logger) string {
+	if strings.Contains(url, "http://") {
+		logger.Warn("Token exchange endpoint URL is of the form 'http' instead 'https'. Correcting it for valid request.", zap.Reflect("Endpoint URL: ", url))
+		return strings.Replace(url, "http", "https", 1)
+	}
+	return url
 }
