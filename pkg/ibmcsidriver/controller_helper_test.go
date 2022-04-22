@@ -688,6 +688,8 @@ func TestCheckIfVolumeExists(t *testing.T) {
 }
 
 func TestCreateCSIVolumeResponse(t *testing.T) {
+	// Creating test logger
+	logger, teardown := cloudProvider.GetTestLogger(t)
 	volumeID := "volID"
 	threeIops := "3"
 	testCases := []struct {
@@ -735,7 +737,7 @@ func TestCreateCSIVolumeResponse(t *testing.T) {
 
 	for _, testcase := range testCases {
 		t.Run(testcase.testCaseName, func(t *testing.T) {
-			actualCSIVolume := createCSIVolumeResponse(testcase.requestVol, testcase.requestCap, testcase.requestZones, testcase.clusterID)
+			actualCSIVolume := createCSIVolumeResponse(testcase.requestVol, testcase.requestCap, testcase.requestZones, testcase.clusterID, logger)
 			assert.Equal(t, testcase.expectedStatus, isCSIResponseSame(testcase.expectedVolume, actualCSIVolume))
 		})
 	}
