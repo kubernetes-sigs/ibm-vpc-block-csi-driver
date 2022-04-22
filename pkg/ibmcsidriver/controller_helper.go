@@ -19,15 +19,16 @@ package ibmcsidriver
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
-
+	"github.com/IBM/ibm-csi-common/pkg/metadata"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	providerError "github.com/IBM/ibmcloud-volume-interface/lib/utils"
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 	"go.uber.org/zap"
+	"os"
+	"strconv"
+	"strings"
 )
 
 // Capacity vs IOPS range for Custom Class
@@ -423,7 +424,7 @@ func checkIfVolumeExists(session provider.Session, vol provider.Volume, ctxLogge
 }
 
 // createCSIVolumeResponse ...
-func createCSIVolumeResponse(vol provider.Volume, capBytes int64, zones []string, clusterID string) *csi.CreateVolumeResponse {
+func createCSIVolumeResponse(vol provider.Volume, capBytes int64, zones []string, clusterID string, logger *zap.Logger) *csi.CreateVolumeResponse {
 	labels := map[string]string{}
 
 	// Update labels for PV objects
@@ -434,12 +435,19 @@ func createCSIVolumeResponse(vol provider.Volume, capBytes int64, zones []string
 	if vol.Iops != nil && len(*vol.Iops) > 0 {
 		labels[IOPSLabel] = *vol.Iops
 	}
-	labels[utils.NodeRegionLabel] = vol.Region
+	metadata, err := metadata.NewNodeMetadata(os.Getenv("KUBE_NODE_NAME"), logger)
+	if err != nil {
+		logger.Error("Controller_Helper: Failed to initialize node metadata", zap.Error(err))
+		return nil
+	}
+	logger.Info("Region", zap.Any("Value:", metadata.GetRegion()))
+	logger.Info("Zone", zap.Any("Value:", labels[utils.NodeZoneLabel]))
+
 	labels[utils.NodeZoneLabel] = vol.Az
 
 	topology := &csi.Topology{
 		Segments: map[string]string{
-			utils.NodeRegionLabel: labels[utils.NodeRegionLabel],
+			utils.NodeRegionLabel: metadata.GetRegion(),
 			utils.NodeZoneLabel:   labels[utils.NodeZoneLabel],
 		},
 	}
