@@ -75,7 +75,7 @@ func NewNodeMetadata(nodeName string, logger *zap.Logger) (NodeMetadata, error) 
 
 	var workerID string
 	// In case of satellte cluster use label NodeVPCIDLabel for workerID.
-	if isSatellite := os.Getenv(strings.ToUpper("IS_SATELLITE")); isSatellite == "True" {
+	if os.Getenv(strings.ToUpper("IKS_ENABLED")) == "False" {
 		workerID = nodeLabels[utils.NodeVPCIDLabel]
 	} else {
 		workerID = nodeLabels[utils.NodeWorkerIDLabel]

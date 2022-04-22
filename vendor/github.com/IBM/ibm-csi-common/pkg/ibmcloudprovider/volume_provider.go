@@ -61,7 +61,7 @@ func NewIBMCloudStorageProvider(configPath string, logger *zap.Logger) (*IBMClou
 	}
 
 	//Decode g2 API Key if it is a satellite cluster.
-	if isSatellite := os.Getenv(strings.ToUpper("IS_SATELLITE")); isSatellite == "True" {
+	if os.Getenv(strings.ToUpper("IKS_ENABLED")) == "False" {
 		logger.Info("Decoding apiKey since its a satellite cluster")
 		apiKey, err := base64.StdEncoding.DecodeString(conf.VPC.G2APIKey)
 		if err != nil {
