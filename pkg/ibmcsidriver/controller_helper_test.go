@@ -690,6 +690,7 @@ func TestCheckIfVolumeExists(t *testing.T) {
 func TestCreateCSIVolumeResponse(t *testing.T) {
 	// Creating test logger
 	logger, teardown := cloudProvider.GetTestLogger(t)
+	defer teardown()
 	volumeID := "volID"
 	threeIops := "3"
 	testCases := []struct {
