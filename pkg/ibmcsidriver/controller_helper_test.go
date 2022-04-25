@@ -302,36 +302,6 @@ func TestGetVolumeParameters(t *testing.T) {
 			expectedError:  fmt.Errorf("volume capabilities are empty"),
 		},
 		{
-			testCaseName: "Region present but zone not given as parameter",
-			request: &csi.CreateVolumeRequest{Name: volumeName, CapacityRange: &csi.CapacityRange{RequiredBytes: 11811160064, LimitBytes: utils.MinimumVolumeSizeInBytes + utils.MinimumVolumeSizeInBytes},
-				VolumeCapabilities: []*csi.VolumeCapability{{AccessMode: &csi.VolumeCapability_AccessMode{Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}}},
-				Parameters: map[string]string{Profile: "general-purpose",
-					Region:        "us-south-test",
-					Tag:           "test-tag",
-					ResourceGroup: "myresourcegroups",
-					Encrypted:     "false",
-					EncryptionKey: "key",
-					ClassVersion:  "",
-					Generation:    "generation",
-					IOPS:          noIops,
-				},
-			},
-			expectedVolume: &provider.Volume{Name: &volumeName,
-				Capacity: &volumeSize,
-				VPCVolume: provider.VPCVolume{VPCBlockVolume: provider.VPCBlockVolume{
-					Tags: []string{createdByIBM},
-				},
-					Profile:       &provider.Profile{Name: "general-purpose"},
-					ResourceGroup: &provider.ResourceGroup{ID: "myresourcegroups"},
-				},
-				Region: "us-south-test",
-				Iops:   &noIops,
-				Az:     "testzone",
-			},
-			expectedStatus: true,
-			expectedError:  fmt.Errorf("zone parameter is empty in storage class for region us-south-test"),
-		},
-		{
 			testCaseName: "Region and Zone not given as parameter from SC",
 			request: &csi.CreateVolumeRequest{Name: volumeName, CapacityRange: &csi.CapacityRange{RequiredBytes: 11811160064, LimitBytes: utils.MinimumVolumeSizeInBytes + utils.MinimumVolumeSizeInBytes},
 				VolumeCapabilities: []*csi.VolumeCapability{{AccessMode: &csi.VolumeCapability_AccessMode{Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}}},
@@ -360,9 +330,8 @@ func TestGetVolumeParameters(t *testing.T) {
 					Profile:       &provider.Profile{Name: "general-purpose"},
 					ResourceGroup: &provider.ResourceGroup{ID: "myresourcegroups"},
 				},
-				Region: "myregion",
-				Iops:   &noIops,
-				Az:     "myzone",
+				Iops: &noIops,
+				Az:   "myzone",
 			},
 			expectedStatus: true,
 			expectedError:  nil,
@@ -678,8 +647,8 @@ func isCSIResponseSame(expectedVolume *csi.CreateVolumeResponse, actualCSIVolume
 	if expectedVolume == nil || actualCSIVolume == nil {
 		return false
 	}
-	                fmt.Println(expectedVolume)
-                fmt.Println(actualCSIVolume)
+	fmt.Println(expectedVolume)
+	fmt.Println(actualCSIVolume)
 
 	return expectedVolume.Volume.VolumeId == actualCSIVolume.Volume.VolumeId &&
 		expectedVolume.Volume.CapacityBytes == actualCSIVolume.Volume.CapacityBytes &&
