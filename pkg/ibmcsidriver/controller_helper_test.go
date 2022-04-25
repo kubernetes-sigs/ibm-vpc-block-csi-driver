@@ -714,6 +714,25 @@ func TestCreateCSIVolumeResponse(t *testing.T) {
 			},
 			expectedStatus: true,
 		},
+		{
+			testCaseName: "InValid volume response due to missing node Metadata",
+			requestVol: provider.Volume{VolumeID: volumeID,
+				VPCVolume: provider.VPCVolume{VPCBlockVolume: provider.VPCBlockVolume{
+					Tags: []string{createdByIBM},
+				},
+					Profile:       &provider.Profile{Name: "general-purpose"},
+					ResourceGroup: &provider.ResourceGroup{ID: "myresourcegroups"},
+				},
+				Region: "us-south-test",
+				Iops:   &threeIops,
+				Az:     "testzone",
+			},
+			requestCap:     20,
+			clusterID:      "1234",
+			requestZones:   []string{"", ""},
+			expectedStatus: false,
+			expectedVolume: nil,
+		},
 	}
 
 	for _, testcase := range testCases {
