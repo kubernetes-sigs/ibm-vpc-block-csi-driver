@@ -10,11 +10,11 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/uuid v1.1.2
 	github.com/kubernetes-csi/csi-test/v4 v4.3.0
-	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/client_golang v1.11.1
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/zap v1.15.0
 	golang.org/x/net v0.0.0-20210224082022-3d97a244fca7
-	golang.org/x/sys v0.0.0-20210225134936-a50acf3fe073
+	golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40
 	google.golang.org/grpc v1.34.0
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	k8s.io/kubernetes v1.21.0
