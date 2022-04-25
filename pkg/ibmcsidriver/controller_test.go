@@ -82,7 +82,7 @@ var (
 	}
 	stdTopology = []*csi.Topology{
 		{
-			Segments: map[string]string{utils.NodeZoneLabel: "myzone", utils.NodeRegionLabel: "myregion"},
+			Segments: map[string]string{utils.NodeZoneLabel: "myzone", utils.NodeRegionLabel: "us-south-test"},
 		},
 	}
 )
@@ -111,7 +111,7 @@ func TestCreateVolumeArguments(t *testing.T) {
 			expVol: &csi.Volume{
 				CapacityBytes:      20 * 1024 * 1024 * 1024, // In byte
 				VolumeId:           "testVolumeId",
-				VolumeContext:      map[string]string{utils.NodeRegionLabel: "myregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: ""},
+				VolumeContext:      map[string]string{utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: ""},
 				AccessibleTopology: stdTopology,
 			},
 			libVolumeResponse: &provider.Volume{Capacity: &cap, Name: &volName, VolumeID: "testVolumeId", Iops: &iopsStr, Az: "myzone", Region: "myregion"},

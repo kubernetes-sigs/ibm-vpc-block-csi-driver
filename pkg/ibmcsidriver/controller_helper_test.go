@@ -19,14 +19,15 @@ package ibmcsidriver
 
 import (
 	"fmt"
-	"testing"
-
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
+	"github.com/IBM/ibm-csi-common/pkg/metadata"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+	"testing"
 )
 
 const (
@@ -677,6 +678,8 @@ func isCSIResponseSame(expectedVolume *csi.CreateVolumeResponse, actualCSIVolume
 	if expectedVolume == nil || actualCSIVolume == nil {
 		return false
 	}
+	                fmt.Println(expectedVolume)
+                fmt.Println(actualCSIVolume)
 
 	return expectedVolume.Volume.VolumeId == actualCSIVolume.Volume.VolumeId &&
 		expectedVolume.Volume.CapacityBytes == actualCSIVolume.Volume.CapacityBytes &&
@@ -701,6 +704,7 @@ func TestCreateCSIVolumeResponse(t *testing.T) {
 		clusterID      string
 		expectedVolume *csi.CreateVolumeResponse
 		expectedStatus bool
+		nodeMeta       func(string, *zap.Logger) (metadata.NodeMetadata, error)
 	}{
 		{
 			testCaseName: "Valid volume response",
@@ -714,6 +718,13 @@ func TestCreateCSIVolumeResponse(t *testing.T) {
 				Region: "us-south-test",
 				Iops:   &threeIops,
 				Az:     "testzone",
+			},
+			nodeMeta: func(string, *zap.Logger) (metadata.NodeMetadata, error) {
+				return &metadata.NodeMetadataManager{
+					Zone:     "testzone",
+					Region:   "us-south-test",
+					WorkerID: "worer-xxx",
+				}, nil
 			},
 			requestCap:   20,
 			clusterID:    "1234",
@@ -738,6 +749,9 @@ func TestCreateCSIVolumeResponse(t *testing.T) {
 
 	for _, testcase := range testCases {
 		t.Run(testcase.testCaseName, func(t *testing.T) {
+			if testcase.nodeMeta != nil {
+				nodeMeta = testcase.nodeMeta
+			}
 			actualCSIVolume := createCSIVolumeResponse(testcase.requestVol, testcase.requestCap, testcase.requestZones, testcase.clusterID, logger)
 			assert.Equal(t, testcase.expectedStatus, isCSIResponseSame(testcase.expectedVolume, actualCSIVolume))
 		})

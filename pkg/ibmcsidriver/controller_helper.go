@@ -49,6 +49,8 @@ var customCapacityIopsRanges = []classRange{
 	{1000, 1999, 100, 20000},
 }
 
+var nodeMeta = metadata.NewNodeMetadata
+
 // normalize the requested capacity(in GiB) to what is supported by the driver
 func getRequestedCapacity(capRange *csi.CapacityRange) (int64, error) {
 	// Input is in bytes from csi
@@ -252,26 +254,16 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 		volume.Iops = nil
 	}
 
-	//if zone is not given in SC parameters, but region is given, error out
-	if len(strings.TrimSpace(volume.Az)) == 0 && len(strings.TrimSpace(volume.Region)) != 0 {
-		err = fmt.Errorf("zone parameter is empty in storage class for region %s", strings.TrimSpace(volume.Region))
-		return volume, err
-	}
-
 	//If both zone and region not provided in storage class parameters then we pick from the Topology
 	//if zone is provided but region is not provided, fetch region for specified zone
-	if len(strings.TrimSpace(volume.Region)) == 0 {
+	if len(strings.TrimSpace(volume.Az)) == 0 {
 		zones, err := pickTargetTopologyParams(req.GetAccessibilityRequirements())
 		if err != nil {
 			err = fmt.Errorf("unable to fetch zone information from topology: '%v'", err)
 			logger.Error("getVolumeParameters", zap.NamedError("InvalidParameter", err))
 			return volume, err
 		}
-		volume.Region = zones[utils.NodeRegionLabel]
-		if len(strings.TrimSpace(volume.Az)) == 0 {
-			volume.Az = zones[utils.NodeZoneLabel]
-		}
-
+		volume.Az = zones[utils.NodeZoneLabel]
 	}
 
 	return volume, nil
@@ -435,7 +427,8 @@ func createCSIVolumeResponse(vol provider.Volume, capBytes int64, zones []string
 	if vol.Iops != nil && len(*vol.Iops) > 0 {
 		labels[IOPSLabel] = *vol.Iops
 	}
-	metadata, err := metadata.NewNodeMetadata(os.Getenv("KUBE_NODE_NAME"), logger)
+	metadata, err := nodeMeta(os.Getenv("KUBE_NODE_NAME"), logger)
+	logger.Info("Metadata", zap.Any("Metadata Value:", metadata))
 	if err != nil {
 		logger.Error("Controller_Helper: Failed to initialize node metadata", zap.Error(err))
 		return nil
@@ -461,6 +454,7 @@ func createCSIVolumeResponse(vol provider.Volume, capBytes int64, zones []string
 			AccessibleTopology: []*csi.Topology{topology},
 		},
 	}
+	fmt.Println("createVolumeResponse:", volResp)
 	return volResp
 }
 
