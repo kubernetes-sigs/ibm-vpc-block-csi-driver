@@ -196,6 +196,64 @@ func TestCreateVolumeArguments(t *testing.T) {
 			libVolumeResponse: nil,
 			libVolumeError:    providerError.Message{Code: "FailedToPlaceOrder", Description: "Volume creation failed", Type: providerError.Unauthenticated},
 		},
+		{
+			name: "Zone provided but region not provided as parameter",
+			req: &csi.CreateVolumeRequest{
+				Name:               volName,
+				CapacityRange:      stdCapRange,
+				VolumeCapabilities: stdVolCap,
+				Parameters: map[string]string{
+					//"type": "ext2",
+					Profile: "general-purpose",
+					Zone:    "myzone",
+				},
+				AccessibilityRequirements: &csi.TopologyRequirement{Preferred: []*csi.Topology{{Segments: map[string]string{
+					utils.NodeRegionLabel: "myregion",
+					utils.NodeZoneLabel:   "myzone",
+				},
+				},
+				},
+				},
+			},
+			expVol: &csi.Volume{
+				CapacityBytes:      20 * 1024 * 1024 * 1024, // In byte
+				VolumeId:           "testVolumeId",
+				VolumeContext:      map[string]string{utils.NodeRegionLabel: "myregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: ""},
+				AccessibleTopology: stdTopology,
+			},
+			libVolumeResponse: &provider.Volume{Capacity: &cap, Name: &volName, VolumeID: "testVolumeId", Iops: &iopsStr, Az: "myzone", Region: "myregion"},
+			expErrCode:        codes.OK,
+			libVolumeError:    nil,
+		},
+
+		{
+			name: "Zone and region not provided as parameter",
+			req: &csi.CreateVolumeRequest{
+				Name:               volName,
+				CapacityRange:      stdCapRange,
+				VolumeCapabilities: stdVolCap,
+				Parameters: map[string]string{
+					//"type": "ext2",
+					Profile: "general-purpose",
+				},
+				AccessibilityRequirements: &csi.TopologyRequirement{Preferred: []*csi.Topology{{Segments: map[string]string{
+					utils.NodeRegionLabel: "myregion",
+					utils.NodeZoneLabel:   "myzone",
+				},
+				},
+				},
+				},
+			},
+			expVol: &csi.Volume{
+				CapacityBytes:      20 * 1024 * 1024 * 1024, // In byte
+				VolumeId:           "testVolumeId",
+				VolumeContext:      map[string]string{utils.NodeRegionLabel: "myregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: ""},
+				AccessibleTopology: stdTopology,
+			},
+			libVolumeResponse: &provider.Volume{Capacity: &cap, Name: &volName, VolumeID: "testVolumeId", Iops: &iopsStr, Az: "myzone", Region: "myregion"},
+			expErrCode:        codes.OK,
+			libVolumeError:    nil,
+		},
 	}
 
 	// Creating test logger
