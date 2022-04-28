@@ -42,16 +42,6 @@ github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym
 github.com/GoogleCloudPlatform/k8s-cloud-provider v0.0.0-20200415212048-7901bc822317/go.mod h1:DF8FZRxMHMGv/vP2lQP6h+dYzzjpuRn24VeRiYn3qjQ=
 github.com/IBM-Cloud/ibm-cloud-cli-sdk v0.6.7 h1:eHgfQl6IeSmzWUyiSi13CvoFYsovoyqWlpHX0pa9J54=
 github.com/IBM-Cloud/ibm-cloud-cli-sdk v0.6.7/go.mod h1:RiUvKuHKTBmBApDMUQzBL14pQUGKcx/IioKQPIcRQjs=
-github.com/IBM/ibm-csi-common v1.0.0-beta15 h1:1U571Xf1RfpI5hIkuz6oIaahuUZpEy6CeRzDIfH/UwY=
-github.com/IBM/ibm-csi-common v1.0.0-beta15/go.mod h1:PeSXn0la1H7hKalfIwgeldFQ7I5d9h6j6pPId3qxlb8=
-github.com/IBM/ibm-csi-common v1.0.0-beta9.0.20220428044458-767812a19053 h1:Unrur56vHYqoYWR3o/F+8+q29dZtPkTpcsM+15OIm6E=
-github.com/IBM/ibm-csi-common v1.0.0-beta9.0.20220428044458-767812a19053/go.mod h1:PeSXn0la1H7hKalfIwgeldFQ7I5d9h6j6pPId3qxlb8=
-github.com/IBM/ibm-csi-common v1.0.0-beta9.0.20220428045626-c217da835d51 h1:qBYiExoHFx7lYmz3TCRf2A78oTW6Pr3LzB1nytuS+1w=
-github.com/IBM/ibm-csi-common v1.0.0-beta9.0.20220428045626-c217da835d51/go.mod h1:PeSXn0la1H7hKalfIwgeldFQ7I5d9h6j6pPId3qxlb8=
-github.com/IBM/ibm-csi-common v1.0.0-beta9.0.20220428052423-980f378f8015 h1:0WANaAJZ7VRjT/6B8OzTt3l/okS3boj9NlIk/2QpVks=
-github.com/IBM/ibm-csi-common v1.0.0-beta9.0.20220428052423-980f378f8015/go.mod h1:PeSXn0la1H7hKalfIwgeldFQ7I5d9h6j6pPId3qxlb8=
-github.com/IBM/ibm-csi-common v1.0.0-beta9.0.20220428052719-b5bcdb80d078 h1:Zp2ongM5iqQPyF+IwhamOnOSiUG1B1R1Owazi3jSkr8=
-github.com/IBM/ibm-csi-common v1.0.0-beta9.0.20220428052719-b5bcdb80d078/go.mod h1:PeSXn0la1H7hKalfIwgeldFQ7I5d9h6j6pPId3qxlb8=
 github.com/IBM/ibm-csi-common v1.0.0-beta9.0.20220428062037-9e4a62515378 h1:ffj434DRojjCR/JiejY3hVvN/8uSHsBBJ4gnZHwM4OQ=
 github.com/IBM/ibm-csi-common v1.0.0-beta9.0.20220428062037-9e4a62515378/go.mod h1:PeSXn0la1H7hKalfIwgeldFQ7I5d9h6j6pPId3qxlb8=
 github.com/IBM/ibmcloud-volume-interface v1.0.0-beta10 h1:m3OO2Xd7NDWovxwa8KLsdUsP95NkKpMJ8YWBS1pa0Ew=
