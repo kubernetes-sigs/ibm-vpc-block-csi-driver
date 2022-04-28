@@ -18,34 +18,13 @@
 package utils
 
 import (
-	"context"
 	"encoding/json"
-	"flag"
-	"fmt"
 	"io/ioutil"
-	"net"
 	"path/filepath"
-	"time"
 
-	grpcClient "github.com/IBM/ibm-csi-common/pkg/utils/grpc-client"
-	pb "github.com/IBM/ibm-csi-common/provider"
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 )
-
-var (
-	endpoint = flag.String("sidecarEndpoint", "/csi/provider.sock", "Storage secret sidecar endpoint")
-)
-
-func unixConnect(addr string, t time.Duration) (net.Conn, error) {
-	unixAddr, err := net.ResolveUnixAddr("unix", addr)
-	if err != nil {
-		return nil, err
-	}
-	conn, err := net.DialUnix("unix", nil, unixAddr)
-	return conn, err
-}
 
 //ClusterInfo contains the cluster information
 type ClusterInfo struct {
@@ -71,68 +50,4 @@ func NewClusterInfo(logger *zap.Logger) (*ClusterInfo, error) {
 		return nil, err
 	}
 	return clusterInfo, nil
-}
-
-// APIKeyImpl implementation
-type APIKeyImpl struct {
-	logger      *zap.Logger
-	GRPCBackend grpcClient.GrpcSessionFactory
-}
-
-//NewAPIKeyImpl returns the new decryptor
-func NewAPIKeyImpl(loggerIn *zap.Logger) (*APIKeyImpl, error) {
-	var err error
-	apiKeyImp := &APIKeyImpl{
-		logger:      loggerIn,
-		GRPCBackend: &grpcClient.ConnObjFactory{},
-	}
-	return apiKeyImp, err
-}
-
-//UpdateIAMKeys decrypts the API keys and updates.
-func (d *APIKeyImpl) UpdateIAMKeys(config *config.Config) error {
-	//Setup grpc connection
-	d.logger.Info("Creating GRPC client")
-	grpcSess := d.GRPCBackend.NewGrpcSession()
-	cc := &grpcClient.GrpcSes{}
-	d.logger.Info("Dialing for connection..")
-	conn, err := grpcSess.GrpcDial(cc, *endpoint, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithDialer(unixConnect)) //nolint:staticcheck
-	if err != nil {
-		err = fmt.Errorf("failed to establish grpc-client connection: %v", err)
-		return err
-	}
-
-	//APIKeyProvider Client
-	c := pb.NewAPIKeyProviderClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-	defer cc.Close()
-
-	if config.Bluemix.Encryption {
-		d.logger.Info("Getting bluemix section...")
-		r, err := c.GetContainerAPIKey(ctx, &pb.Provider{})
-		if err != nil {
-			return err
-		}
-		config.Bluemix.IamAPIKey = r.GetApikey()
-	}
-	if config.VPC.Encryption {
-		if config.VPC.APIKey != "" {
-			d.logger.Info("Getting VPC section...")
-			r, err := c.GetVPCAPIKey(ctx, &pb.Provider{})
-			if err != nil {
-				return err
-			}
-			config.VPC.APIKey = r.GetApikey()
-		}
-		if config.VPC.G2APIKey != "" {
-			d.logger.Info("Getting VPC G2 section...")
-			r, err := c.GetVPCAPIKey(ctx, &pb.Provider{})
-			if err != nil {
-				return err
-			}
-			config.VPC.G2APIKey = r.GetApikey()
-		}
-	}
-	return nil
 }

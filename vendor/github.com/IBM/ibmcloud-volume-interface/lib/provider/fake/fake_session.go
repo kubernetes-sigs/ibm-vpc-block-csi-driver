@@ -2,10 +2,10 @@
 package fake
 
 import (
-	http "net/http"
-	sync "sync"
+	"net/http"
+	"sync"
 
-	provider "github.com/IBM/ibmcloud-volume-interface/lib/provider"
+	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 )
 
 type FakeSession struct {

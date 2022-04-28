@@ -30,12 +30,15 @@ import (
 	"github.com/IBM-Cloud/ibm-cloud-cli-sdk/common/rest"
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	util "github.com/IBM/ibmcloud-volume-interface/lib/utils"
+	"github.com/IBM/secret-common-lib/pkg/secret_provider"
+	sp "github.com/IBM/secret-utils-lib/pkg/secret_provider"
 )
 
 // tokenExchangeService ...
 type tokenExchangeService struct {
-	authConfig *AuthConfiguration
-	httpClient *http.Client
+	authConfig     *AuthConfiguration
+	httpClient     *http.Client
+	secretprovider sp.SecretProviderInterface
 }
 
 // AuthConfiguration ...
@@ -62,9 +65,14 @@ func NewTokenExchangeService(authConfig *AuthConfiguration) (TokenExchangeServic
 	if err != nil {
 		return nil, err
 	}
+	spObject, err := secret_provider.NewSecretProvider()
+	if err != nil {
+		return nil, err
+	}
 	return &tokenExchangeService{
-		authConfig: authConfig,
-		httpClient: httpClient,
+		authConfig:     authConfig,
+		httpClient:     httpClient,
+		secretprovider: spObject,
 	}, nil
 }
 
@@ -118,12 +126,14 @@ func (tes *tokenExchangeService) ExchangeIAMAPIKeyForIMSToken(iamAPIKey string, 
 
 // ExchangeIAMAPIKeyForAccessToken ...
 func (tes *tokenExchangeService) ExchangeIAMAPIKeyForAccessToken(iamAPIKey string, logger *zap.Logger) (*AccessToken, error) {
-	r := tes.newTokenExchangeRequest(logger)
-
-	r.request.Field("grant_type", "urn:ibm:params:oauth:grant-type:apikey")
-	r.request.Field("apikey", iamAPIKey)
-
-	return r.exchangeForAccessToken()
+	logger.Info("Fetching using secret provider")
+	token, _, err := tes.secretprovider.GetDefaultIAMToken(false)
+	if err != nil {
+		logger.Error("Error fetching iam token", zap.Error(err))
+		return nil, err
+	}
+	logger.Info("Successfully fetched iam token")
+	return &AccessToken{Token: token}, nil
 }
 
 // exchangeForAccessToken ...
@@ -170,12 +180,6 @@ func (tes *tokenExchangeService) newTokenExchangeRequest(logger *zap.Logger) *to
 		logger:       logger,
 		errorRetrier: util.NewErrorRetrier(40, retyrInterval, logger),
 	}
-}
-
-// UpdateAPIKey ...
-func (tes *tokenExchangeService) UpdateAPIKey(apiKey string, logger *zap.Logger) error {
-	// This method need not be implemented
-	return nil
 }
 
 // sendTokenExchangeRequest ...

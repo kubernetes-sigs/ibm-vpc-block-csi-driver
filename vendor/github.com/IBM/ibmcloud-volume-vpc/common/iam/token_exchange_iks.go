@@ -28,13 +28,16 @@ import (
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	util "github.com/IBM/ibmcloud-volume-interface/lib/utils"
 	"github.com/IBM/ibmcloud-volume-interface/provider/iam"
+	"github.com/IBM/secret-common-lib/pkg/secret_provider"
+	sp "github.com/IBM/secret-utils-lib/pkg/secret_provider"
 	"go.uber.org/zap"
 )
 
 // tokenExchangeIKSService ...
 type tokenExchangeIKSService struct {
-	iksAuthConfig *IksAuthConfiguration
-	httpClient    *http.Client
+	iksAuthConfig  *IksAuthConfiguration
+	httpClient     *http.Client
+	secretprovider sp.SecretProviderInterface
 }
 
 // IksAuthConfiguration ...
@@ -53,9 +56,14 @@ func NewTokenExchangeIKSService(iksAuthConfig *IksAuthConfiguration) (iam.TokenE
 	if err != nil {
 		return nil, err
 	}
+	spObject, err := secret_provider.NewSecretProvider()
+	if err != nil {
+		return nil, err
+	}
 	return &tokenExchangeIKSService{
-		iksAuthConfig: iksAuthConfig,
-		httpClient:    httpClient,
+		iksAuthConfig:  iksAuthConfig,
+		httpClient:     httpClient,
+		secretprovider: spObject,
 	}, nil
 }
 
@@ -82,8 +90,14 @@ func (tes *tokenExchangeIKSService) ExchangeRefreshTokenForAccessToken(refreshTo
 
 // ExchangeIAMAPIKeyForAccessToken ...
 func (tes *tokenExchangeIKSService) ExchangeIAMAPIKeyForAccessToken(iamAPIKey string, logger *zap.Logger) (*iam.AccessToken, error) {
-	r := tes.newTokenExchangeRequest(logger)
-	return r.exchangeForAccessToken()
+	logger.Info("Fetching using secret provider")
+	token, _, err := tes.secretprovider.GetDefaultIAMToken(false)
+	if err != nil {
+		logger.Error("Error fetching iam token", zap.Error(err))
+		return nil, err
+	}
+	logger.Info("Successfully fetched iam token")
+	return &iam.AccessToken{Token: token}, nil
 }
 
 // newTokenExchangeRequest ...
@@ -189,14 +203,4 @@ func (r *tokenExchangeIKSRequest) sendTokenExchangeRequest() (*tokenExchangeIKSR
 	return nil,
 		util.NewError("ErrorUnclassified",
 			"Unexpected IAM token exchange response")
-}
-
-// UpdateAPIKey ...
-func (tes *tokenExchangeIKSService) UpdateAPIKey(apiKey string, logger *zap.Logger) error {
-	logger.Info("Updating api key")
-	if tes.iksAuthConfig == nil {
-		return errors.New("failed to update api key")
-	}
-	tes.iksAuthConfig.IamAPIKey = apiKey
-	return nil
 }

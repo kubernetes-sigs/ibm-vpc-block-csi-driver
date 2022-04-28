@@ -3,20 +3,21 @@ module github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
 go 1.16
 
 require (
-	github.com/IBM/ibm-csi-common v1.0.0-beta15
-	github.com/IBM/ibmcloud-volume-interface v1.0.0-beta10
-	github.com/IBM/ibmcloud-volume-vpc v1.0.0-beta15
+	github.com/IBM/ibm-csi-common v1.0.0-beta9.0.20220427022829-314ef2a8dfb7
+	github.com/IBM/ibmcloud-volume-interface v1.0.1-0.20220427021755-42e408722055
+	github.com/IBM/ibmcloud-volume-vpc v1.0.0-beta9.0.20220427022608-f5a95ba2842b
 	github.com/container-storage-interface/spec v1.5.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/uuid v1.1.2
 	github.com/kubernetes-csi/csi-test/v4 v4.3.0
 	github.com/prometheus/client_golang v1.11.1
 	github.com/stretchr/testify v1.7.0
-	go.uber.org/zap v1.15.0
-	golang.org/x/net v0.0.0-20210224082022-3d97a244fca7
-	golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40
-	google.golang.org/grpc v1.34.0
+	go.uber.org/zap v1.20.0
+	golang.org/x/net v0.0.0-20211209124913-491a49abca63
+	golang.org/x/sys v0.0.0-20210831042530-f4d43177bf5e
+	google.golang.org/grpc v1.36.1
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
+	k8s.io/client-go v11.0.1-0.20190516230509-ae8359b20417+incompatible // indirect
 	k8s.io/kubernetes v1.21.0
 	k8s.io/mount-utils v0.21.0
 )
