@@ -29,12 +29,11 @@ import (
 func initIBMCSIDriver(t *testing.T) *IBMCSIDriver {
 	vendorVersion := "test-vendor-version-1.1.2"
 	driver := "mydriver"
-
 	// Creating test logger
 	logger, teardown := cloudProvider.GetTestLogger(t)
 	defer teardown()
 	icDriver := GetIBMCSIDriver()
-
+	nodeMeta = nodeMetadata.InitMetadata
 	// Create fake provider and mounter
 	provider, _ := cloudProvider.NewFakeIBMCloudStorageProvider("", logger)
 	mounter := mountManager.NewFakeNodeMounter()
