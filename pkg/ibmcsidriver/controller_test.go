@@ -216,10 +216,14 @@ func TestCreateVolumeArguments(t *testing.T) {
 				},
 			},
 			expVol: &csi.Volume{
-				CapacityBytes:      20 * 1024 * 1024 * 1024, // In byte
-				VolumeId:           "testVolumeId",
-				VolumeContext:      map[string]string{utils.NodeRegionLabel: "myregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: ""},
-				AccessibleTopology: stdTopology,
+				CapacityBytes: 20 * 1024 * 1024 * 1024, // In byte
+				VolumeId:      "testVolumeId",
+				VolumeContext: map[string]string{utils.NodeRegionLabel: "testregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: ""},
+				AccessibleTopology: []*csi.Topology{
+					{
+						Segments: map[string]string{utils.NodeZoneLabel: "myzone", utils.NodeRegionLabel: "testregion"},
+					},
+				},
 			},
 			libVolumeResponse: &provider.Volume{Capacity: &cap, Name: &volName, VolumeID: "testVolumeId", Iops: &iopsStr, Az: "myzone", Region: "myregion"},
 			expErrCode:        codes.OK,
@@ -245,10 +249,14 @@ func TestCreateVolumeArguments(t *testing.T) {
 				},
 			},
 			expVol: &csi.Volume{
-				CapacityBytes:      20 * 1024 * 1024 * 1024, // In byte
-				VolumeId:           "testVolumeId",
-				VolumeContext:      map[string]string{utils.NodeRegionLabel: "myregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: ""},
-				AccessibleTopology: stdTopology,
+				CapacityBytes: 20 * 1024 * 1024 * 1024, // In byte
+				VolumeId:      "testVolumeId",
+				VolumeContext: map[string]string{utils.NodeRegionLabel: "testregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: ""},
+				AccessibleTopology: []*csi.Topology{
+					{
+						Segments: map[string]string{utils.NodeZoneLabel: "myzone", utils.NodeRegionLabel: "testregion"},
+					},
+				},
 			},
 			libVolumeResponse: &provider.Volume{Capacity: &cap, Name: &volName, VolumeID: "testVolumeId", Iops: &iopsStr, Az: "myzone", Region: "myregion"},
 			expErrCode:        codes.OK,
