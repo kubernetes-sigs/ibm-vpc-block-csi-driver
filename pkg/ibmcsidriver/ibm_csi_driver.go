@@ -19,7 +19,6 @@ package ibmcsidriver
 
 import (
 	"fmt"
-
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	commonError "github.com/IBM/ibm-csi-common/pkg/messages"
 	nodeMetadata "github.com/IBM/ibm-csi-common/pkg/metadata"
@@ -27,6 +26,7 @@ import (
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 	"go.uber.org/zap"
+	"os"
 )
 
 // IBMCSIDriver ...
@@ -34,6 +34,7 @@ type IBMCSIDriver struct {
 	name          string
 	vendorVersion string
 	logger        *zap.Logger
+	region        string
 
 	ids *CSIIdentityServer
 	ns  *CSINodeServer
@@ -43,6 +44,8 @@ type IBMCSIDriver struct {
 	cscap []*csi.ControllerServiceCapability
 	nscap []*csi.NodeServiceCapability
 }
+
+var nodeMeta = nodeMetadata.NewNodeMetadata
 
 // GetIBMCSIDriver ...
 func GetIBMCSIDriver() *IBMCSIDriver {
@@ -78,7 +81,7 @@ func (icDriver *IBMCSIDriver) SetupIBMCSIDriver(provider cloudProvider.CloudProv
 		csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER,
 	}
 
-	_ = icDriver.AddVolumeCapabilityAccessModes(vcam)
+	_ = icDriver.AddVolumeCapabilityAccessModes(vcam) // #nosec G104: Attempt to AddVolumeCapabilityAccessModes only on best-effort basis.Error cannot be usefully handled.
 	csc := []csi.ControllerServiceCapability_RPC_Type{
 		csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME,
 		csi.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME,
@@ -89,14 +92,14 @@ func (icDriver *IBMCSIDriver) SetupIBMCSIDriver(provider cloudProvider.CloudProv
 		// csi.ControllerServiceCapability_RPC_PUBLISH_READONLY,
 		csi.ControllerServiceCapability_RPC_EXPAND_VOLUME,
 	}
-	_ = icDriver.AddControllerServiceCapabilities(csc)
+	_ = icDriver.AddControllerServiceCapabilities(csc) // #nosec G104: Attempt to AddControllerServiceCapabilities only on best-effort basis.Error cannot be usefully handled.
 
 	ns := []csi.NodeServiceCapability_RPC_Type{
 		csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME,
 		csi.NodeServiceCapability_RPC_GET_VOLUME_STATS,
 		csi.NodeServiceCapability_RPC_EXPAND_VOLUME,
 	}
-	_ = icDriver.AddNodeServiceCapabilities(ns)
+	_ = icDriver.AddNodeServiceCapabilities(ns) // #nosec G104: Attempt to AddNodeServiceCapabilities only on best-effort basis.Error cannot be usefully handled.
 
 	// Set up CSI RPC Servers
 	icDriver.ids = NewIdentityServer(icDriver)
@@ -104,6 +107,13 @@ func (icDriver *IBMCSIDriver) SetupIBMCSIDriver(provider cloudProvider.CloudProv
 	icDriver.cs = NewControllerServer(icDriver, provider)
 
 	icDriver.logger.Info("Successfully setup IBM CSI driver")
+
+	// Set up Region
+	regionMetadata, err := nodeMeta(os.Getenv("KUBE_NODE_NAME"), lgr)
+	if err != nil {
+		return fmt.Errorf("Controller_Helper: Failed to initialize node metadata")
+	}
+	icDriver.region = regionMetadata.GetRegion()
 
 	return nil
 }

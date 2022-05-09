@@ -79,7 +79,5 @@ func (csiIdentity *CSIIdentityServer) GetPluginCapabilities(ctx context.Context,
 
 // Probe ...
 func (csiIdentity *CSIIdentityServer) Probe(ctx context.Context, req *csi.ProbeRequest) (*csi.ProbeResponse, error) {
-	ctxLogger, _ := utils.GetContextLogger(ctx, false)
-	ctxLogger.Info("CSIIdentityServer-Probe...", zap.Reflect("Request", *req))
 	return &csi.ProbeResponse{}, nil
 }
