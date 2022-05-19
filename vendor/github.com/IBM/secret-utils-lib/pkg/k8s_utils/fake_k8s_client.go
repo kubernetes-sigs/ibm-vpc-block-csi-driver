@@ -30,13 +30,13 @@ import (
 )
 
 // FakeGetk8sClientSet ...
-func FakeGetk8sClientSet(logger *zap.Logger) (*KubernetesClient, error) {
+func FakeGetk8sClientSet(logger *zap.Logger) (KubernetesClient, error) {
 	logger.Info("Getting fake k8s client")
-	return &KubernetesClient{namespace: "kube-system", logger: logger, clientset: fake.NewSimpleClientset()}, nil
+	return KubernetesClient{namespace: "kube-system", logger: logger, clientset: fake.NewSimpleClientset()}, nil
 }
 
 // FakeCreateSecret ...
-func FakeCreateSecret(kc *KubernetesClient, fakeAuthType, secretdatafilepath string) error {
+func FakeCreateSecret(kc KubernetesClient, fakeAuthType, secretdatafilepath string) error {
 	secret := new(v1.Secret)
 
 	var dataname string
@@ -68,6 +68,29 @@ func FakeCreateSecret(kc *KubernetesClient, fakeAuthType, secretdatafilepath str
 	_, err = clientset.CoreV1().Secrets("kube-system").Create(context.TODO(), secret, metav1.CreateOptions{})
 	if err != nil {
 		kc.logger.Error("Error creating secret", zap.Error(err))
+		return err
+	}
+	return nil
+}
+
+// FakeCreateCM ...
+func FakeCreateCM(kc KubernetesClient, clsuterInfofilepath string) error {
+	byteData, err := ioutil.ReadFile(clsuterInfofilepath)
+	if err != nil {
+		kc.logger.Error("Error reading content to create config map", zap.Error(err))
+		return err
+	}
+
+	data := make(map[string]string)
+	data["cluster-config.json"] = string(byteData)
+	cm := new(v1.ConfigMap)
+	cm.Data = data
+	cm.Name = "cluster-info"
+	clientset := kc.clientset
+
+	_, err = clientset.CoreV1().ConfigMaps("kube-system").Create(context.TODO(), cm, metav1.CreateOptions{})
+	if err != nil {
+		kc.logger.Error("Error creating config map", zap.Error(err))
 		return err
 	}
 	return nil

@@ -41,7 +41,7 @@ type Authenticator interface {
 }
 
 // NewAuthenticator initializes the particular authenticator based on the configuration provided.
-func NewAuthenticator(logger *zap.Logger, kc *k8s_utils.KubernetesClient) (Authenticator, string, error) {
+func NewAuthenticator(logger *zap.Logger, kc k8s_utils.KubernetesClient) (Authenticator, string, error) {
 	logger.Info("Initializing authenticator")
 
 	// Fetching secret data (ibm-cloud-credentials or storage-secret-store)
@@ -50,6 +50,7 @@ func NewAuthenticator(logger *zap.Logger, kc *k8s_utils.KubernetesClient) (Authe
 		logger.Error("Error fetching secret", zap.Error(err))
 		return nil, "", err
 	}
+
 	if secretname == utils.IBMCLOUD_CREDENTIALS_SECRET {
 		credentialsmap, err := parseIBMCloudCredentials(logger, secretData)
 		if err != nil {

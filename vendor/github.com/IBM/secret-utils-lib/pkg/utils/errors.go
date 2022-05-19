@@ -100,4 +100,13 @@ const (
 
 	// ErrFetchingENV ...
 	ErrFetchingENV = "Failed to gather environment variables"
+
+	// ErrEmptyClusterConfig ...
+	ErrEmptyClusterConfig = "Cluster config is empty"
+
+	// ErrFetchingK8sClusterConfig ...
+	ErrFetchingK8sClusterConfig = "Error fetching k8s cluster config"
+
+	// WarnFetchingTokenExchangeURL ...
+	WarnFetchingTokenExchangeURL = "Token exchange url not found in the secret"
 )

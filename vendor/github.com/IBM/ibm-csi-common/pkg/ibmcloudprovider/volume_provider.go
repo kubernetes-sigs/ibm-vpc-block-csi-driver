@@ -20,6 +20,7 @@ package ibmcloudprovider
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/IBM/ibm-csi-common/pkg/utils"
