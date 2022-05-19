@@ -251,25 +251,15 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 		volume.Iops = nil
 	}
 
-	//if zone is not given in SC parameters, but region is given, error out
-	if len(strings.TrimSpace(volume.Az)) == 0 && len(strings.TrimSpace(volume.Region)) != 0 {
-		err = fmt.Errorf("zone parameter is empty in storage class for region %s", strings.TrimSpace(volume.Region))
-		return volume, err
-	}
-
-	//If both zone and region not provided in storage class parameters then we pick from the Topology
-	//if zone is provided but region is not provided, fetch region for specified zone
-	if len(strings.TrimSpace(volume.Region)) == 0 {
+	//If  zone not provided in storage class parameters then we pick from the Topology
+	if len(strings.TrimSpace(volume.Az)) == 0 {
 		zones, err := pickTargetTopologyParams(req.GetAccessibilityRequirements())
 		if err != nil {
 			err = fmt.Errorf("unable to fetch zone information from topology: '%v'", err)
 			logger.Error("getVolumeParameters", zap.NamedError("InvalidParameter", err))
 			return volume, err
 		}
-		volume.Region = zones[utils.NodeRegionLabel]
-		if len(strings.TrimSpace(volume.Az)) == 0 {
-			volume.Az = zones[utils.NodeZoneLabel]
-		}
+		volume.Az = zones[utils.NodeZoneLabel]
 
 	}
 
@@ -423,7 +413,7 @@ func checkIfVolumeExists(session provider.Session, vol provider.Volume, ctxLogge
 }
 
 // createCSIVolumeResponse ...
-func createCSIVolumeResponse(vol provider.Volume, capBytes int64, zones []string, clusterID string) *csi.CreateVolumeResponse {
+func createCSIVolumeResponse(vol provider.Volume, capBytes int64, zones []string, clusterID string, region string) *csi.CreateVolumeResponse {
 	labels := map[string]string{}
 
 	// Update labels for PV objects
@@ -434,7 +424,12 @@ func createCSIVolumeResponse(vol provider.Volume, capBytes int64, zones []string
 	if vol.Iops != nil && len(*vol.Iops) > 0 {
 		labels[IOPSLabel] = *vol.Iops
 	}
-	labels[utils.NodeRegionLabel] = vol.Region
+
+	if vol.Region != "" {
+		labels[utils.NodeRegionLabel] = vol.Region
+	} else {
+		labels[utils.NodeRegionLabel] = region
+	}
 	labels[utils.NodeZoneLabel] = vol.Az
 
 	topology := &csi.Topology{
@@ -455,7 +450,6 @@ func createCSIVolumeResponse(vol provider.Volume, capBytes int64, zones []string
 	}
 	return volResp
 }
-
 func createControllerPublishVolumeResponse(volumeAttachmentResponse provider.VolumeAttachmentResponse, extraPublishInfo map[string]string) *csi.ControllerPublishVolumeResponse {
 	publishContext := map[string]string{
 		PublishInfoVolumeID:   volumeAttachmentResponse.VolumeID,
