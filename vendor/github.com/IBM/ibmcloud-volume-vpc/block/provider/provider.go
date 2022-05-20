@@ -241,31 +241,6 @@ func (vpcp *VPCBlockProvider) OpenSession(ctx context.Context, contextCredential
 	return vpcSession, nil
 }
 
-// UpdateAPIKey ...
-func (vpcp *VPCBlockProvider) UpdateAPIKey(conf interface{}, logger *zap.Logger) error {
-	logger.Info("Updating api key in vpc block provider")
-	vpcConfig, ok := conf.(*vpcconfig.VPCBlockConfig)
-	if !ok {
-		logger.Error("Error fetching vpc block config from interface")
-		return errors.New("error unmarshaling vpc block config")
-	}
-	if vpcp.ContextCF == nil {
-		logger.Error("Error updating api key, context credentials is not intiliazed")
-		return errors.New("credentials not initliazed in the provider")
-	}
-	err := vpcp.ContextCF.UpdateAPIKey(vpcConfig.VPCConfig.G2APIKey, logger)
-	if err != nil {
-		logger.Error("Error updating api key in provider", zap.Error(err))
-		return err
-	}
-	// Updating the api key in VPC block provider
-	vpcp.Config.VPCConfig.APIKey = vpcConfig.VPCConfig.G2APIKey
-	vpcp.Config.VPCConfig.G2APIKey = vpcConfig.VPCConfig.G2APIKey
-	vpcp.tokenGenerator.config.G2APIKey = vpcConfig.VPCConfig.G2APIKey
-	vpcp.tokenGenerator.config.APIKey = vpcConfig.VPCConfig.G2APIKey
-	return nil
-}
-
 // getAccessToken ...
 func getAccessToken(creds provider.ContextCredentials, logger *zap.Logger) (token *iam.AccessToken, err error) {
 	switch creds.AuthType {

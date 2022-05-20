@@ -19,7 +19,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	util "github.com/IBM/ibmcloud-volume-interface/lib/utils"
@@ -45,11 +44,21 @@ var _ local.Provider = &IksVpcBlockProvider{}
 
 //NewProvider handles both IKS and  RIAAS sessions
 func NewProvider(conf *vpcconfig.VPCBlockConfig, logger *zap.Logger) (local.Provider, error) {
+	var err error
 	//Setup vpc provider
-	provider, _ := vpcprovider.NewProvider(conf, logger)
+	provider, err := vpcprovider.NewProvider(conf, logger)
+	if err != nil {
+		logger.Error("Error initializing VPC Provider", zap.Error(err))
+		return nil, err
+	}
 	vpcBlockProvider, _ := provider.(*vpcprovider.VPCBlockProvider)
+
 	// Setup IKS provider
-	provider, _ = vpcprovider.NewProvider(conf, logger)
+	provider, err = vpcprovider.NewProvider(conf, logger)
+	if err != nil {
+		logger.Error("Error initializing IKS Provider", zap.Error(err))
+		return nil, err
+	}
 	iksBlockProvider, _ := provider.(*vpcprovider.VPCBlockProvider)
 
 	//Overrider Base URL
@@ -61,6 +70,11 @@ func NewProvider(conf *vpcconfig.VPCBlockConfig, logger *zap.Logger) (local.Prov
 		iksBlockProvider: iksBlockProvider,
 	}
 
+	iksVpcBlockProvider.iksBlockProvider.ContextCF, err = vpcauth.NewVPCContextCredentialsFactory(iksVpcBlockProvider.vpcBlockProvider.Config)
+	if err != nil {
+		logger.Error("Error initializing context credentials factory", zap.Error(err))
+		return nil, err
+	}
 	//vpcBlockProvider.ApiConfig.BaseURL = conf.VPC.IKSTokenExchangePrivateURL
 	return iksVpcBlockProvider, nil
 }
@@ -96,13 +110,7 @@ func (iksp *IksVpcBlockProvider) OpenSession(ctx context.Context, contextCredent
 	vpcSession, _ := session.(*vpcprovider.VPCSession)
 	ctxLogger.Info("Opening IKS block session")
 
-	//Create ContextCredentialsFactory
-	ccf, err = iksp.ContextCredentialsFactory(nil)
-	if err != nil {
-		ctxLogger.Error("Error while creating the ContextCredentialsFactory", zap.Error(err))
-		return nil, err
-	}
-	iksp.iksBlockProvider.ContextCF = ccf
+	ccf = iksp.iksBlockProvider.ContextCF
 	iksp.iksBlockProvider.ClientProvider = riaas.IKSRegionalAPIClientProvider{}
 
 	ctxLogger.Info("Its ISK dual session. Getttng IAM token for  IKS block session")
@@ -135,32 +143,5 @@ func (iksp *IksVpcBlockProvider) OpenSession(ctx context.Context, contextCredent
 
 // ContextCredentialsFactory ...
 func (iksp *IksVpcBlockProvider) ContextCredentialsFactory(zone *string) (local.ContextCredentialsFactory, error) {
-	return vpcauth.NewVPCContextCredentialsFactory(iksp.vpcBlockProvider.Config)
-}
-
-// UpdateAPIKey ...
-func (iksp *IksVpcBlockProvider) UpdateAPIKey(conf interface{}, logger *zap.Logger) error {
-	logger.Info("Updating api key in iks vpc provider")
-	vpcConfig, ok := conf.(*vpcconfig.VPCBlockConfig)
-	if !ok {
-		logger.Error("Error fetching vpc block config from interface")
-		return errors.New("error unmarshaling vpc block config")
-	}
-	if iksp.vpcBlockProvider == nil {
-		logger.Error("VPC Block provider not initialized, hence unable to update api key")
-		return errors.New("vpc block provider not initialized")
-	}
-	err := iksp.vpcBlockProvider.UpdateAPIKey(vpcConfig, logger)
-	if err != nil {
-		logger.Error("Error updating api key in vpc block provider", zap.Error(err))
-		return err
-	}
-	err = iksp.iksBlockProvider.UpdateAPIKey(vpcConfig, logger)
-	if err != nil {
-		logger.Error("Error updating api key in iks block provider", zap.Error(err))
-		return err
-	}
-
-	iksp.VPCBlockProvider = *iksp.vpcBlockProvider
-	return nil
+	return iksp.iksBlockProvider.ContextCF, nil
 }

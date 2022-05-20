@@ -32,6 +32,9 @@ func NewVPCContextCredentialsFactory(config *vpcconfig.VPCBlockConfig) (*auth.Co
 		IamClientSecret: config.VPCConfig.IamClientSecret,
 	}
 	ccf, err := auth.NewContextCredentialsFactory(authConfig)
+	if err != nil {
+		return nil, err
+	}
 	if config.VPCConfig.IKSTokenExchangePrivateURL != "" {
 		authIKSConfig := &vpciam.IksAuthConfiguration{
 			IamAPIKey:       config.VPCConfig.APIKey,
@@ -39,9 +42,9 @@ func NewVPCContextCredentialsFactory(config *vpcconfig.VPCBlockConfig) (*auth.Co
 			CSRFToken:       config.APIConfig.PassthroughSecret,          // required for private cluster
 		}
 		ccf.TokenExchangeService, err = vpciam.NewTokenExchangeIKSService(authIKSConfig)
-	}
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
 	}
 	return ccf, nil
 }
