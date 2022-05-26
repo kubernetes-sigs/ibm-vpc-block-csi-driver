@@ -40,7 +40,6 @@ type KubernetesClient struct {
 
 // GetNameSpace ...
 func (kc KubernetesClient) GetNameSpace() string {
-	kc.logger.Info("Fetching namespace")
 	return kc.namespace
 }
 
@@ -51,7 +50,6 @@ func (kc KubernetesClient) GetClientSet() kubernetes.Interface {
 
 // Getk8sClientSet ...
 func Getk8sClientSet(logger *zap.Logger) (KubernetesClient, error) {
-	logger.Info("Fetching k8s clientset")
 
 	var kc KubernetesClient
 	// Fetching cluster config used to create k8s client
@@ -67,14 +65,12 @@ func Getk8sClientSet(logger *zap.Logger) (KubernetesClient, error) {
 		logger.Error("Error creating k8s client", zap.Error(err))
 		return kc, utils.Error{Description: utils.ErrFetchingK8sClusterConfig, BackendError: err.Error()}
 	}
-	logger.Info("Successfully fetched k8s client set")
 
 	namespace, err := getNameSpace(logger)
 	if err != nil {
 		logger.Error("Error fetching namespace", zap.Error(err))
 		return kc, err
 	}
-	logger.Info("Successfully fetched namespace")
 
 	kc.clientset = clientset
 	kc.logger = logger
@@ -85,7 +81,6 @@ func Getk8sClientSet(logger *zap.Logger) (KubernetesClient, error) {
 // getNameSpace ...
 func getNameSpace(logger *zap.Logger) (string, error) {
 	// Reading the namespace in which the pod is deployed
-	logger.Info("Fetching namespace")
 	byteData, err := ioutil.ReadFile(nameSpacePath)
 	if err != nil {
 		logger.Error("Error fetching namespace", zap.Error(err))

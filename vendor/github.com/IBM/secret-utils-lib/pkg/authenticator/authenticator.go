@@ -42,7 +42,6 @@ type Authenticator interface {
 
 // NewAuthenticator initializes the particular authenticator based on the configuration provided.
 func NewAuthenticator(logger *zap.Logger, kc k8s_utils.KubernetesClient) (Authenticator, string, error) {
-	logger.Info("Initializing authenticator")
 
 	// Fetching secret data (ibm-cloud-credentials or storage-secret-store)
 	secretData, secretname, err := k8s_utils.GetSecretData(kc)
@@ -67,7 +66,7 @@ func NewAuthenticator(logger *zap.Logger, kc k8s_utils.KubernetesClient) (Authen
 			defaultSecret = credentialsmap[utils.IBMCLOUD_PROFILEID]
 			authenticator = NewComputeIdentityAuthenticator(defaultSecret, logger)
 		}
-		logger.Info("Successfully initialized authenticator")
+		logger.Info("Initialized authenticator", zap.String("secret-used", utils.IBMCLOUD_CREDENTIALS_SECRET), zap.String("type", credentialType))
 		return authenticator, credentialType, nil
 	}
 
@@ -86,7 +85,7 @@ func NewAuthenticator(logger *zap.Logger, kc k8s_utils.KubernetesClient) (Authen
 
 	defaultSecret = conf.VPC.G2APIKey
 	authenticator := NewIamAuthenticator(defaultSecret, logger)
-	logger.Info("Successfully initialized authenticator")
+	logger.Info("Initialized authenticator", zap.String("secret-used", utils.STORAGE_SECRET_STORE_SECRET))
 	authenticator.SetEncryption(conf.VPC.Encryption)
 	return authenticator, utils.DEFAULT, nil
 }
@@ -94,7 +93,6 @@ func NewAuthenticator(logger *zap.Logger, kc k8s_utils.KubernetesClient) (Authen
 // parseIBMCloudCredentials: parses the given data into key value pairs
 // a map of credentials.
 func parseIBMCloudCredentials(logger *zap.Logger, data string) (map[string]string, error) {
-	logger.Info("Parsing credentials")
 
 	credentials := strings.Split(data, "\n")
 	credentialsmap := make(map[string]string)
@@ -141,6 +139,5 @@ func parseIBMCloudCredentials(logger *zap.Logger, data string) (map[string]strin
 		}
 	}
 
-	logger.Info("Successfully parsed credentials")
 	return credentialsmap, nil
 }

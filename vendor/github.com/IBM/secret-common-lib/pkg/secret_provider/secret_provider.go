@@ -33,7 +33,6 @@ func NewSecretProvider() (sp.SecretProviderInterface, error) {
 		managed = true
 	}
 	logger := setUpLogger(managed)
-	logger.Info("Initializing secret provider")
 	var secretprovider sp.SecretProviderInterface
 	var err error
 	if managed {
@@ -47,7 +46,6 @@ func NewSecretProvider() (sp.SecretProviderInterface, error) {
 		return nil, err
 	}
 
-	logger.Info("Successfully initialized secret provider")
 	return secretprovider, nil
 }
 
