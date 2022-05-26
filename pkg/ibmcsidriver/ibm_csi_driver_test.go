@@ -28,6 +28,7 @@ import (
 
 func initIBMCSIDriver(t *testing.T) *IBMCSIDriver {
 	vendorVersion := "test-vendor-version-1.1.2"
+	extraVolumeLabelsStr := "xyz:owned"
 	driver := "mydriver"
 	// Creating test logger
 	logger, teardown := cloudProvider.GetTestLogger(t)
@@ -45,7 +46,7 @@ func initIBMCSIDriver(t *testing.T) *IBMCSIDriver {
 	fakeNodeData.GetWorkerIDReturns("testworker")
 
 	// Setup the IBM CSI driver
-	err := icDriver.SetupIBMCSIDriver(provider, mounter, statsUtil, &fakeNodeData, logger, driver, vendorVersion)
+	err := icDriver.SetupIBMCSIDriver(provider, extraVolumeLabelsStr, mounter, statsUtil, &fakeNodeData, logger, driver, vendorVersion)
 	if err != nil {
 		t.Fatalf("Failed to setup IBM CSI Driver: %v", err)
 	}
@@ -61,6 +62,7 @@ func TestSetupIBMCSIDriver(t *testing.T) {
 	// common code
 	// Creating test logger
 	vendorVersion := "test-vendor-version-1.1.2"
+	extraVolumeLabelsStr := "xyz:owned"
 	name := "mydriver"
 	logger, teardown := cloudProvider.GetTestLogger(t)
 	defer teardown()
@@ -77,14 +79,14 @@ func TestSetupIBMCSIDriver(t *testing.T) {
 	fakeNodeData.GetWorkerIDReturns("testworker")
 
 	// Failed setting up driver, provider nil
-	err := icDriver.SetupIBMCSIDriver(nil, mounter, statsUtil, &fakeNodeData, logger, name, vendorVersion)
+	err := icDriver.SetupIBMCSIDriver(nil, extraVolumeLabelsStr, mounter, statsUtil, &fakeNodeData, logger, name, vendorVersion)
 	assert.NotNil(t, err)
 
 	// Failed setting up driver, mounter nil
-	err = icDriver.SetupIBMCSIDriver(provider, nil, statsUtil, &fakeNodeData, logger, name, vendorVersion)
+	err = icDriver.SetupIBMCSIDriver(provider, extraVolumeLabelsStr, nil, statsUtil, &fakeNodeData, logger, name, vendorVersion)
 	assert.NotNil(t, err)
 
 	// Failed setting up driver, name empty
-	err = icDriver.SetupIBMCSIDriver(provider, mounter, statsUtil, &fakeNodeData, logger, "", vendorVersion)
+	err = icDriver.SetupIBMCSIDriver(provider, extraVolumeLabelsStr, mounter, statsUtil, &fakeNodeData, logger, "", vendorVersion)
 	assert.NotNil(t, err)
 }

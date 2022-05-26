@@ -87,7 +87,7 @@ func (csiCS *CSIControllerServer) CreateVolume(ctx context.Context, req *csi.Cre
 	}
 
 	// Get volume input Parameters
-	requestedVolume, err := getVolumeParameters(ctxLogger, req, csiCS.CSIProvider.GetConfig())
+	requestedVolume, err := getVolumeParameters(ctxLogger, req, csiCS.CSIProvider.GetConfig(), csiCS.Driver.extraVolumeLabels)
 	if requestedVolume != nil {
 		// For logging mask VolumeEncryptionKey
 		// Create copy of the requestedVolume

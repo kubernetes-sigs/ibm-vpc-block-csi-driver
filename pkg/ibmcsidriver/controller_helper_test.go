@@ -151,6 +151,7 @@ func isVolumeSame(expected *provider.Volume, actual *provider.Volume) bool {
 
 func TestGetVolumeParameters(t *testing.T) {
 	volumeName := "volName"
+	extraVolumeLabelsStr := "kubernetes-io-cluster-CLUSTER_ID:owned"
 	volumeSize := 11
 	noIops := ""
 	testCases := []struct {
@@ -364,7 +365,7 @@ func TestGetVolumeParameters(t *testing.T) {
 
 	for _, testcase := range testCases {
 		t.Run(testcase.testCaseName, func(t *testing.T) {
-			actualVolume, err := getVolumeParameters(logger, testcase.request, testConfig)
+			actualVolume, err := getVolumeParameters(logger, testcase.request, testConfig, extraVolumeLabelsStr)
 			if testcase.expectedError != nil {
 				assert.Equal(t, err, testcase.expectedError)
 			} else {

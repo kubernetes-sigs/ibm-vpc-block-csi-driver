@@ -19,6 +19,7 @@ package ibmcsidriver
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -110,7 +111,7 @@ func areVolumeCapabilitiesSupported(volCaps []*csi.VolumeCapability, driverVolum
 
 //getVolumeParameters this function get the parameters from storage class, this also validate
 // all parameters passed in storage class or not which are mandatory.
-func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, config *config.Config) (*provider.Volume, error) {
+func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, config *config.Config, extraVolumeLabels string) (*provider.Volume, error) {
 	var encrypt = "undef"
 	var err error
 	volume := &provider.Volume{}
@@ -215,6 +216,12 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 	err = overrideParams(logger, req, config, volume)
 	if err != nil {
 		return volume, err
+	}
+
+	//Append the extraVolumeLabels for unmanaged clusters
+	if len(extraVolumeLabels) != 0 && !strings.Contains(os.Getenv("IKS_ENABLED"), "True") {
+		logger.Info("append", zap.Any("extraVolumeLabels", extraVolumeLabels))
+		volume.VPCVolume.Tags = append(volume.VPCVolume.Tags, extraVolumeLabels)
 	}
 
 	// Check if the provided fstype is supported one

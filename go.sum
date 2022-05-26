@@ -61,6 +61,8 @@ github.com/IBM/ibmcloud-volume-interface v1.0.1-beta2 h1:K5CcIsjhQqptMfZaGkzIngh
 github.com/IBM/ibmcloud-volume-interface v1.0.1-beta2/go.mod h1:DKjLV0a+2k7hU1A/HoY/VdMD3VAynAffAmjFBD6upVA=
 github.com/IBM/ibmcloud-volume-vpc v1.0.1-beta1 h1:15bsqh/zPGuADPyZyDs3R90YLTMb1EQcHBEThPHGCHI=
 github.com/IBM/ibmcloud-volume-vpc v1.0.1-beta1/go.mod h1:Nc76FwSnstig3wCV2uyW5E+RFU7LVgs5fqG464FiRdA=
+github.com/IBM/ibmcloud-volume-vpc v1.0.1-beta1.0.20220524132926-4c7af2d3c7e8 h1:JrWSV7MocFB7EpC/azRrm5dLDX+APZ57B1nf+TkoZ7Q=
+github.com/IBM/ibmcloud-volume-vpc v1.0.1-beta1.0.20220524132926-4c7af2d3c7e8/go.mod h1:Nc76FwSnstig3wCV2uyW5E+RFU7LVgs5fqG464FiRdA=
 github.com/IBM/secret-common-lib v1.0.1 h1:zEMGEXTD8JIM1xNIShu/8Ud7GD7OQ0f1tCxLVqLNe0o=
 github.com/IBM/secret-common-lib v1.0.1/go.mod h1:cfPn5m4IWVtk+6SVtRL4ti+0MI2ZqtkITasuA1M0/HI=
 github.com/IBM/secret-utils-lib v1.0.0 h1:W3kdWfSwArFxMG0jy3ug5dkhPcEPX3RWM5O3Ostilg8=

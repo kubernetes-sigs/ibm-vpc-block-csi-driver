@@ -138,6 +138,7 @@ func (v providerIDGenerator) GenerateInvalidNodeID() string {
 
 func initCSIDriverForSanity(t *testing.T) *csiDriver.IBMCSIDriver {
 	vendorVersion := "test-vendor-version-1.1.2"
+	extraVolumeLabelsStr := "xyz:owned"
 	driver := "fakedriver"
 
 	// Creating test logger
@@ -158,7 +159,7 @@ func initCSIDriverForSanity(t *testing.T) *csiDriver.IBMCSIDriver {
 	fakeNodeData.GetWorkerIDReturns("testworker")
 
 	// Setup the IBM CSI Driver
-	err := csiSanityDriver.SetupIBMCSIDriver(provider, mounter, statsUtil, &fakeNodeData, logger, driver, vendorVersion)
+	err := csiSanityDriver.SetupIBMCSIDriver(provider, extraVolumeLabelsStr, mounter, statsUtil, &fakeNodeData, logger, driver, vendorVersion)
 	if err != nil {
 		t.Fatalf("Failed to setup IBM CSI Driver: %v", err)
 	}
