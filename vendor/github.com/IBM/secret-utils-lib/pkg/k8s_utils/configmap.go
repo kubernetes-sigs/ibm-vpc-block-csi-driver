@@ -10,7 +10,6 @@ import (
 
 // GetConfigMapData ...
 func GetConfigMapData(kc KubernetesClient, configMapName, dataName string) (string, error) {
-	kc.logger.Info("Fetching config map")
 
 	clientset := kc.GetClientSet()
 	namespace := kc.GetNameSpace()
@@ -27,6 +26,5 @@ func GetConfigMapData(kc KubernetesClient, configMapName, dataName string) (stri
 		return "", utils.Error{Description: utils.ErrEmptyClusterConfig}
 	}
 
-	kc.logger.Info("Fetched config map data")
 	return data, nil
 }

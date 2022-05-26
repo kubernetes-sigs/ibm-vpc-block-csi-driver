@@ -63,7 +63,7 @@ func GetClusterInfo(kc k8s_utils.KubernetesClient, logger *zap.Logger) (ClusterC
 
 // getTokenExchangeURLfromSecret ...
 func getTokenExchangeURLfromSecret(secret string, logger *zap.Logger) (string, error) {
-	logger.Info("Framing token exchange URL using storage-secret-store")
+	logger.Info("Getting token exchange URL from storage-secret-store")
 
 	secretConfig, err := ParseConfig(logger, secret)
 	if err != nil {
@@ -95,7 +95,6 @@ func getTokenExchangeURLfromSecret(secret string, logger *zap.Logger) (string, e
 
 // FrameTokenExchangeURL ...
 func FrameTokenExchangeURL(kc k8s_utils.KubernetesClient, logger *zap.Logger) string {
-	logger.Info("Forming token exchange URL")
 
 	secret, err := k8s_utils.GetSecret(kc, utils.STORAGE_SECRET_STORE_SECRET, utils.SECRET_STORE_FILE)
 	if err == nil {
@@ -113,10 +112,10 @@ func FrameTokenExchangeURL(kc k8s_utils.KubernetesClient, logger *zap.Logger) st
 	}
 
 	if !strings.Contains(cc.MasterURL, stageMasterURLsubstr) {
-		logger.Info("Env - Production")
+		logger.Info("Env-Production")
 		return (utils.ProdIAMURL + tokenExchangePath)
 	}
 
-	logger.Info("Env - Stage")
+	logger.Info("Env-Stage")
 	return (utils.StageIAMURL + tokenExchangePath)
 }
