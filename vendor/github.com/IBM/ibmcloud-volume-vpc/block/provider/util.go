@@ -42,16 +42,17 @@ const (
 var volumeIDPartsCount = 5
 
 var skipErrorCodes = map[string]bool{
-	"validation_invalid_name":          true,
-	"volume_capacity_max":              true,
-	"volume_id_invalid":                true,
-	"volume_profile_iops_invalid":      true,
-	"volume_capacity_zero_or_negative": true,
-	"not_found":                        true,
-	"volume_id_not_found":              true,
-	"volume_name_not_found":            true,
-	"internal_error":                   false,
-	"invalid_route":                    false,
+	"validation_invalid_name":              true,
+	"volume_capacity_max":                  true,
+	"volume_id_invalid":                    true,
+	"volume_profile_iops_invalid":          true,
+	"volume_capacity_zero_or_negative":     true,
+	"not_found":                            true,
+	"volume_id_not_found":                  true,
+	"volume_name_not_found":                true,
+	"volume_profile_capacity_iops_invalid": true,
+	"internal_error":                       false,
+	"invalid_route":                        false,
 
 	// IKS ms error code for skip re-try
 	"ST0008": true, //resources not found
