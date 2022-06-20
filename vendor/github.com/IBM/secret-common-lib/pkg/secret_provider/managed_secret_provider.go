@@ -39,7 +39,6 @@ type ManagedSecretProvider struct {
 
 // newManagedSecretProvider ...
 func newManagedSecretProvider(logger *zap.Logger) (*ManagedSecretProvider, error) {
-	logger.Info("Initializing managed secret provider, Checking if connection can be established to secret sidecar")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
@@ -55,10 +54,7 @@ func newManagedSecretProvider(logger *zap.Logger) (*ManagedSecretProvider, error
 
 // GetDefaultIAMToken ...
 func (msp *ManagedSecretProvider) GetDefaultIAMToken(freshTokenRequired bool) (string, uint64, error) {
-	msp.logger.Info("Fetching IAM token for default secret")
-
 	var tokenlifetime uint64
-
 	// Connecting to sidecar
 	msp.logger.Info("Connecting to sidecar")
 	conn, err := grpc.Dial(*endpoint, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithContextDialer(unixConnect))
@@ -78,17 +74,15 @@ func (msp *ManagedSecretProvider) GetDefaultIAMToken(freshTokenRequired bool) (s
 		return "", tokenlifetime, err
 	}
 
-	msp.logger.Info("Successfully fetched IAM token for default secret")
+	msp.logger.Info("Fetched IAM token for default secret")
 	return response.Iamtoken, response.Tokenlifetime, nil
 }
 
 // GetIAMToken ...
 func (msp *ManagedSecretProvider) GetIAMToken(secret string, freshTokenRequired bool) (string, uint64, error) {
-	msp.logger.Info("Fetching IAM token for the provided secret")
-
 	var tokenlifetime uint64
 
-	msp.logger.Info("Connecting to secret sidecar")
+	msp.logger.Info("Connecting to sidecar")
 	conn, err := grpc.Dial(*endpoint, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithContextDialer(unixConnect))
 	if err != nil {
 		msp.logger.Error("Error establishing grpc connection to secret sidecar", zap.Error(err))
@@ -106,7 +100,7 @@ func (msp *ManagedSecretProvider) GetIAMToken(secret string, freshTokenRequired 
 		return "", tokenlifetime, err
 	}
 
-	msp.logger.Info("Successfully fetched IAM token for the provided secret")
+	msp.logger.Info("Fetched IAM token for the provided secret")
 	return response.Iamtoken, response.Tokenlifetime, nil
 }
 

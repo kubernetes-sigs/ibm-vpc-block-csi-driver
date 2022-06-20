@@ -28,12 +28,11 @@ type APIKeyAuthenticator struct {
 	authenticator     *core.IamAuthenticator
 	logger            *zap.Logger
 	isSecretEncrypted bool
+	token             string
 }
 
 // NewIamAuthenticator ...
 func NewIamAuthenticator(apikey string, logger *zap.Logger) *APIKeyAuthenticator {
-	logger.Info("Initializing iam authenticator")
-	defer logger.Info("Initialized iam authenticator")
 	aa := new(APIKeyAuthenticator)
 	aa.authenticator = new(core.IamAuthenticator)
 	aa.authenticator.ApiKey = apikey
@@ -43,26 +42,16 @@ func NewIamAuthenticator(apikey string, logger *zap.Logger) *APIKeyAuthenticator
 
 // GetToken ...
 func (aa *APIKeyAuthenticator) GetToken(freshTokenRequired bool) (string, uint64, error) {
-	aa.logger.Info("Fetching IAM token using api key authenticator")
-	var iamtoken string
 	var err error
 	var tokenlifetime uint64
 
 	if !freshTokenRequired {
-		aa.logger.Info("Request received to fetch existing token")
-		iamtoken, err = aa.authenticator.GetToken()
-		if err != nil {
-			aa.logger.Error("Error fetching existing token", zap.Error(err))
-			return "", tokenlifetime, utils.Error{Description: "Error fetching iam token using api key", BackendError: err.Error()}
-		}
-
-		// Fetching token life time
-		tokenlifetime, err = token.CheckTokenLifeTime(iamtoken)
+		// Fetching token life time of the token in cache
+		tokenlifetime, err = token.CheckTokenLifeTime(aa.token)
 		if err == nil {
-			aa.logger.Info("Fetched iam token and token lifetime successfully")
-			return iamtoken, tokenlifetime, nil
+			aa.logger.Info("Fetched iam token from cache", zap.Uint64("token-life-time-in-seconds", tokenlifetime))
+			return aa.token, tokenlifetime, nil
 		}
-		aa.logger.Error("Error fetching token lifetime of existing token", zap.Error(err))
 	}
 
 	aa.logger.Info("Fetching fresh token")
@@ -77,15 +66,15 @@ func (aa *APIKeyAuthenticator) GetToken(freshTokenRequired bool) (string, uint64
 		return "", tokenlifetime, utils.Error{Description: utils.ErrEmptyTokenResponse}
 	}
 
-	iamtoken = tokenResponse.AccessToken
-	tokenlifetime, err = token.CheckTokenLifeTime(iamtoken)
+	tokenlifetime, err = token.CheckTokenLifeTime(tokenResponse.AccessToken)
 	if err != nil {
 		aa.logger.Error("Error fetching token lifetime for new token", zap.Error(err))
 		return "", tokenlifetime, utils.Error{Description: "Error fetching token lifetime", BackendError: err.Error()}
 	}
+	aa.token = tokenResponse.AccessToken
 
-	aa.logger.Info("Successfully fetched IAM token and token lifetime")
-	return iamtoken, tokenlifetime, nil
+	aa.logger.Info("Fetched fresh iam token", zap.Uint64("token-life-time-in-seconds", tokenlifetime))
+	return aa.token, tokenlifetime, nil
 }
 
 // GetSecret ...

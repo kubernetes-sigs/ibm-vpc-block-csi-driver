@@ -114,7 +114,7 @@ func (icDriver *IBMCSIDriver) SetupIBMCSIDriver(provider cloudProvider.CloudProv
 	// Set up Region
 	regionMetadata, err := nodeMeta(os.Getenv("KUBE_NODE_NAME"), lgr)
 	if err != nil {
-		return fmt.Errorf("Controller_Helper: Failed to initialize node metadata")
+		return fmt.Errorf("Controller_Helper: Failed to initialize node metadata: error: %v", err)
 	}
 	icDriver.region = regionMetadata.GetRegion()
 
