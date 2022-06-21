@@ -45,7 +45,7 @@ type IBMCloudStorageProvider struct {
 var _ CloudProviderInterface = &IBMCloudStorageProvider{}
 
 // NewIBMCloudStorageProvider ...
-func NewIBMCloudStorageProvider(configPath string, logger *zap.Logger) (*IBMCloudStorageProvider, error) {
+func NewIBMCloudStorageProvider(configPath string, clusterVolumeLabel string, logger *zap.Logger) (*IBMCloudStorageProvider, error) {
 	logger.Info("NewIBMCloudStorageProvider-Reading provider configuration...")
 	// Load config file
 	conf, err := config.ReadConfig(configPath, logger)
@@ -78,6 +78,8 @@ func NewIBMCloudStorageProvider(configPath string, logger *zap.Logger) (*IBMClou
 			return nil, err
 		}
 		logger.Info("Fetched clusterInfo..")
+	} else {
+		conf.VPC.ClusterVolumeLabel = clusterVolumeLabel
 	}
 
 	// Update the CSRF  Token

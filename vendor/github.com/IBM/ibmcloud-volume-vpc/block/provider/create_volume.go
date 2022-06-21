@@ -38,6 +38,10 @@ func (vpcs *VPCSession) CreateVolume(volumeRequest provider.Volume) (volumeRespo
 	defer vpcs.Logger.Debug("Exit from CreateVolume method...")
 	defer metrics.UpdateDurationFromStart(vpcs.Logger, "CreateVolume", time.Now())
 
+	if len(vpcs.Config.VPCConfig.ClusterVolumeLabel) != 0 {
+		volumeRequest.VPCVolume.Tags = append(volumeRequest.VPCVolume.Tags, vpcs.Config.VPCConfig.ClusterVolumeLabel)
+	}
+
 	vpcs.Logger.Info("Basic validation for CreateVolume request... ", zap.Reflect("RequestedVolumeDetails", volumeRequest))
 	resourceGroup, iops, err := validateVolumeRequest(volumeRequest)
 	if err != nil {
@@ -50,6 +54,7 @@ func (vpcs *VPCSession) CreateVolume(volumeRequest provider.Volume) (volumeRespo
 		Name:          *volumeRequest.Name,
 		Capacity:      int64(*volumeRequest.Capacity),
 		Iops:          iops,
+		UserTags:      volumeRequest.VPCVolume.Tags,
 		ResourceGroup: &resourceGroup,
 		Profile: &models.Profile{
 			Name: volumeRequest.VPCVolume.Profile.Name,

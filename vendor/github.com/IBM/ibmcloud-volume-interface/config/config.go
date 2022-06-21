@@ -182,7 +182,8 @@ type VPCProviderConfig struct {
 	// IKSTokenExchangePrivateURL, for private cluster support hence using for all cluster types
 	IKSTokenExchangePrivateURL string `toml:"iks_token_exchange_endpoint_private_url"`
 
-	IsIKS bool `toml:"is_iks,omitempty"`
+	IsIKS              bool `toml:"is_iks,omitempty"`
+	ClusterVolumeLabel string
 }
 
 //IKSConfig config
