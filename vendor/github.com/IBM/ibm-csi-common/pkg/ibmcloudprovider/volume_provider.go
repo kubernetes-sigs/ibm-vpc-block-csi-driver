@@ -78,9 +78,10 @@ func NewIBMCloudStorageProvider(configPath string, clusterVolumeLabel string, lo
 			return nil, err
 		}
 		logger.Info("Fetched clusterInfo..")
-	} else {
-		conf.VPC.ClusterVolumeLabel = clusterVolumeLabel
 	}
+
+	//Initialize the clusterVolumeLabel once which will be used for tagging by the library.
+	conf.VPC.ClusterVolumeLabel = clusterVolumeLabel
 
 	// Update the CSRF  Token
 	if conf.Bluemix.PrivateAPIRoute != "" {

@@ -38,12 +38,8 @@ func (vpcs *VPCSession) CreateVolume(volumeRequest provider.Volume) (volumeRespo
 	defer vpcs.Logger.Debug("Exit from CreateVolume method...")
 	defer metrics.UpdateDurationFromStart(vpcs.Logger, "CreateVolume", time.Now())
 
-	if len(vpcs.Config.VPCConfig.ClusterVolumeLabel) != 0 {
-		volumeRequest.VPCVolume.Tags = append(volumeRequest.VPCVolume.Tags, vpcs.Config.VPCConfig.ClusterVolumeLabel)
-	}
-
 	vpcs.Logger.Info("Basic validation for CreateVolume request... ", zap.Reflect("RequestedVolumeDetails", volumeRequest))
-	resourceGroup, iops, err := validateVolumeRequest(volumeRequest)
+	resourceGroup, iops, err := validateVolumeRequest(&volumeRequest, vpcs.Config.VPCConfig.ClusterVolumeLabel)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +100,7 @@ func (vpcs *VPCSession) CreateVolume(volumeRequest provider.Volume) (volumeRespo
 }
 
 // validateVolumeRequest validating volume request
-func validateVolumeRequest(volumeRequest provider.Volume) (models.ResourceGroup, int64, error) {
+func validateVolumeRequest(volumeRequest *provider.Volume, clusterVolumeLabel string) (models.ResourceGroup, int64, error) {
 	resourceGroup := models.ResourceGroup{}
 	var iops int64
 	iops = 0
@@ -150,5 +146,11 @@ func validateVolumeRequest(volumeRequest provider.Volume) (models.ResourceGroup,
 		// get the resource group ID from resource group name as Name is not supported by RIaaS
 		resourceGroup.Name = volumeRequest.VPCVolume.ResourceGroup.Name
 	}
+
+	//Append the clusterVolumeLabel to existing tag list only if it is non-empty
+	if len(clusterVolumeLabel) != 0 {
+		volumeRequest.VPCVolume.Tags = append(volumeRequest.VPCVolume.Tags, clusterVolumeLabel)
+	}
+
 	return resourceGroup, iops, nil
 }
