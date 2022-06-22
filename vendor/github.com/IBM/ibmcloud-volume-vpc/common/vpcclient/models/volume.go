@@ -40,7 +40,8 @@ type Volume struct {
 	Iops                int64                `json:"iops,omitempty"`
 	VolumeEncryptionKey *VolumeEncryptionKey `json:"encryption_key,omitempty"`
 	ResourceGroup       *ResourceGroup       `json:"resource_group,omitempty"`
-	Tags                []string             `json:"tags,omitempty"`
+	Tags                []string             `json:"tags,omitempty"` //We need to validate and remove this if not required.
+	UserTags            []string             `json:"user_tags,omitempty"`
 	Profile             *Profile             `json:"profile,omitempty"`
 	Snapshot            *Snapshot            `json:"snapshot,omitempty"`
 	CreatedAt           *time.Time           `json:"created_at,omitempty"`

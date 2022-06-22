@@ -45,7 +45,7 @@ type IBMCloudStorageProvider struct {
 var _ CloudProviderInterface = &IBMCloudStorageProvider{}
 
 // NewIBMCloudStorageProvider ...
-func NewIBMCloudStorageProvider(configPath string, logger *zap.Logger) (*IBMCloudStorageProvider, error) {
+func NewIBMCloudStorageProvider(configPath string, clusterVolumeLabel string, logger *zap.Logger) (*IBMCloudStorageProvider, error) {
 	logger.Info("NewIBMCloudStorageProvider-Reading provider configuration...")
 	// Load config file
 	conf, err := config.ReadConfig(configPath, logger)
@@ -79,6 +79,9 @@ func NewIBMCloudStorageProvider(configPath string, logger *zap.Logger) (*IBMClou
 		}
 		logger.Info("Fetched clusterInfo..")
 	}
+
+	//Initialize the clusterVolumeLabel once which will be used for tagging by the library.
+	conf.VPC.ClusterVolumeLabel = clusterVolumeLabel
 
 	// Update the CSRF  Token
 	if conf.Bluemix.PrivateAPIRoute != "" {

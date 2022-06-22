@@ -49,10 +49,11 @@ func init() {
 }
 
 var (
-	endpoint       = flag.String("endpoint", "unix:/tmp/csi.sock", "CSI endpoint")
-	metricsAddress = flag.String("metrics-address", "0.0.0.0:9080", "Metrics address")
-	vendorVersion  string
-	logger         *zap.Logger
+	endpoint             = flag.String("endpoint", "unix:/tmp/csi.sock", "CSI endpoint")
+	metricsAddress       = flag.String("metrics-address", "0.0.0.0:9080", "Metrics address")
+	extraVolumeLabelsStr = flag.String("extra-labels", "", "Extra labels to tag all volumes created by driver. It is a comma separated list of key value pairs like '<key1>:<value1>,<key2>:<value2>'.")
+	vendorVersion        string
+	logger               *zap.Logger
 )
 
 const (
@@ -91,7 +92,7 @@ func handle(logger *zap.Logger) {
 	logger.Info("Controller Mutex Lock enabled", zap.Bool("LockEnabled", *utils.LockEnabled))
 	// Setup Cloud Provider
 	configPath := filepath.Join(config.GetConfPathDir(), configFileName)
-	ibmcloudProvider, err := cloudProvider.NewIBMCloudStorageProvider(configPath, logger)
+	ibmcloudProvider, err := cloudProvider.NewIBMCloudStorageProvider(configPath, *extraVolumeLabelsStr, logger)
 	if err != nil {
 		logger.Fatal("Failed to instantiate IKS-Storage provider", zap.Error(err))
 	}
