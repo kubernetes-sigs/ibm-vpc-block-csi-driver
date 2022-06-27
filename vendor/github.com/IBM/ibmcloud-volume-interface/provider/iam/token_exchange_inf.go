@@ -50,7 +50,4 @@ type TokenExchangeService interface {
 
 	// GetIAMAccountIDFromAccessToken ...
 	GetIAMAccountIDFromAccessToken(accessToken AccessToken, logger *zap.Logger) (string, error)
-
-	// UpdateAPIKey updates api key in the credentials
-	UpdateAPIKey(apiKey string, logger *zap.Logger) error
 }
