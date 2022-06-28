@@ -301,36 +301,6 @@ func TestGetVolumeParameters(t *testing.T) {
 			expectedError:  fmt.Errorf("volume capabilities are empty"),
 		},
 		{
-			testCaseName: "Region present but zone not given as parameter",
-			request: &csi.CreateVolumeRequest{Name: volumeName, CapacityRange: &csi.CapacityRange{RequiredBytes: 11811160064, LimitBytes: utils.MinimumVolumeSizeInBytes + utils.MinimumVolumeSizeInBytes},
-				VolumeCapabilities: []*csi.VolumeCapability{{AccessMode: &csi.VolumeCapability_AccessMode{Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}}},
-				Parameters: map[string]string{Profile: "general-purpose",
-					Region:        "us-south-test",
-					Tag:           "test-tag",
-					ResourceGroup: "myresourcegroups",
-					Encrypted:     "false",
-					EncryptionKey: "key",
-					ClassVersion:  "",
-					Generation:    "generation",
-					IOPS:          noIops,
-				},
-			},
-			expectedVolume: &provider.Volume{Name: &volumeName,
-				Capacity: &volumeSize,
-				VPCVolume: provider.VPCVolume{VPCBlockVolume: provider.VPCBlockVolume{
-					Tags: []string{createdByIBM},
-				},
-					Profile:       &provider.Profile{Name: "general-purpose"},
-					ResourceGroup: &provider.ResourceGroup{ID: "myresourcegroups"},
-				},
-				Region: "us-south-test",
-				Iops:   &noIops,
-				Az:     "testzone",
-			},
-			expectedStatus: true,
-			expectedError:  fmt.Errorf("zone parameter is empty in storage class for region us-south-test"),
-		},
-		{
 			testCaseName: "Region and Zone not given as parameter from SC",
 			request: &csi.CreateVolumeRequest{Name: volumeName, CapacityRange: &csi.CapacityRange{RequiredBytes: 11811160064, LimitBytes: utils.MinimumVolumeSizeInBytes + utils.MinimumVolumeSizeInBytes},
 				VolumeCapabilities: []*csi.VolumeCapability{{AccessMode: &csi.VolumeCapability_AccessMode{Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}}},
@@ -359,9 +329,8 @@ func TestGetVolumeParameters(t *testing.T) {
 					Profile:       &provider.Profile{Name: "general-purpose"},
 					ResourceGroup: &provider.ResourceGroup{ID: "myresourcegroups"},
 				},
-				Region: "myregion",
-				Iops:   &noIops,
-				Az:     "myzone",
+				Iops: &noIops,
+				Az:   "myzone",
 			},
 			expectedStatus: true,
 			expectedError:  nil,
@@ -677,7 +646,8 @@ func isCSIResponseSame(expectedVolume *csi.CreateVolumeResponse, actualCSIVolume
 	if expectedVolume == nil || actualCSIVolume == nil {
 		return false
 	}
-
+	fmt.Println(expectedVolume.Volume)
+	fmt.Println(actualCSIVolume.Volume)
 	return expectedVolume.Volume.VolumeId == actualCSIVolume.Volume.VolumeId &&
 		expectedVolume.Volume.CapacityBytes == actualCSIVolume.Volume.CapacityBytes &&
 		expectedVolume.Volume.GetAccessibleTopology()[0].GetSegments()[utils.NodeRegionLabel] == actualCSIVolume.Volume.GetAccessibleTopology()[0].GetSegments()[utils.NodeRegionLabel] &&
@@ -731,11 +701,47 @@ func TestCreateCSIVolumeResponse(t *testing.T) {
 			},
 			expectedStatus: true,
 		},
+		{
+			testCaseName: "Valid volume response with region in vol request empty",
+			requestVol: provider.Volume{VolumeID: volumeID,
+				VPCVolume: provider.VPCVolume{VPCBlockVolume: provider.VPCBlockVolume{
+					Tags: []string{createdByIBM},
+				},
+					Profile:       &provider.Profile{Name: "general-purpose"},
+					ResourceGroup: &provider.ResourceGroup{ID: "myresourcegroups"},
+				},
+				Iops: &threeIops,
+				Az:   "testzone",
+			},
+			requestCap:   20,
+			clusterID:    "1234",
+			requestZones: []string{"", ""},
+			expectedVolume: &csi.CreateVolumeResponse{
+				Volume: &csi.Volume{
+					CapacityBytes: 20,
+					VolumeId:      volumeID,
+					VolumeContext: map[string]string{VolumeIDLabel: volumeID, IOPSLabel: threeIops, utils.NodeRegionLabel: "my-region", utils.NodeZoneLabel: "testzone"},
+					AccessibleTopology: []*csi.Topology{{
+						Segments: map[string]string{
+							utils.NodeRegionLabel: "testregion",
+							utils.NodeZoneLabel:   "testzone",
+						},
+					},
+					},
+				},
+			},
+			expectedStatus: true,
+		},
+	}
+	// Setup test driver
+	icDriver := initIBMCSIDriver(t)
+	if icDriver == nil {
+		t.Fatalf("Failed to setup IBM CSI Driver")
 	}
 
 	for _, testcase := range testCases {
 		t.Run(testcase.testCaseName, func(t *testing.T) {
-			actualCSIVolume := createCSIVolumeResponse(testcase.requestVol, testcase.requestCap, testcase.requestZones, testcase.clusterID)
+			actualCSIVolume := createCSIVolumeResponse(testcase.requestVol, testcase.requestCap, testcase.requestZones, testcase.clusterID, icDriver.region)
 			assert.Equal(t, testcase.expectedStatus, isCSIResponseSame(testcase.expectedVolume, actualCSIVolume))
 		})
 	}

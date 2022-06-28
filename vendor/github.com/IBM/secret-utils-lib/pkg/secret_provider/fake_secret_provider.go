@@ -1,0 +1,36 @@
+/*******************************************************************************
+ * IBM Confidential
+ * OCO Source Materials
+ * IBM Cloud Kubernetes Service, 5737-D43
+ * (C) Copyright IBM Corp. 2022 All Rights Reserved.
+ * The source code for this program is not published or otherwise divested of
+ * its trade secrets, irrespective of what has been deposited with
+ * the U.S. Copyright Office.
+ ******************************************************************************/
+
+// Package secretprovider ...
+package secret_provider
+
+import (
+	"errors"
+)
+
+// FakeSecretProvider ...
+type FakeSecretProvider struct {
+}
+
+// GetDefaultIAMToken ...
+func (fs *FakeSecretProvider) GetDefaultIAMToken(isFreshTokenRequired bool) (string, uint64, error) {
+	if isFreshTokenRequired {
+		return "token", 1000, nil
+	}
+	return "", 0, errors.New("fake error")
+}
+
+// GetIAMToken ...
+func (fs *FakeSecretProvider) GetIAMToken(secret string, isFreshTokenRequired bool) (string, uint64, error) {
+	if isFreshTokenRequired {
+		return "token", 1000, nil
+	}
+	return "", 0, errors.New("fake error")
+}
