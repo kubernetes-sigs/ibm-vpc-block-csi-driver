@@ -287,11 +287,9 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 	// If the volume corresponding to the volume_id is already staged to the staging_target_path,
 	// and is identical to the specified volume_capability the Plugin MUST reply 0 OK.
 	target, err := filepath.EvalSymlinks(source)
-	if err == nil {
-		if device == target {
-			ctxLogger.Info("volume already staged", zap.String("volumeID", volumeID))
-			return &csi.NodeStageVolumeResponse{}, nil
-		}
+	if err == nil && device == target {
+		ctxLogger.Info("volume already staged", zap.String("volumeID", volumeID))
+		return &csi.NodeStageVolumeResponse{}, nil
 	}
 
 	mnt := volumeCapability.GetMount()
