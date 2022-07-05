@@ -251,6 +251,8 @@ func (icp *IBMCloudStorageProvider) UpdateAPIKey(logger *zap.Logger) error {
 		}
 		logger.Info("Created NewAPIKeyImpl...")
 		// Call to update cloud storage provider with api key
+		icp.ProviderConfig.VPC.Encryption = true
+		icp.ProviderConfig.Bluemix.Encryption = conf.Bluemix.Encryption
 		err = apiKeyImp.UpdateIAMKeys(icp.ProviderConfig)
 		if err != nil {
 			logger.Error("Unable to get API key", local.ZapError(err))
@@ -277,7 +279,6 @@ func (icp *IBMCloudStorageProvider) UpdateAPIKey(logger *zap.Logger) error {
 	// Updating the api key in vpc block config which will further be used to update the provider
 	vpcBlockConfig.VPCConfig.APIKey = newAPIkey
 	vpcBlockConfig.VPCConfig.G2APIKey = newAPIkey
-	icp.ProviderConfig.VPC.Encryption = conf.VPC.Encryption
 	prov, err := icp.Registry.Get(icp.ProviderName)
 	if err != nil {
 		logger.Error("Not able to get the said provider, it might not registered", local.ZapError(err))
