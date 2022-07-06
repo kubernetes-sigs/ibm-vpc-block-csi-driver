@@ -2,7 +2,7 @@
 github.com/BurntSushi/toml
 # github.com/IBM-Cloud/ibm-cloud-cli-sdk v0.6.7
 github.com/IBM-Cloud/ibm-cloud-cli-sdk/common/rest
-# github.com/IBM/ibm-csi-common v1.0.0-beta9.0.20220705091926-5ecf15bb1b2e
+# github.com/IBM/ibm-csi-common v1.0.0-beta17
 ## explicit
 github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider
 github.com/IBM/ibm-csi-common/pkg/messages
