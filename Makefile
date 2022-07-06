@@ -80,7 +80,7 @@ build:
 	CGO_ENABLED=0 GOOS=$(shell go env GOOS) GOARCH=$(shell go env GOARCH) go build -mod=vendor -a -ldflags '-X main.vendorVersion='"${DRIVER_NAME}-${GIT_COMMIT_SHA}"' -extldflags "-static"' -o ${GOPATH}/bin/${EXE_DRIVER_NAME} ./cmd/
 
 .PHONY: verify
-verify: docker-pull-prerequisites
+verify:
 	echo "Verifying and linting files ..."
 	./hack/verify-all.sh
 	echo "Congratulations! All Go source files have been linted."
