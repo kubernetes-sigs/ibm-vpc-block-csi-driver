@@ -20,6 +20,7 @@ package ibmcsidriver
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -285,7 +286,8 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 	// This operation (NodeStageVolume) MUST be idempotent.
 	// If the volume corresponding to the volume_id is already staged to the staging_target_path,
 	// and is identical to the specified volume_capability the Plugin MUST reply 0 OK.
-	if device == source {
+	target, err := filepath.EvalSymlinks(source)
+	if err == nil && device == target {
 		ctxLogger.Info("volume already staged", zap.String("volumeID", volumeID))
 		return &csi.NodeStageVolumeResponse{}, nil
 	}

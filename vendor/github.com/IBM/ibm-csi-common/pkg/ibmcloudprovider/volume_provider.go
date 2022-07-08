@@ -26,7 +26,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/BurntSushi/toml"
 	"github.com/IBM/ibm-csi-common/pkg/messages"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 	"github.com/IBM/ibmcloud-volume-interface/config"
@@ -222,6 +221,7 @@ func (icp *IBMCloudStorageProvider) GetClusterInfo() *utils.ClusterInfo {
 // UpdateAPIKey ...
 func (icp *IBMCloudStorageProvider) UpdateAPIKey(logger *zap.Logger) error {
 	logger.Info("Updating API key in cloud storage provider")
+
 	// Populating vpc block config structure, which will be used for updating iks and vpc block provider
 	vpcBlockConfig := &vpcconfig.VPCBlockConfig{
 		VPCConfig:    icp.ProviderConfig.VPC,
@@ -229,11 +229,21 @@ func (icp *IBMCloudStorageProvider) UpdateAPIKey(logger *zap.Logger) error {
 		APIConfig:    icp.ProviderConfig.API,
 		ServerConfig: icp.ProviderConfig.Server,
 	}
+
 	// Storing a backup of the existing api key, to make sure the newly read api key isn't the same as the old one
 	// Hence avoiding fetching session with the same api key again
 	vpcAPIKey := vpcBlockConfig.VPCConfig.G2APIKey
 
-	if icp.ProviderConfig.IKS != nil && (icp.ProviderConfig.IKS.Enabled || os.Getenv("IKS_ENABLED") == "True") && icp.ProviderConfig.VPC.Encryption {
+	// Reading config again to read the api key
+	configPath := filepath.Join(config.GetConfPathDir(), utils.ConfigFileName)
+	conf, err := config.ReadConfig(configPath, logger)
+	if err != nil {
+		logger.Error("Failed to read config file", zap.Error(err))
+		return err
+	}
+
+	var newAPIkey string
+	if icp.ProviderConfig.IKS != nil && (icp.ProviderConfig.IKS.Enabled || os.Getenv("IKS_ENABLED") == "True") && conf.VPC.Encryption {
 		apiKeyImp, err := utils.NewAPIKeyImpl(logger)
 		if err != nil {
 			logger.Error("Unable to create API key getter", zap.Reflect("Error", err))
@@ -241,6 +251,8 @@ func (icp *IBMCloudStorageProvider) UpdateAPIKey(logger *zap.Logger) error {
 		}
 		logger.Info("Created NewAPIKeyImpl...")
 		// Call to update cloud storage provider with api key
+		icp.ProviderConfig.VPC.Encryption = true
+		icp.ProviderConfig.Bluemix.Encryption = conf.Bluemix.Encryption
 		err = apiKeyImp.UpdateIAMKeys(icp.ProviderConfig)
 		if err != nil {
 			logger.Error("Unable to get API key", local.ZapError(err))
@@ -248,34 +260,25 @@ func (icp *IBMCloudStorageProvider) UpdateAPIKey(logger *zap.Logger) error {
 		}
 		// If the retrieved API key is the same as previous one, return error
 		if vpcAPIKey == icp.ProviderConfig.VPC.G2APIKey {
-			logger.Error("API key is not reset")
+			logger.Error("API key is invalid")
 			return errors.New(messages.ErrAPIKeyNotFound)
 		}
-		// Updating the api key in vpc block config which will further be used to update the provider
-		vpcBlockConfig.VPCConfig.APIKey = icp.ProviderConfig.VPC.G2APIKey
-		vpcBlockConfig.VPCConfig.G2APIKey = icp.ProviderConfig.VPC.G2APIKey
+		newAPIkey = icp.ProviderConfig.VPC.G2APIKey
 	} else {
-		// Reading config again to read the api key
-		conf := new(config.Config)
-		configPath := filepath.Join(config.GetConfPathDir(), utils.ConfigFileName)
-		_, err := toml.DecodeFile(configPath, conf)
-		if err != nil {
-			logger.Error("Failed to parse config file", zap.Error(err))
-			return err
-		}
-
 		// If the retrieved API key is the same as previous one, return error
 		if vpcAPIKey == conf.VPC.G2APIKey {
-			logger.Error("API is not reset")
+			logger.Error("API key is invalid")
 			return errors.New(messages.ErrAPIKeyNotFound)
 		}
-		// Updating the api key in cloud storage provider and vpc block config which will further be used to update the provider
+		newAPIkey = conf.VPC.G2APIKey
+		// Updating the api key in cloud storage provider
 		icp.ProviderConfig.VPC.APIKey = conf.VPC.APIKey
 		icp.ProviderConfig.VPC.G2APIKey = conf.VPC.G2APIKey
-		vpcBlockConfig.VPCConfig.APIKey = conf.VPC.G2APIKey
-		vpcBlockConfig.VPCConfig.G2APIKey = conf.VPC.G2APIKey
 	}
 
+	// Updating the api key in vpc block config which will further be used to update the provider
+	vpcBlockConfig.VPCConfig.APIKey = newAPIkey
+	vpcBlockConfig.VPCConfig.G2APIKey = newAPIkey
 	prov, err := icp.Registry.Get(icp.ProviderName)
 	if err != nil {
 		logger.Error("Not able to get the said provider, it might not registered", local.ZapError(err))
