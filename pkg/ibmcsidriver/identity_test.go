@@ -68,11 +68,21 @@ func TestGetPluginCapabilities(t *testing.T) {
 	}
 
 	for _, capability := range resp.GetCapabilities() {
-		switch capability.GetService().GetType() {
-		case csi.PluginCapability_Service_CONTROLLER_SERVICE:
-		case csi.PluginCapability_Service_VOLUME_ACCESSIBILITY_CONSTRAINTS:
-		default:
-			t.Fatalf("Unknown capability: %v", capability.GetService().GetType())
+		if capability.GetService() != nil {
+			switch capability.GetService().GetType() {
+			case csi.PluginCapability_Service_CONTROLLER_SERVICE:
+			case csi.PluginCapability_Service_VOLUME_ACCESSIBILITY_CONSTRAINTS:
+			default:
+				t.Fatalf("Unknown capability: %v", capability.GetService().GetType())
+			}
+		}
+
+		if capability.GetVolumeExpansion() != nil {
+			switch capability.GetVolumeExpansion().GetType() {
+			case csi.PluginCapability_VolumeExpansion_ONLINE:
+			default:
+				t.Fatalf("Unknown capability: %v", capability.GetVolumeExpansion().GetType())
+			}
 		}
 	}
 }
