@@ -31,14 +31,18 @@ const (
 )
 
 // WaitForValidVolumeState checks the volume for valid status
-func WaitForValidVolumeState(vpcs *VPCSession, volumeID string) (err error) {
+func WaitForValidVolumeState(vpcs *VPCSession, volumeObj *models.Volume) (err error) {
 	vpcs.Logger.Debug("Entry of WaitForValidVolumeState method...")
 	defer vpcs.Logger.Debug("Exit from WaitForValidVolumeState method...")
 	defer metrics.UpdateDurationFromStart(vpcs.Logger, "WaitForValidVolumeState", time.Now())
 
-	vpcs.Logger.Info("Getting volume details from VPC provider...", zap.Reflect("VolumeID", volumeID))
-
+	var volumeID string
 	var volume *models.Volume
+
+	if volumeObj != nil {
+		volumeID = volumeObj.ID
+		vpcs.Logger.Info("Getting volume details from VPC provider...", zap.Reflect("VolumeID", volumeID))
+	}
 	err = retry(vpcs.Logger, func() error {
 		volume, err = vpcs.Apiclient.VolumeService().GetVolume(volumeID, vpcs.Logger)
 		if err != nil {
@@ -47,6 +51,9 @@ func WaitForValidVolumeState(vpcs *VPCSession, volumeID string) (err error) {
 		vpcs.Logger.Info("Getting volume details from VPC provider...", zap.Reflect("volume", volume))
 		if volume != nil && volume.Status == validVolumeStatus {
 			vpcs.Logger.Info("Volume got valid (available) state", zap.Reflect("VolumeDetails", volume))
+			if volume.SourceSnapshot != nil {
+				volumeObj.SourceSnapshot = volume.SourceSnapshot
+			}
 			return nil
 		}
 		return userError.GetUserError("VolumeNotInValidState", err, volumeID)

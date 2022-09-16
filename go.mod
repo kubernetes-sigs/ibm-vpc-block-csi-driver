@@ -3,9 +3,9 @@ module github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
 go 1.18
 
 require (
-	github.com/IBM/ibm-csi-common v1.0.1-beta7
-	github.com/IBM/ibmcloud-volume-interface v1.0.1-beta5
-	github.com/IBM/ibmcloud-volume-vpc v1.0.1-beta7
+	github.com/IBM/ibm-csi-common v1.0.0-beta19
+	github.com/IBM/ibmcloud-volume-interface v1.0.1-beta6
+	github.com/IBM/ibmcloud-volume-vpc v1.0.1-beta8
 	github.com/container-storage-interface/spec v1.5.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/uuid v1.1.2
@@ -16,6 +16,7 @@ require (
 	golang.org/x/net v0.0.0-20211209124913-491a49abca63
 	golang.org/x/sys v0.0.0-20210831042530-f4d43177bf5e
 	google.golang.org/grpc v1.36.1
+	google.golang.org/protobuf v1.27.1
 	k8s.io/kubernetes v1.21.0
 	k8s.io/mount-utils v0.21.0
 )
@@ -78,7 +79,6 @@ require (
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20210402141018-6c239bbf2bb1 // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

@@ -26,6 +26,7 @@ import (
 )
 
 // VolumeAttachManager operations
+//
 //go:generate counterfeiter -o fakes/volume_attach_service.go --fake-name VolumeAttachService . VolumeAttachManager
 type VolumeAttachManager interface {
 	// Create the volume with authorisation by passing required information in the volume object

@@ -30,7 +30,7 @@ type LockStore struct {
 	store map[string]*sync.Mutex
 }
 
-//lockstore mutex
+// lockstore mutex
 var lockstoremux = sync.Mutex{}
 
 func (s *LockStore) checkAndInitLockStore() {

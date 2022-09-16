@@ -43,7 +43,7 @@ import (
 	"k8s.io/client-go/tools/record"
 )
 
-//PVWatcher to watch  pv creation and add taggs
+// PVWatcher to watch  pv creation and add taggs
 type PVWatcher struct {
 	logger          *zap.Logger
 	kclient         kubernetes.Interface
@@ -83,7 +83,7 @@ const (
 	VolumeUpdateEventSuccess = "Success"
 )
 
-//VolumeTypeMap ...
+// VolumeTypeMap ...
 var VolumeTypeMap = map[string]string{}
 
 var master = flag.String(
@@ -130,7 +130,7 @@ func New(logger *zap.Logger, provisionerName string, volumeType string, cloudPro
 	return pvw
 }
 
-//Start start pv watcher
+// Start start pv watcher
 func (pvw *PVWatcher) Start() {
 	watchlist := cache.NewListWatchFromClient(pvw.kclient.CoreV1().RESTClient(), "persistentvolumes", "", fields.Everything())
 	_, controller := cache.NewInformer(watchlist, &v1.PersistentVolume{}, time.Second*0,

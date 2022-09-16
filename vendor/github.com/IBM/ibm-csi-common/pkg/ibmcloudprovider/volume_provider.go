@@ -66,7 +66,7 @@ func NewIBMCloudStorageProvider(configPath string, clusterVolumeLabel string, lo
 		conf.VPC.APIVersion = fmt.Sprintf("%d-%02d-%02d", dateTime.Year(), dateTime.Month(), dateTime.Day())
 	} else {
 		logger.Warn("Failed to parse VPC_API_VERSION, setting default value")
-		conf.VPC.APIVersion = "2020-07-02" // setting default values
+		conf.VPC.APIVersion = "2022-04-04" // setting default values
 	}
 
 	var clusterInfo = &utils.ClusterInfo{}

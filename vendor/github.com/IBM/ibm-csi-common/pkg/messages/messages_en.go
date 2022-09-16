@@ -29,11 +29,35 @@ var messagesEn = map[string]Message{
 		Type:        codes.Unimplemented,
 		Action:      "Please do not use this method as its not implemented yet",
 	},
+	MethodUnsupported: {
+		Code:        MethodUnsupported,
+		Description: "'%s' CSI interface method is not supported",
+		Type:        codes.Unimplemented,
+		Action:      "Please do not use this method as its unsupported",
+	},
 	MissingVolumeName: {
 		Code:        MissingVolumeName,
 		Description: "Volume name not provided",
 		Type:        codes.InvalidArgument,
 		Action:      "Please provide volume name while creating volume",
+	},
+	MissingSnapshotName: {
+		Code:        MissingSnapshotName,
+		Description: "Snapshot name not provided",
+		Type:        codes.InvalidArgument,
+		Action:      "Please provide snapshot name while creating snapshot",
+	},
+	MissingSourceVolumeID: {
+		Code:        MissingSourceVolumeID,
+		Description: "Volume ID not provided",
+		Type:        codes.InvalidArgument,
+		Action:      "Please provide source volume ID while creating snapshot",
+	},
+	UnsupportedVolumeContentSource: {
+		Code:        UnsupportedVolumeContentSource,
+		Description: "Volume ID not provided",
+		Type:        codes.InvalidArgument,
+		Action:      "Please provide valid volumeContentSource type",
 	},
 	NoVolumeCapabilities: {
 		Code:        NoVolumeCapabilities,
@@ -71,6 +95,12 @@ var messagesEn = map[string]Message{
 		Type:        codes.AlreadyExists,
 		Action:      "Please provide different name or have same size of existing volume",
 	},
+	SnapshotAlreadyExists: {
+		Code:        SnapshotAlreadyExists,
+		Description: "Snapshot with name '%s' already exists for different volume '%s'",
+		Type:        codes.AlreadyExists,
+		Action:      "Please provide different name for creating snapshot",
+	},
 	VolumeInvalidArguments: {
 		Code:        VolumeInvalidArguments,
 		Description: "Invalid arguments for create volume",
@@ -88,6 +118,12 @@ var messagesEn = map[string]Message{
 		Description: "VolumeID must be provided",
 		Type:        codes.InvalidArgument,
 		Action:      "Please provide volume ID for attach/detach or delete it",
+	},
+	EmptySnapshotID: {
+		Code:        EmptySnapshotID,
+		Description: "SnapshotID must be provided",
+		Type:        codes.InvalidArgument,
+		Action:      "Please provide snapshot ID for deletion",
 	},
 	EmptyNodeID: {
 		Code:        EmptyNodeID,
@@ -245,11 +281,23 @@ var messagesEn = map[string]Message{
 		Type:        codes.Internal,
 		Action:      "Please check 'BackendError' tag for more details",
 	},
+	ListSnapshotsFailed: {
+		Code:        ListSnapshotsFailed,
+		Description: "Failed to list snapshots",
+		Type:        codes.Internal,
+		Action:      "Please check 'BackendError' tag for more details",
+	},
 	StartVolumeIDNotFound: {
 		Code:        StartVolumeIDNotFound,
 		Description: "The volume ID '%s' specified in the start parameter of the list volume call could not be found",
 		Type:        codes.Aborted,
 		Action:      "Please verify that the start volume ID is correct and whether you have access to the volume ID",
+	},
+	StartSnapshotIDNotFound: {
+		Code:        StartSnapshotIDNotFound,
+		Description: "The snapshot ID '%s' specified in the start parameter of the list snapshot call could not be found",
+		Type:        codes.Aborted,
+		Action:      "Please verify that the start snapshot ID is correct and whether you have access to the snapshot ID",
 	},
 	FileSystemResizeFailed: {
 		Code:        FileSystemResizeFailed,
