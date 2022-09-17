@@ -66,7 +66,7 @@ deps:
 
 .PHONY: fmt
 fmt:
-    gofmt -l  ${GOFILES}
+	gofmt -l ${GOFILES}
 
 .PHONY: dofmt
 dofmt:
