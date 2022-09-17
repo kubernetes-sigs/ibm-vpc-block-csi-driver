@@ -65,7 +65,7 @@ deps:
 	fi
 
 .PHONY: fmt
-fmt:
+fmt: lint
 	gofmt -l ${GOFILES}
 
 .PHONY: dofmt
@@ -74,7 +74,7 @@ dofmt:
 
 .PHONY: lint
 lint:
-	$(GOPATH)/bin/golangci-lint run --timeout 600s
+	hack/verify-golint.sh
 
 .PHONY: build
 build:
