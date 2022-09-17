@@ -65,10 +65,8 @@ deps:
 	fi
 
 .PHONY: fmt
-fmt: lint
-	$(GOPATH)/bin/golangci-lint run --disable-all --enable=gofmt --timeout 600s
-	@if [ -n "$$($(GOPATH)/bin/golangci-lint run)" ]; then echo 'Please run ${COLOR_YELLOW}make dofmt${COLOR_RESET} on your code.' && exit 1; fi
-	gofmt -l  ${GOFILES}
+fmt:
+    gofmt -l  ${GOFILES}
 
 .PHONY: dofmt
 dofmt:
