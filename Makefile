@@ -61,7 +61,7 @@ driver: deps buildimage
 deps:
 	echo "Installing dependencies ..."
 	@if ! which golangci-lint >/dev/null || [[ "$$(golangci-lint --version)" != *${LINT_VERSION}* ]]; then \
-		go install github.com/golangci/golangci-lint/cmd/golangci-lint@${LINT_VERSION}; \
+		go install github.com/golangci/golangci-lint/cmd/golangci-lint@v${LINT_VERSION}; \
 	fi
 
 .PHONY: fmt
