@@ -46,6 +46,8 @@ export GO111MODULE=$(GO111MODULE_FLAG)
 
 export LINT_VERSION="1.45.2"
 
+GOFILES=$(shell find . -type f -name '*.go' -not -path "./vendor/*")
+
 COLOR_YELLOW=\033[0;33m
 COLOR_RESET=\033[0m
 
@@ -66,6 +68,7 @@ deps:
 fmt: lint
 	$(GOPATH)/bin/golangci-lint run --disable-all --enable=gofmt --timeout 600s
 	@if [ -n "$$($(GOPATH)/bin/golangci-lint run)" ]; then echo 'Please run ${COLOR_YELLOW}make dofmt${COLOR_RESET} on your code.' && exit 1; fi
+	gofmt -l  ${GOFILES}
 
 .PHONY: dofmt
 dofmt:

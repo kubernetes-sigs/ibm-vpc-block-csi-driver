@@ -1190,47 +1190,6 @@ func TestDeleteSnapshot(t *testing.T) {
 	}
 }
 
-// func TestListSnapshots(t *testing.T) {
-// 	// test cases
-// 	testCases := []struct {
-// 		name        string
-// 		req         *csi.ListSnapshotsRequest
-// 		expResponse *csi.ListSnapshotsResponse
-// 		expErrCode  codes.Code
-// 	}{
-// 		{
-// 			name:        "Success list snapshots",
-// 			req:         &csi.ListSnapshotsRequest{},
-// 			expResponse: nil,
-// 			expErrCode:  codes.OK,
-// 		},
-// 	}
-
-// 	// Creating test logger
-// 	logger, teardown := cloudProvider.GetTestLogger(t)
-// 	defer teardown()
-
-// 	// Run test cases
-// 	for _, tc := range testCases {
-// 		t.Logf("test case: %s", tc.name)
-// 		// Setup new driver each time so no interference
-// 		icDriver := initIBMCSIDriver(t)
-
-// 		fakeSession, err := icDriver.cs.CSIProvider.GetProviderSession(context.Background(), logger)
-// 		assert.Nil(t, err)
-// 		/*fakeStructSession*/ _, ok := fakeSession.(*fake.FakeSession)
-// 		assert.Equal(t, true, ok)
-
-// 		// Call CSI CreateVolume
-// 		response, err := icDriver.cs.ListSnapshots(context.Background(), tc.req)
-// 		if tc.expErrCode != codes.OK {
-// 			t.Logf("Error code")
-// 			assert.NotNil(t, err)
-// 		}
-// 		assert.Equal(t, tc.expResponse, response)
-// 	}
-// }
-
 func TestGetSnapshots(t *testing.T) {
 	// test cases
 	testCases := []struct {
