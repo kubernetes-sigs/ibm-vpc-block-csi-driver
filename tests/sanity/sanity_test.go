@@ -22,6 +22,15 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"math/rand"
+	"net/http"
+	"os"
+	"path"
+	"strings"
+	"testing"
+	"time"
+
+	nodeInfo "github.com/IBM/ibm-csi-common/pkg/metadata/fake"
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	providerError "github.com/IBM/ibmcloud-volume-interface/lib/utils"
@@ -30,13 +39,6 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"math/rand"
-	"net/http"
-	"os"
-	"path"
-	"strings"
-	"testing"
-	"time"
 
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	nodeMetadata "github.com/IBM/ibm-csi-common/pkg/metadata"
@@ -163,12 +165,14 @@ func initCSIDriverForSanity(t *testing.T) *csiDriver.IBMCSIDriver {
 
 	// fake node metadata
 	fakeNodeData := nodeMetadata.FakeNodeMetadata{}
+	fakeNodeInfo := nodeInfo.FakeNodeInfo{}
 	fakeNodeData.GetRegionReturns("testregion")
 	fakeNodeData.GetZoneReturns("testzone")
 	fakeNodeData.GetWorkerIDReturns("testworker")
+	fakeNodeInfo.NewNodeMetadataReturns(&fakeNodeData, nil)
 
 	// Setup the IBM CSI Driver
-	err := csiSanityDriver.SetupIBMCSIDriver(provider, mounter, statsUtil, &fakeNodeData, logger, driver, vendorVersion)
+	err := csiSanityDriver.SetupIBMCSIDriver(provider, mounter, statsUtil, &fakeNodeData, &fakeNodeInfo, logger, driver, vendorVersion)
 	if err != nil {
 		t.Fatalf("Failed to setup IBM CSI Driver: %v", err)
 	}

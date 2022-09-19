@@ -34,9 +34,20 @@ var maxRetryAttempt = 10
 // maxRetryGap ...
 var maxRetryGap = 60
 
-// ConstantRetryGap ...
+// minVPCRetryGap ...
+var minVPCRetryGap = 3
+
+// minVPCRetryGapAttempt ...
+var minVPCRetryGapAttempt = 3
+
+// maxRetryAttempt ...
+var maxVPCRetryAttempt = 46
+
+//ConstantRetryGap ...
 const (
-	ConstantRetryGap = 10 // seconds
+	ConstantRetryGap        = 10 // seconds
+	ConstMaxVPCRetryAttempt = 46
+	ConstMinVPCRetryGap     = 3 //seconds
 )
 
 var volumeIDPartsCount = 5
@@ -141,16 +152,22 @@ func skipRetryForObviousErrors(err error, isIKS bool) bool {
 
 // FlexyRetry ...
 type FlexyRetry struct {
-	maxRetryAttempt int
-	maxRetryGap     int
+	maxRetryAttempt       int
+	maxRetryGap           int
+	minVPCRetryGap        int
+	minVPCRetryGapAttempt int
+	maxVPCRetryAttempt    int
 }
 
 // NewFlexyRetryDefault ...
 func NewFlexyRetryDefault() FlexyRetry {
 	return FlexyRetry{
 		// Default values as we configuration
-		maxRetryAttempt: maxRetryAttempt,
-		maxRetryGap:     maxRetryGap,
+		maxRetryAttempt:       maxRetryAttempt,
+		maxRetryGap:           maxRetryGap,
+		minVPCRetryGap:        minVPCRetryGap,
+		minVPCRetryGapAttempt: minVPCRetryGapAttempt,
+		maxVPCRetryAttempt:    maxVPCRetryAttempt,
 	}
 }
 
@@ -212,6 +229,57 @@ func (fRetry *FlexyRetry) FlexyRetryWithConstGap(logger *zap.Logger, funcToRetry
 		if (i + 1) < totalAttempt {
 			logger.Info("UNEXPECTED RESULT from FlexyRetryWithConstGap, Re-attempting execution ..", zap.Int("attempt..", i+2),
 				zap.Int("retry-gap", ConstantRetryGap), zap.Int("max-retry-Attempts", totalAttempt),
+				zap.Bool("stopRetry", stopRetry), zap.Error(err))
+		}
+	}
+	return err
+}
+
+// FlexyRetryWithCustomGap ...
+/*
+Flow
+1.) First attempt is immediately after attach was done.
+2.) MinVPCRetryGapAttempts will be done with interval MinVPCRetryGap
+3.) 2*MinVPCRetryGapAttempts will be done with interval of MinVPCRetryGap*2 ( it will default to 10 sec if it more than 10)
+4.) Remaining attempts will be done with interval of 10 secs
+*/
+func (fRetry *FlexyRetry) FlexyRetryWithCustomGap(logger *zap.Logger, funcToRetry func() (error, bool)) error {
+	var err error
+	var stopRetry bool
+	var interimRetryGap = (2 * fRetry.minVPCRetryGap)               //InteriRetryGap is always 2 * minVPCRetryGap
+	maxInterimRetryGapAttempt := (3 * fRetry.minVPCRetryGapAttempt) //interimRetryGapAttempts will be 2 * minVPCRetryGapAttempt so the last attempt would be interimRetryGapAttempts + minVPCRetryGapAttempt
+	retryGap := fRetry.minVPCRetryGap
+	totalAttempt := fRetry.maxVPCRetryAttempt // Default = 46, as per default values 3 times 3 sec + 6 times 6 sec + 37 times 10 sec i.e 415 seconds
+
+	//If interimRetryGap is resulting in value more than 10 secs lets default to 10 secs
+	if interimRetryGap > ConstantRetryGap {
+		interimRetryGap = ConstantRetryGap
+	}
+
+	for i := 0; i <= totalAttempt; i++ {
+		if i > 0 {
+			time.Sleep(time.Duration(retryGap) * time.Second)
+		}
+
+		// Call function which required retry, retry is decided by function itself
+		err, stopRetry = funcToRetry()
+		if stopRetry {
+			break
+		}
+
+		//First fRetry.minVPCRetryGapAttempt attempts fRetry.minVPCRetryGap second and next (2 * fRetry.minVPCRetryGap)  attempts (2 * fRetry.minVPCRetryGap) second
+		if i == fRetry.minVPCRetryGapAttempt {
+			retryGap = interimRetryGap
+		}
+
+		//Remaining attempts 10 seconds
+		if i == maxInterimRetryGapAttempt {
+			retryGap = ConstantRetryGap // 10 seconds
+		}
+
+		if (i + 1) < totalAttempt {
+			logger.Info("UNEXPECTED RESULT from FlexyRetryWithCustomGap, Re-attempting execution ..", zap.Int("attempt..", i+2),
+				zap.Int("retry-gap", retryGap), zap.Int("max-retry-Attempts", totalAttempt),
 				zap.Bool("stopRetry", stopRetry), zap.Error(err))
 		}
 	}

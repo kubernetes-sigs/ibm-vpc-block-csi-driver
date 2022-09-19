@@ -45,7 +45,7 @@ func (vpcs *VPCSession) WaitForAttachVolume(volumeAttachmentTemplate provider.Vo
 	}
 
 	var currentVolAttachment *provider.VolumeAttachmentResponse
-	err = vpcs.APIRetry.FlexyRetryWithConstGap(vpcs.Logger, func() (error, bool) {
+	err = vpcs.APIRetry.FlexyRetryWithCustomGap(vpcs.Logger, func() (error, bool) {
 		currentVolAttachment, err = vpcs.GetVolumeAttachment(volumeAttachmentTemplate)
 		if err != nil {
 			// Need to stop retry as there is an error while getting attachment

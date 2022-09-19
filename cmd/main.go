@@ -32,6 +32,7 @@ import (
 	"time"
 
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
+	nodeInfoManager "github.com/IBM/ibm-csi-common/pkg/metadata"
 	"github.com/IBM/ibm-csi-common/pkg/metrics"
 	mountManager "github.com/IBM/ibm-csi-common/pkg/mountmanager"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
@@ -103,9 +104,15 @@ func handle(logger *zap.Logger) {
 	// Get new instance for the Mount Manager
 	mounter := mountManager.NewNodeMounter()
 
+	nodeName := os.Getenv("KUBE_NODE_NAME")
+
+	nodeInfo := nodeInfoManager.NodeInfoManager{
+		NodeName: nodeName,
+	}
+
 	statUtil := &(driver.VolumeStatUtils{})
 
-	err = ibmCSIDriver.SetupIBMCSIDriver(ibmcloudProvider, mounter, statUtil, nil, logger, csiConfig.CSIDriverName, vendorVersion)
+	err = ibmCSIDriver.SetupIBMCSIDriver(ibmcloudProvider, mounter, statUtil, nil, &nodeInfo, logger, csiConfig.CSIDriverName, vendorVersion)
 	if err != nil {
 		logger.Fatal("Failed to initialize driver...", zap.Error(err))
 	}
