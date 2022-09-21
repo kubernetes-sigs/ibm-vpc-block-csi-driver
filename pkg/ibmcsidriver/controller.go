@@ -119,11 +119,11 @@ func (csiCS *CSIControllerServer) CreateVolume(ctx context.Context, req *csi.Cre
 	volumeSource := req.GetVolumeContentSource()
 	if volumeSource != nil {
 		if _, ok := volumeSource.GetType().(*csi.VolumeContentSource_Snapshot); !ok {
-			return nil, commonError.GetCSIError(ctxLogger, commonError.UnsupportedVolumeContentSource, requestID, err)
+			return nil, commonError.GetCSIError(ctxLogger, commonError.UnsupportedVolumeContentSource, requestID, nil)
 		}
 		sourceSnapshot := volumeSource.GetSnapshot()
 		if sourceSnapshot == nil {
-			return nil, commonError.GetCSIError(ctxLogger, commonError.VolumeInvalidArguments, requestID, err)
+			return nil, commonError.GetCSIError(ctxLogger, commonError.VolumeInvalidArguments, requestID, nil)
 		}
 		requestedVolume.SnapshotID = sourceSnapshot.GetSnapshotId()
 	}
@@ -140,11 +140,10 @@ func (csiCS *CSIControllerServer) CreateVolume(ctx context.Context, req *csi.Cre
 	// Create volume
 	volumeObj, err := session.CreateVolume(*requestedVolume)
 	if err != nil {
-		if strings.Contains(err.Error(), "Not found") {
+		if providerError.RetrivalFailed == providerError.GetErrorType(err) {
 			return nil, commonError.GetCSIError(ctxLogger, commonError.ObjectNotFound, requestID, err, "creation")
-		} else {
-			return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err, "creation")
 		}
+		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err, "creation")
 	}
 
 	// return csi volume object
@@ -439,11 +438,11 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 	defer metrics.UpdateDurationFromStart(ctxLogger, "CreateSnapshot", time.Now())
 
 	snapshotName := req.GetName()
-	sourceVolumeID := req.GetSourceVolumeId()
 	if len(snapshotName) == 0 {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.MissingSnapshotName, requestID, nil)
 	}
 
+	sourceVolumeID := req.GetSourceVolumeId()
 	if len(sourceVolumeID) == 0 {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.MissingSourceVolumeID, requestID, nil)
 	}

@@ -306,7 +306,12 @@ func (c *fakeProviderSession) GetProviderDisplayName() provider.VolumeProvider {
 func (c *fakeProviderSession) CreateVolume(volumeRequest provider.Volume) (*provider.Volume, error) {
 	if len(volumeRequest.SnapshotID) > 0 {
 		if _, ok := c.snapshots[volumeRequest.SnapshotID]; !ok {
-			return nil, errors.New("Not found")
+			errorMsg := providerError.Message{
+				Code:        "FailedToPlaceOrder",
+				Description: "Volume not found by name",
+				Type:        providerError.RetrivalFailed,
+			}
+			return nil, errorMsg
 		}
 	}
 	if volumeRequest.Name == nil || len(*volumeRequest.Name) == 0 {
