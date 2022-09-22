@@ -39,7 +39,7 @@ func (vpcs *VPCSession) GetSnapshot(snapshotID string) (*provider.Snapshot, erro
 	})
 
 	if err != nil {
-		return nil, userError.GetUserError("StorageFindFailedWithSnapshotId", err, snapshotID)
+		return nil, userError.GetUserError("SnapshotIDNotFound", err, snapshotID)
 	}
 
 	vpcs.Logger.Info("Successfully retrieved snpashot details from VPC backend", zap.Reflect("snapshotDetails", snapshot))

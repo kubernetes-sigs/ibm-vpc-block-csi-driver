@@ -55,7 +55,7 @@ var messagesEn = map[string]Message{
 	},
 	UnsupportedVolumeContentSource: {
 		Code:        UnsupportedVolumeContentSource,
-		Description: "Volume ID not provided",
+		Description: "Volume Content source is not valid. SnapshotSource should be provided as Volume Content source",
 		Type:        codes.InvalidArgument,
 		Action:      "Please provide valid volumeContentSource type",
 	},
