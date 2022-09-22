@@ -307,8 +307,8 @@ func (c *fakeProviderSession) CreateVolume(volumeRequest provider.Volume) (*prov
 	if len(volumeRequest.SnapshotID) > 0 {
 		if _, ok := c.snapshots[volumeRequest.SnapshotID]; !ok {
 			errorMsg := providerError.Message{
-				Code:        "FailedToPlaceOrder",
-				Description: "Volume not found by name",
+				Code:        "StorageFindFailedWithSnapshotId",
+				Description: "Snapshot not found by ID",
 				Type:        providerError.RetrivalFailed,
 			}
 			return nil, errorMsg
