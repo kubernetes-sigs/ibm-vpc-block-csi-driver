@@ -357,10 +357,15 @@ func (csiNS *CSINodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInf
 
 	// maxVolumesPerNode is the maximum number of volumes attachable to a node
 	var maxVolumesPerNode int64 = DefaultVolumesPerNode
+	nodeName := os.Getenv("KUBE_NODE_NAME")
+
+	nodeInfo := nodeMetadata.NodeInfoManager{
+		NodeName: nodeName,
+	}
 
 	// Check if node metadata service initialized properly
 	if csiNS.Metadata == nil {
-		metadata, err := nodeMetadata.NewNodeMetadata(os.Getenv("KUBE_NODE_NAME"), ctxLogger)
+		metadata, err := nodeInfo.NewNodeMetadata(ctxLogger)
 		if err != nil {
 			ctxLogger.Error("Failed to initialize node metadata", zap.Error(err))
 			return nil, commonError.GetCSIError(ctxLogger, commonError.NodeMetadataInitFailed, requestID, err)

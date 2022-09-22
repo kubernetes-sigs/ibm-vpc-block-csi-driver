@@ -19,6 +19,7 @@ package ibmcsidriver
 
 import (
 	"fmt"
+
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	commonError "github.com/IBM/ibm-csi-common/pkg/messages"
 	nodeMetadata "github.com/IBM/ibm-csi-common/pkg/metadata"
@@ -26,7 +27,6 @@ import (
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 	"go.uber.org/zap"
-	"os"
 )
 
 // IBMCSIDriver ...
@@ -45,15 +45,13 @@ type IBMCSIDriver struct {
 	nscap []*csi.NodeServiceCapability
 }
 
-var nodeMeta = nodeMetadata.NewNodeMetadata
-
 // GetIBMCSIDriver ...
 func GetIBMCSIDriver() *IBMCSIDriver {
 	return &IBMCSIDriver{}
 }
 
 // SetupIBMCSIDriver ...
-func (icDriver *IBMCSIDriver) SetupIBMCSIDriver(provider cloudProvider.CloudProviderInterface, mounter mountManager.Mounter, statsUtil StatsUtils, metadata nodeMetadata.NodeMetadata, lgr *zap.Logger, name, vendorVersion string) error {
+func (icDriver *IBMCSIDriver) SetupIBMCSIDriver(provider cloudProvider.CloudProviderInterface, mounter mountManager.Mounter, statsUtil StatsUtils, metadata nodeMetadata.NodeMetadata, nodeInfo nodeMetadata.NodeInfo, lgr *zap.Logger, name, vendorVersion string) error {
 	icDriver.logger = lgr
 	icDriver.logger.Info("IBMCSIDriver-SetupIBMCSIDriver setting up IBM CSI Driver...")
 
@@ -87,8 +85,8 @@ func (icDriver *IBMCSIDriver) SetupIBMCSIDriver(provider cloudProvider.CloudProv
 		csi.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME,
 		csi.ControllerServiceCapability_RPC_LIST_VOLUMES,
 		// csi.ControllerServiceCapability_RPC_GET_CAPACITY,
-		// csi.ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT,
-		// csi.ControllerServiceCapability_RPC_LIST_SNAPSHOTS,
+		csi.ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT,
+		csi.ControllerServiceCapability_RPC_LIST_SNAPSHOTS,
 		// csi.ControllerServiceCapability_RPC_PUBLISH_READONLY,
 		csi.ControllerServiceCapability_RPC_EXPAND_VOLUME,
 	}
@@ -109,7 +107,7 @@ func (icDriver *IBMCSIDriver) SetupIBMCSIDriver(provider cloudProvider.CloudProv
 	icDriver.logger.Info("Successfully setup IBM CSI driver")
 
 	// Set up Region
-	regionMetadata, err := nodeMeta(os.Getenv("KUBE_NODE_NAME"), lgr)
+	regionMetadata, err := nodeInfo.NewNodeMetadata(lgr)
 	if err != nil {
 		return fmt.Errorf("Controller_Helper: Failed to initialize node metadata: error: %v", err)
 	}

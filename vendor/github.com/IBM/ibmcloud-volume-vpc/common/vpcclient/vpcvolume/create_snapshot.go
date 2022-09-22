@@ -26,8 +26,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// CreateSnapshot POSTs to /volumes
-func (ss *SnapshotService) CreateSnapshot(volumeID string, snapshotTemplate *models.Snapshot, ctxLogger *zap.Logger) (*models.Snapshot, error) {
+// CreateSnapshot POSTs to /snapshots
+func (ss *SnapshotService) CreateSnapshot(snapshotTemplate *models.Snapshot, ctxLogger *zap.Logger) (*models.Snapshot, error) {
 	ctxLogger.Debug("Entry Backend CreateSpanShot")
 	defer ctxLogger.Debug("Exit Backend CreateSnapshot")
 
@@ -45,7 +45,7 @@ func (ss *SnapshotService) CreateSnapshot(volumeID string, snapshotTemplate *mod
 	request := ss.client.NewRequest(operation)
 	ctxLogger.Info("Equivalent curl command and payload details", zap.Reflect("URL", request.URL()), zap.Reflect("Payload", snapshotTemplate), zap.Reflect("Operation", operation))
 
-	_, err := request.PathParameter(volumeIDParam, volumeID).JSONBody(snapshotTemplate).JSONSuccess(&snapshot).JSONError(&apiErr).Invoke()
+	_, err := request.JSONBody(snapshotTemplate).JSONSuccess(&snapshot).JSONError(&apiErr).Invoke()
 	if err != nil {
 		return nil, err
 	}

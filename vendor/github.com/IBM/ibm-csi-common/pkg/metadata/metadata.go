@@ -48,10 +48,21 @@ type nodeMetadataManager struct {
 	workerID string
 }
 
+// NodeInfo ...
+//go:generate counterfeiter -o fake/fake_node_info.go --fake-name FakeNodeInfo . NodeInfo
+type NodeInfo interface {
+	NewNodeMetadata(logger *zap.Logger) (NodeMetadata, error)
+}
+
+// NodeInfoManager ...
+type NodeInfoManager struct {
+	NodeName string
+}
+
 var _ NodeMetadata = &nodeMetadataManager{}
 
 // NewNodeMetadata ...
-func NewNodeMetadata(nodeName string, logger *zap.Logger) (NodeMetadata, error) {
+func (nodeManager *NodeInfoManager) NewNodeMetadata(logger *zap.Logger) (NodeMetadata, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, err
@@ -62,7 +73,7 @@ func NewNodeMetadata(nodeName string, logger *zap.Logger) (NodeMetadata, error) 
 		return nil, err
 	}
 
-	node, err := clientset.CoreV1().Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
+	node, err := clientset.CoreV1().Nodes().Get(context.Background(), nodeManager.NodeName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

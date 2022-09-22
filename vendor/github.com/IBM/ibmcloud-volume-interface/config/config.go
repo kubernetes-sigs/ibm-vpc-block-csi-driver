@@ -175,10 +175,13 @@ type VPCProviderConfig struct {
 	G2VPCAPIGeneration   int    `toml:"g2_vpc_api_generation" envconfig:"G2_VPC_API_GENERATION"`
 	G2APIVersion         string `toml:"g2_api_version,omitempty" envconfig:"G2_VPC_API_VERSION"`
 
-	Encryption      bool   `toml:"encryption"`
-	VPCTimeout      string `toml:"vpc_api_timeout,omitempty" envconfig:"VPC_API_TIMEOUT"`
-	MaxRetryAttempt int    `toml:"max_retry_attempt,omitempty" envconfig:"VPC_RETRY_ATTEMPT"`
-	MaxRetryGap     int    `toml:"max_retry_gap,omitempty" envconfig:"VPC_RETRY_INTERVAL"`
+	Encryption            bool   `toml:"encryption"`
+	VPCTimeout            string `toml:"vpc_api_timeout,omitempty" envconfig:"VPC_API_TIMEOUT"`
+	MaxRetryAttempt       int    `toml:"max_retry_attempt,omitempty" envconfig:"VPC_RETRY_ATTEMPT"`
+	MaxRetryGap           int    `toml:"max_retry_gap,omitempty" envconfig:"VPC_RETRY_INTERVAL"`
+	MaxVPCRetryAttempt    int    `toml:"max_vpc_retry_attempt,omitempty" envconfig:"MAX_VPC_RETRY_ATTEMPT"`
+	MinVPCRetryGap        int    `toml:"min_vpc_retry_gap,omitempty" envconfig:"MIN_VPC_RETRY_INTERVAL"`
+	MinVPCRetryGapAttempt int    `toml:"min_vpc_retry_gap_attempt,omitempty" envconfig:"MIN_VPC_RETRY_INTERVAL_ATTEMPT"`
 	// IKSTokenExchangePrivateURL, for private cluster support hence using for all cluster types
 	IKSTokenExchangePrivateURL string `toml:"iks_token_exchange_endpoint_private_url"`
 

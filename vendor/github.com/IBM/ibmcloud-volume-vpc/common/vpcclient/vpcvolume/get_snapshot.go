@@ -26,8 +26,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// GetSnapshot GETs from /volumes
-func (ss *SnapshotService) GetSnapshot(volumeID string, snapshotID string, ctxLogger *zap.Logger) (*models.Snapshot, error) {
+// GetSnapshot GETs from /snapshots
+func (ss *SnapshotService) GetSnapshot(snapshotID string, ctxLogger *zap.Logger) (*models.Snapshot, error) {
 	ctxLogger.Debug("Entry Backend GetSnapshot")
 	defer ctxLogger.Debug("Exit Backend GetSnapshot")
 
@@ -45,7 +45,7 @@ func (ss *SnapshotService) GetSnapshot(volumeID string, snapshotID string, ctxLo
 	request := ss.client.NewRequest(operation)
 	ctxLogger.Info("Equivalent curl command", zap.Reflect("URL", request.URL()), zap.Reflect("Operation", operation))
 
-	req := request.PathParameter(volumeIDParam, volumeID).PathParameter(snapshotIDParam, snapshotID)
+	req := request.PathParameter(snapshotIDParam, snapshotID)
 
 	_, err := req.JSONSuccess(&snapshot).JSONError(&apiErr).Invoke()
 	if err != nil {
@@ -53,4 +53,27 @@ func (ss *SnapshotService) GetSnapshot(volumeID string, snapshotID string, ctxLo
 	}
 
 	return &snapshot, nil
+}
+
+// GetSnapshotByName GETs /snapshots
+func (ss *SnapshotService) GetSnapshotByName(snapshotName string, ctxLogger *zap.Logger) (*models.Snapshot, error) {
+	ctxLogger.Debug("Entry Backend GetSnapshotByName")
+	defer ctxLogger.Debug("Exit Backend GetSnapshotByName")
+
+	defer util.TimeTracker("GetSnapshotByName", time.Now())
+
+	// Get the snapshot details for a single snapshot, ListSnapshotFilters will return only 1 snapshot in list
+	filters := &models.LisSnapshotFilters{Name: snapshotName}
+	snapshots, err := ss.ListSnapshots(1, "", filters, ctxLogger)
+	if err != nil {
+		return nil, err
+	}
+
+	if snapshots != nil {
+		snapshotlist := snapshots.Snapshots
+		if len(snapshotlist) > 0 {
+			return snapshotlist[0], nil
+		}
+	}
+	return nil, err
 }

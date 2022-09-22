@@ -30,6 +30,7 @@ import (
 
 // RegionalAPI is the main interface for the RIAAS API client. From here, service
 // objects for the individual parts of the API can be obtained
+//
 //go:generate counterfeiter -o fakes/regional_api.go --fake-name RegionalAPI . RegionalAPI
 type RegionalAPI interface {
 	Login(token string) error
@@ -114,6 +115,7 @@ func (s *Session) SnapshotService() vpcvolume.SnapshotManager {
 
 // RegionalAPIClientProvider declares an interface for a provider that can supply a new
 // RegionalAPI client session
+//
 //go:generate counterfeiter -o fakes/client_provider.go --fake-name RegionalAPIClientProvider . RegionalAPIClientProvider
 type RegionalAPIClientProvider interface {
 	New(config Config) (RegionalAPI, error)
@@ -143,7 +145,7 @@ func (s *IKSSession) VolumeService() vpcvolume.VolumeManager {
 	return vpcvolume.NewIKSVolumeService(s.client)
 }
 
-//IKSRegionalAPIClientProvider ...
+// IKSRegionalAPIClientProvider ...
 type IKSRegionalAPIClientProvider struct {
 	RegionalAPIClientProvider
 }
