@@ -17,3 +17,5 @@ spec:
           image: k8s.gcr.io/cloud-provider-ibm/ibm-vpc-block-csi-driver:v0.0.0
         - name: csi-resizer
           image: k8s.gcr.io/sig-storage/csi-resizer:v1.2.0
+        - name: csi-snapshotter
+          image: k8s.gcr.io/sig-storage/csi-snapshotter:v6.0.1
