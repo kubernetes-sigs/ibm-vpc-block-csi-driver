@@ -1,0 +1,9 @@
+apiVersion: snapshot.storage.k8s.io/v1
+deletionPolicy: Delete
+driver: vpc.block.csi.ibm.io
+kind: VolumeSnapshotClass
+metadata:
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+    app: ibm-vpc-block-csi-driver
+  name: vpc-block-snapshot
