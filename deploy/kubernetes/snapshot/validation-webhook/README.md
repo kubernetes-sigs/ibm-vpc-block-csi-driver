@@ -49,11 +49,11 @@ snapshot-validation-secret                         Opaque                       
     ```
 - If the following logs are observed, 
     ```
-    2022/09/22 18:38:49 http: TLS handshake error from 172.17.177.12:44408: remote error: tls: bad certificate
-    2022/09/22 18:38:50 http: TLS handshake error from 172.17.185.15:51182: remote error: tls: bad certificate
-    2022/09/22 18:38:51 http: TLS handshake error from 172.17.177.12:44428: remote error: tls: bad certificate
-    2022/09/22 18:38:52 http: TLS handshake error from 172.17.152.13:32776: remote error: tls: bad certificate
-    2022/09/22 18:38:53 http: TLS handshake error from 172.17.152.13:32788: remote error: tls: bad certificate
+    2022/09/22 18:38:49 http: TLS handshake error from <IP>:<PORT>: remote error: tls: bad certificate
+    2022/09/22 18:38:50 http: TLS handshake error from <IP>:<PORT>: remote error: tls: bad certificate
+    2022/09/22 18:38:51 http: TLS handshake error from <IP>:<PORT>: remote error: tls: bad certificate
+    2022/09/22 18:38:52 http: TLS handshake error from <IP>:<PORT>: remote error: tls: bad certificate
+    2022/09/22 18:38:53 http: TLS handshake error from <IP>:<PORT>: remote error: tls: bad certificate
     ```
     The k8s secret used by webhook is not populated with the cert and key value. 
     OR
