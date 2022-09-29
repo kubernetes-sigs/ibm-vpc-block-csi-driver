@@ -2,8 +2,8 @@
 For a better understanding of webhooks and validation webhook in kubernetes, please refer  [this](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/).
 
 In simple terms, the snapshot validation webhook when deployed, validates the input provided for creating/updating snapshot as described below:
-1. Kubernetes will return error when you try to create a snapshot without volumeSnapshotClassName. Without the webhook, no error is returned, but snapshot won't get created.
-2. Kubernetes will return error when you try to update the snapshot with a different pvc name. Without the web hook, no error is returned, but snapshot config will be updated to new pvc given, but it will still be a snapshot of the previous pvc.
+1. Without the webhook, although the snapshot won't get created, no error is returned.
+2. Kubernetes will return error when you try to update the snapshot with a different pvc name. Without the webhook, no error is returned, but snapshot config will be updated to new pvc given, but it will still be a snapshot of the previous pvc.
 
 To understand more about snapshot validation web hook and it's benefits, refer [snapshot validation webhook]( https://github.com/kubernetes-csi/external-snapshotter/tree/v6.0.1#validating-webhook)
 
@@ -17,15 +17,15 @@ The steps to deploy this webhook is already provided [here](https://github.com/k
 ```
 ./deploy/kubernetes/webhook-example/create-cert.sh --service snapshot-validation-service --secret snapshot-validation-secret --namespace default
 ```
-- The script takes 3 arguments - `service` which is name of the k8s service for the webhook, `secret` which is the name of the k8s secret which will hold RSA key and certificate, `namespace` which is the namespace where the pods, secret and service related to this webhook is deployed. It these arguments are not provided, the default values are `service - admission-webhook-example-svc`, `secret - admission-webhook-example-certs`, `namespace - default`.
-- First the script creates a pem encoded private RSA key and certificate signing request using openssl, the same are named server-key.pem and server.csr files respectively.
+- The script takes 3 arguments - `service` which is name of the k8s service for the webhook, `secret` which is the name of the k8s secret which will hold RSA key and certificate, `namespace` which is the namespace where the pods, secret and service related to this webhook is deployed. If these arguments are not provided, the default values are `service - admission-webhook-example-svc`, `secret - admission-webhook-example-certs`, `namespace - default`.
+- First the script creates a pem encoded private RSA key and certificate signing request using openssl, the same are named `server-key.pem` and `server.csr` files respectively.
 - Next a [certificate signing request](https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/) is created using server.csr content as input with kubernetes.io/kubelet-serving signer. To understand more about signers, please refer [this](https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/#kubernetes-signers). 
 - `kubectl approve` command is run to approve the CSR. This automatically generates a signed certificate in the Certificate Signed Request under `.status.certificate` field.
 - A kubernetes secret is created with the secret name provided while runnning the script in the given namespace. The secret holds two keys in its data, `cert.pem` which holds the X.509 certificate and `key.pem` which holds the private RSA key. This secret will be used by snapshot validation webhook once deployed.
-3. Fetch the certificate authority of the cluster where you are deploying the webhook. You will either find it or tha path leading to it in your KUBECONFIG file, under the name `certificate-authority` under your cluster. Fetch the content of the file (it begins and ends with `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` respectively). Encode the file `base64 -i <file>.pem`.
-4. Add the base64 encoded value in `deploy/kubernetes/webhook-example/admission-configuration.yaml` file in front of `caBundle:` paramater.
-5. Change the namespace to where you prefer to deploy the webhook in `admission-configuration.yaml, rbac-snapshot-webhook.yaml, webhook.yaml` files under `deploy/kubernetes/webhook-example`/` directory
-6. Run `kubectl create -f webhook-example`
+3. Fetch the certificate authority of the cluster where you are deploying the webhook. You will either find its value or tha path leading to it in your KUBECONFIG file, under the name `certificate-authority` under your cluster. Fetch the content of the file (it begins and ends with `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` respectively). Encode the file `base64 -i <file>.pem`.
+4. Add the base64 encoded value in `deploy/kubernetes/webhook-example/admission-configuration-template` file in front of `caBundle:` parameter and save the same to a file named `admission-configuration.yaml` in the same `webhook-example` directory.
+5. Change the namespace to where you prefer to deploy the webhook in `admission-configuration.yaml, rbac-snapshot-webhook.yaml, webhook.yaml` files under `deploy/kubernetes/webhook-example` directory
+6. Run `kubectl apply -f webhook-example`
 7. Once done, you should be able to see 3 pods, 1 service and 1 secret in the provided namespace as shown below.
 ```
 % kubectl get pods -n kube-system | grep snapshot-validation
