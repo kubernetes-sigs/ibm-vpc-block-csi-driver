@@ -7,7 +7,7 @@ spec:
     spec:
       containers:
         - name: csi-provisioner
-          image: k8s.gcr.io/sig-storage/csi-provisioner:v2.2.2
+          image: k8s.gcr.io/sig-storage/csi-provisioner:v3.2.1
         - name: csi-attacher
           image:  k8s.gcr.io/sig-storage/csi-attacher:v3.2.1
         - name: liveness-probe
@@ -17,3 +17,5 @@ spec:
           image: k8s.gcr.io/cloud-provider-ibm/ibm-vpc-block-csi-driver:v0.0.0
         - name: csi-resizer
           image: k8s.gcr.io/sig-storage/csi-resizer:v1.2.0
+        - name: csi-snapshotter
+          image: k8s.gcr.io/sig-storage/csi-snapshotter:v6.0.1
