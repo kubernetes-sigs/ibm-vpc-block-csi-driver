@@ -60,3 +60,125 @@ snapshot-validation-secret                         Opaque                       
     The certificate provided in the `caBundle:` may not be right. If neither is the case, reach out to the community - raise an issue [here](https://github.com/kubernetes-csi/external-snapshotter/issues).
 
 ### Deploying webhook with cert manager
+Please refer to the [cert manager](https://cert-manager.io/docs/) to learn more about the same. Basically, cert manager takes care of generating and managing the certificates required for the webhook which reduces the overhead of generating certs manually using openssl and csr. Using cert manager for the snapshot validation webhook can be made more flexible. More information will be provided in the following steps. The [installation doc](https://cert-manager.io/docs/installation/kubectl/) for cert-manager has the steps to install and verify cert manager. But, please follow the steps given below which are specific to snapshot validation webhook.
+
+1. Run `kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.9.1/cert-manager.yaml`.
+    You should be able to see the following pods and service running in `cert-manager` namespace
+    ```
+    % kubectl get pods -n cert-manager
+    NAME                                       READY   STATUS    RESTARTS   AGE
+    cert-manager-5dd59d9d9b-n8lfp              1/1     Running   0          6d14h
+    cert-manager-cainjector-8696fc9f89-2mf7p   1/1     Running   0          6d14h
+    cert-manager-webhook-7d4b5b8c56-wmdzx      1/1     Running   0          6d14h
+    % kubectl get svc -n cert-manager
+    NAME                   TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+    cert-manager           ClusterIP   172.21.233.3     <none>        9402/TCP   6d14h
+    cert-manager-webhook   ClusterIP   172.21.201.208   <none>        443/TCP    6d14h
+    ```
+    If any issues are observed, you may check in the [cert-manager community](https://github.com/cert-manager/cert-manager/issues)
+2. Update the following yaml with the `namespace` (under `dnsNames`) where you want to deploy the snapshot validation webhook. `Issuer` and `Certificate` are CRDs which get created when the cert-manager is deployed. You can specify any namespace to deploy these resources (specified as <any-namespace> in this yaml file). `kubectl apply -f cert-issuer.yaml`. To know more about  `Issuers` refer [this](https://cert-manager.io/docs/concepts/issuer/)
+    ```
+    ## cert-issuer.yaml
+    apiVersion: cert-manager.io/v1
+    kind: Issuer
+    metadata:
+      name: selfsigned-issuer
+      namespace: <any-namespace>
+    spec:
+      selfSigned: {}
+    ---
+    apiVersion: cert-manager.io/v1
+    kind: Certificate
+    metadata:
+      name: selfsigned-cert
+      namespace: <any-namespace>
+    spec:
+      dnsNames:
+        - snapshot-validation-service.<namespace>.svc
+        - snapshot-validation-service.<namespace>
+        - snapshot-validation-service
+      secretName: selfsigned-cert-tls
+      issuerRef:
+        name: selfsigned-issuer
+    ```
+3. After creating the above, you should be able see a k8s secret and 3 keys (base64 encoded) - `ca.crt, tls.crt, tls.key` in its data as shown below seen here.
+    ```
+    % kubectl get secret selfsigned-cert-tls  -n kube-system
+    NAME                  TYPE                DATA   AGE
+    selfsigned-cert-tls   kubernetes.io/tls   3      8s
+    % kubectl get secret selfsigned-cert-tls  -n kube-system -oyaml
+    apiVersion: v1
+    data:
+      ca.crt: <base64-encoded-value-of-certificate>
+      tls.crt: <base64-encoded-value-of-certificate>
+      tls.key: <base64-encoded-value-of-private-RSA-key>
+    kind: Secret
+    metadata:
+      annotations:
+        cert-manager.io/alt-names: snapshot-validation-service.kube-system.svc,snapshot-validation-service.kube-system,snapshot-validation-service
+        cert-manager.io/certificate-name: selfsigned-cert
+        cert-manager.io/common-name: ""
+        cert-manager.io/ip-sans: ""
+        cert-manager.io/issuer-group: ""
+        cert-manager.io/issuer-kind: Issuer
+        cert-manager.io/issuer-name: selfsigned-issuer
+        cert-manager.io/uri-sans: ""
+      creationTimestamp: "2022-09-29T06:56:44Z"
+      name: selfsigned-cert-tls
+      namespace: kube-system
+      resourceVersion: "22902189"
+      uid: <uid>
+    type: kubernetes.io/tls
+    ```
+4. Create a k8s secret with CA cert and RSA key. Populate  `cert.pem` and `key.pem` with  `tls.crt` and `tls.key` value obtained from the secret created in the previous step. Substitute the namespace. `kubectl create -f snapshot-validation-secret.yaml`.
+    ```
+    ## snapshot-validation-secret.yaml
+    apiVersion: v1
+    data:
+      cert.pem: <value-obtained-from-tls.crt>
+      key.pem: <value-obtained-from-tls.key>
+    kind: Secret
+    metadata:
+      name: snapshot-validation-secret
+      namespace: <namespace-where-snapshot-validation-webhook-will-be-deployed>
+    type: Opaque
+    ```
+5. Clone [external-snapshotter](https://github.com/kubernetes-csi/external-snapshotter) repo. The following steps should be run from the same external-snapshotter folder.
+6. Add the `ca.crt` value obtained from the `selfsigned-cert-tls` secret in `deploy/kubernetes/webhook-example/admission-configuration-template` file in front of `caBundle:` parameter and save the same to a file named `admission-configuration.yaml` in the same `webhook-example` directory.
+7. Change the namespace to where you prefer to deploy the webhook in `admission-configuration.yaml, rbac-snapshot-webhook.yaml, webhook.yaml` files under `deploy/kubernetes/webhook-example` directory
+8. Run `kubectl apply -f webhook-example`
+9. Once done, you should be able to see 3 pods, 1 service and 1 secret in the provided namespace as shown below.
+    ```
+    % kubectl get pods -n kube-system | grep snapshot-validation
+    snapshot-validation-deployment-6f88cc8b87-fdl4p       1/1     Running     0                6d16h
+    snapshot-validation-deployment-6f88cc8b87-jlc5g       1/1     Running     0                6d16h
+    snapshot-validation-deployment-6f88cc8b87-mmbd2       1/1     Running     0                6d16h
+
+    % kubectl get svc -n kube-system | grep snapshot-validation
+    snapshot-validation-service          ClusterIP      <CLUSTER-IP>   <none>                               443/TCP                                                       12d
+
+    % kubectl get secrets -n kube-system | grep snapshot-validation
+    snapshot-validation-secret                         Opaque                                2      6d16h
+    ```
+10. Check pod logs.
+- If you see the following, web hook is up and running
+    ```
+    kubectl logs -f snapshot-validation-deployment-6f88cc8b87-fdl4p -n kube-system
+    I0921 18:15:14.545269    1 certwatcher.go:129] Updated current TLS certificate
+    Starting webhook server
+    I0921 18:15:14.645808    1 webhook.go:196] Starting certificate watcher
+    ```
+
+### Testing webhook functionality
+Provided that the snapshot validation webhook is deployed:
+1. If you try to create a snapshot without providing the `volumeSnapshotClassName`, you will see the following error
+    ```
+     % kubectl create -f volumeSnapshot.yaml
+    Error from server: error when creating "volumeSnapshot.yaml": admission webhook "validation-webhook.snapshot.storage.k8s.io" denied the request: Spec.VolumeSnapshotClassName must not be the empty string
+    ```
+2. If you try to update a snapshot with a different pvc name using `kubectl edit`, you will see the following error
+    ```
+    % kubectl edit volumesnapshot snapshot-0 -n default
+    error: volumesnapshots.snapshot.storage.k8s.io "snapshot-0" could not be patched: admission webhook "validation-webhook.snapshot.storage.k8s.io" denied the request: Spec.Source.PersistentVolumeClaimName is immutable but was changed from pvc1 to pvc2
+    ```
+Without the webhook, these errors will not be seen.
