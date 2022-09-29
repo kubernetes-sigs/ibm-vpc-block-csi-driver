@@ -60,7 +60,7 @@ snapshot-validation-secret                         Opaque                       
     The certificate provided in the `caBundle:` may not be right. If neither is the case, reach out to the community - raise an issue [here](https://github.com/kubernetes-csi/external-snapshotter/issues).
 
 ### Deploying webhook with cert manager
-Please refer to the [cert manager](https://cert-manager.io/docs/) to learn more about the same. Basically, cert manager takes care of generating and managing the certificates required for the webhook which reduces the overhead of generating certs manually using openssl and csr. Using cert manager for the snapshot validation webhook can be made more flexible. More information will be provided in the following steps. The [installation doc](https://cert-manager.io/docs/installation/kubectl/) for cert-manager has the steps to install and verify cert manager. But, please follow the steps given below which are specific to snapshot validation webhook.
+The cert manager takes care of generating and managing the certificates required for the webhook which reduces the overhead of generating certs manually using openssl and csr. Please refer to the [cert manager](https://cert-manager.io/docs/) to learn more. Using cert manager for the snapshot validation webhook can be made more flexible. More information will be provided in the following steps. The [installation doc](https://cert-manager.io/docs/installation/kubectl/) for cert-manager has the steps to install and verify cert manager. But, please follow the steps given below which are specific to snapshot validation webhook.
 
 1. Run `kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.9.1/cert-manager.yaml`.
     You should be able to see the following pods and service running in `cert-manager` namespace
@@ -168,6 +168,7 @@ Please refer to the [cert manager](https://cert-manager.io/docs/) to learn more 
     Starting webhook server
     I0921 18:15:14.645808    1 webhook.go:196] Starting certificate watcher
     ```
+**Note**: Few of the above steps can be automated by the means of init container or sidecars, which can automatically copy the certs. More about the same will be updated eventually.
 
 ### Testing webhook functionality
 Provided that the snapshot validation webhook is deployed:
