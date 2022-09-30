@@ -22,10 +22,10 @@ The steps to deploy this webhook is already provided [here](https://github.com/k
 - Next a [certificate signing request](https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/) is created using server.csr content as input with kubernetes.io/kubelet-serving signer. To understand more about signers, please refer [this](https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/#kubernetes-signers). 
 - `kubectl approve` command is run to approve the CSR. This automatically generates a signed certificate in the Certificate Signed Request under `.status.certificate` field.
 - A kubernetes secret is created with the secret name provided while runnning the script in the given namespace. The secret holds two keys in its data, `cert.pem` which holds the X.509 certificate and `key.pem` which holds the private RSA key. This secret will be used by snapshot validation webhook once deployed.
-3. Fetch the certificate authority of the cluster where you are deploying the webhook. You will either find its value or tha path leading to it in your KUBECONFIG file, under the name `certificate-authority` under your cluster. Fetch the content of the file (it begins and ends with `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` respectively). Encode the file `base64 -i <file>.pem`.
+3. Fetch the certificate authority of the cluster where you are deploying the webhook. You will either find its value or the path leading to it in your KUBECONFIG file, under the name `certificate-authority` under your cluster. Fetch the content of the file (it begins and ends with `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` respectively). Encode the file `base64 -i <file>.pem`.
 4. Add the base64 encoded value in `deploy/kubernetes/webhook-example/admission-configuration-template` file in front of `caBundle:` parameter and save the same to a file named `admission-configuration.yaml` in the same `webhook-example` directory.
 5. Change the namespace to where you prefer to deploy the webhook in `admission-configuration.yaml, rbac-snapshot-webhook.yaml, webhook.yaml` files under `deploy/kubernetes/webhook-example` directory.
-6. Run `kubectl apply -f webhook-example`.
+6. Run `kubectl apply -f deploy/kubernetes/webhook-example`.
 7. Once done, you should be able to see 3 pods, 1 service and 1 secret in the provided namespace as shown below.
 ```
 % kubectl get pods -n kube-system | grep snapshot-validation
@@ -42,12 +42,13 @@ snapshot-validation-secret                         Opaque                       
 8. Check pod logs. 
 - If you see the following, web hook is up and running.
     ```
-    kubectl logs -f snapshot-validation-deployment-6f88cc8b87-fdl4p -n kube-system
+    % kubectl logs -f snapshot-validation-deployment-6f88cc8b87-fdl4p -n kube-system
     I0921 18:15:14.545269    1 certwatcher.go:129] Updated current TLS certificate
     Starting webhook server
     I0921 18:15:14.645808    1 webhook.go:196] Starting certificate watcher
     ```
-- If the following logs are observed, 
+- If the following logs are observed, it indicates that the kubernetes secret used by webhook is not
+populated with the cert and key value OR the certificate provided in the `caBundle:` may not be right. If neither is the case, reach out to the community - raise an issue [here](https://github.com/kubernetes-csi/external-snapshotter/issues).
     ```
     2022/09/22 18:38:49 http: TLS handshake error from <IP>:<PORT>: remote error: tls: bad certificate
     2022/09/22 18:38:50 http: TLS handshake error from <IP>:<PORT>: remote error: tls: bad certificate
@@ -55,9 +56,6 @@ snapshot-validation-secret                         Opaque                       
     2022/09/22 18:38:52 http: TLS handshake error from <IP>:<PORT>: remote error: tls: bad certificate
     2022/09/22 18:38:53 http: TLS handshake error from <IP>:<PORT>: remote error: tls: bad certificate
     ```
-    The k8s secret used by webhook is not populated with the cert and key value. 
-    OR
-    The certificate provided in the `caBundle:` may not be right. If neither is the case, reach out to the community - raise an issue [here](https://github.com/kubernetes-csi/external-snapshotter/issues).
 
 ### Deploying webhook with cert manager
 The cert manager takes care of generating and managing the certificates required for the webhook which reduces the overhead of generating certs manually using openssl and csr. Please refer to the [cert manager](https://cert-manager.io/docs/) to learn more. Using cert manager for the snapshot validation webhook can be made more flexible. More information will be provided in the following steps. The [installation doc](https://cert-manager.io/docs/installation/kubectl/) for cert-manager has the steps to install and verify cert manager. But, please follow the steps given below which are specific to snapshot validation webhook.
