@@ -8,6 +8,8 @@ In simple terms, the snapshot validation webhook when deployed, validates the in
 To understand more about snapshot validation web hook and it's benefits, refer [snapshot validation webhook]( https://github.com/kubernetes-csi/external-snapshotter/tree/v6.0.1#validating-webhook).
 
 ## Deploying snapshot validation webhook
+**Note:** Out of the two ways defined below, deploying wihout cert manager works on Kubernetes clusters, but is not verified on openshift clusters. Deploying with cert manager works on both kubernetes and openshift clusters.
+
 ### Deploying webhook without cert manager
 **Note:** This is not considered to be a production ready method to deploy the certificates. This is only one of many ways to deploy the certificates, it is your responsibility to ensure the security of your cluster. TLS certificates and private keys should be handled with care and you may not want to keep them in plain Kubernetes secrets.
 
