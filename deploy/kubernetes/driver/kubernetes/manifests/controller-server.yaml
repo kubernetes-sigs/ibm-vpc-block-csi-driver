@@ -22,6 +22,27 @@ spec:
         runAsNonRoot: true
         runAsUser: 2121
       containers:
+        - name: csi-snapshotter
+          image: MUSTPATCHWITHKUSTOMIZE
+          imagePullPolicy: Always
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+          args:
+            - "--v=5"
+            - "--csi-address=/csi/csi.sock"
+            - "--timeout=900s"
+            - "--leader-election=false"
+          resources:
+            limits:
+              cpu: 80m
+              memory: 160Mi
+            requests:
+              cpu: 20m
+              memory: 40Mi
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
         - name: csi-provisioner
           image: MUSTPATCHWITHKUSTOMIZE
           imagePullPolicy: Always
