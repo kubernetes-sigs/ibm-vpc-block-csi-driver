@@ -8,12 +8,12 @@ In simple terms, the snapshot validation webhook when deployed, validates the in
 To understand more about snapshot validation web hook and it's benefits, refer [snapshot validation webhook]( https://github.com/kubernetes-csi/external-snapshotter/tree/v6.0.1#validating-webhook).
 
 ## Deploying snapshot validation webhook
-**Note:** Out of the two ways defined below, deploying wihout cert manager works on Kubernetes clusters, but is not verified on openshift clusters. Deploying with cert manager works on both kubernetes and openshift clusters.
+**Note:** Out of the two ways defined below, deploying wihout cert manager works on Kubernetes clusters, but is not verified on openshift clusters. Deploying with cert manager works on both kubernetes and openshift clusters. Also, the following doc is based on verifying using external-snapshotter version [v6.0.1](https://github.com/kubernetes-csi/external-snapshotter/tree/v6.0.1#validating-webhook)
 
 ### Deploying webhook without cert manager
 **Note:** This is not considered to be a production ready method to deploy the certificates. This is only one of many ways to deploy the certificates, it is your responsibility to ensure the security of your cluster. TLS certificates and private keys should be handled with care and you may not want to keep them in plain Kubernetes secrets.
 
-The steps to deploy this webhook is already provided [here](https://github.com/kubernetes-csi/external-snapshotter/blob/v6.0.1/deploy/kubernetes/webhook-example/README.md#how-to-deploy-the-webhook), but the same might not work on your cluster, hence follow these steps (these are the same steps provided in this [READme](https://github.com/kubernetes-csi/external-snapshotter/blob/v6.0.1/deploy/kubernetes/webhook-example/README.md#how-to-deploy-the-webhook) but with some modifications and more details).
+The steps to deploy this webhook is already provided [here](https://github.com/kubernetes-csi/external-snapshotter/blob/v6.0.1/deploy/kubernetes/webhook-example/README.md#how-to-deploy-the-webhook), but the same might not work on your cluster, hence follow these steps (these are the same steps provided in this [README](https://github.com/kubernetes-csi/external-snapshotter/blob/v6.0.1/deploy/kubernetes/webhook-example/README.md#how-to-deploy-the-webhook) but with some modifications and more details).
 1. Clone [external-snapshotter](https://github.com/kubernetes-csi/external-snapshotter) repo. The following steps should be run from the same external-snapshotter folder.
 2. Run the `create-cert.sh` script. More details about the script are mentioned below.
 ```
