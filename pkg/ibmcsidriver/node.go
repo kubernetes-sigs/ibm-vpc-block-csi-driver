@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//Package ibmcsidriver ...
+// Package ibmcsidriver ...
 package ibmcsidriver
 
 import (
@@ -73,7 +73,7 @@ type VolumeStatUtils struct {
 type VolumeMountUtils struct {
 }
 
-//FSInfo ...
+// FSInfo ...
 func (su *VolumeStatUtils) FSInfo(path string) (int64, int64, int64, int64, int64, int64, error) {
 	return fs.Info(path)
 }

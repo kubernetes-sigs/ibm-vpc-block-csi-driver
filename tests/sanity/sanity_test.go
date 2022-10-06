@@ -440,14 +440,14 @@ func (c *fakeProviderSession) AttachVolume(attachRequest provider.VolumeAttachme
 	return attachmentDetails, nil
 }
 
-//Detach detaches the volume/ fileset from the server
-//Its non bloking call and does not wait to complete the detachment
+// Detach detaches the volume/ fileset from the server
+// Its non bloking call and does not wait to complete the detachment
 func (c *fakeProviderSession) DetachVolume(detachRequest provider.VolumeAttachmentRequest) (*http.Response, error) {
 	return nil, nil
 }
 
-//WaitForAttachVolume waits for the volume to be attached to the host
-//Return error if wait is timed out OR there is other error
+// WaitForAttachVolume waits for the volume to be attached to the host
+// Return error if wait is timed out OR there is other error
 func (c *fakeProviderSession) WaitForAttachVolume(attachRequest provider.VolumeAttachmentRequest) (*provider.VolumeAttachmentResponse, error) {
 	if len(attachRequest.InstanceID) == 0 {
 		return nil, errors.New("no instance ID passed")
@@ -462,13 +462,13 @@ func (c *fakeProviderSession) WaitForAttachVolume(attachRequest provider.VolumeA
 	}, nil
 }
 
-//WaitForDetachVolume waits for the volume to be detached from the host
-//Return error if wait is timed out OR there is other error
+// WaitForDetachVolume waits for the volume to be detached from the host
+// Return error if wait is timed out OR there is other error
 func (c *fakeProviderSession) WaitForDetachVolume(detachRequest provider.VolumeAttachmentRequest) error {
 	return nil
 }
 
-//GetAttachAttachment retirves the current status of given volume attach request
+// GetAttachAttachment retirves the current status of given volume attach request
 func (c *fakeProviderSession) GetVolumeAttachment(attachRequest provider.VolumeAttachmentRequest) (*provider.VolumeAttachmentResponse, error) {
 	return nil, nil
 }
