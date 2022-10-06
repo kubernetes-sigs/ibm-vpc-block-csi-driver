@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//Package ibmcsidriver ...
+// Package ibmcsidriver ...
 package ibmcsidriver
 
 import (
@@ -93,8 +93,8 @@ func (csiNS *CSINodeServer) processMount(ctxLogger *zap.Logger, requestID, stagi
 	return &csi.NodePublishVolumeResponse{}, nil
 }
 
-//This will handle raw block volume mounts
-//Incase of RAW volume mount, the Target will be devicefilepath  and NOT a mount directory.
+// This will handle raw block volume mounts
+// Incase of RAW volume mount, the Target will be devicefilepath  and NOT a mount directory.
 // The mountType is "bind" mount and will not specify any FORMAT(e.g ext4, ext3..)
 // e.g SOURCE (volume provider attached device on Host): /dev/xvde
 // e.g TARGET (SoftLink to User defined POD device /dev/sda) : "/var/data/kubelet/plugins/kubernetes.io/csi/volumeDevices/publish/pvc-9b82dced-fcd6-4181-968e-ae269e0f2311"
