@@ -503,7 +503,7 @@ func (c *fakeProviderSession) ListSnapshots() ([]*provider.Snapshot, error) {
 	return nil, nil
 }
 
-//List all the  snapshots for a given volume
+// List all the  snapshots for a given volume
 func (c *fakeProviderSession) ListAllSnapshots(volumeID string) ([]*provider.Snapshot, error) {
 	return nil, nil
 }
