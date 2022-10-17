@@ -26,7 +26,7 @@ import (
 	"go.uber.org/zap"
 )
 
-//ClusterInfo contains the cluster information
+// ClusterInfo contains the cluster information
 type ClusterInfo struct {
 	ClusterID   string `json:"cluster_id"`
 	ClusterName string `json:"cluster_name,omitempty"`
@@ -34,7 +34,7 @@ type ClusterInfo struct {
 	CustomerID  string `json:"customer_id,omitempty"`
 }
 
-//NewClusterInfo loads cluster info
+// NewClusterInfo loads cluster info
 func NewClusterInfo(logger *zap.Logger) (*ClusterInfo, error) {
 	configBasePath := config.GetConfPathDir()
 	clusterInfo := &ClusterInfo{}

@@ -22,6 +22,7 @@ import (
 
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	nodeMetadata "github.com/IBM/ibm-csi-common/pkg/metadata"
+	nodeInfo "github.com/IBM/ibm-csi-common/pkg/metadata/fake"
 	mountManager "github.com/IBM/ibm-csi-common/pkg/mountmanager"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,19 +34,20 @@ func initIBMCSIDriver(t *testing.T) *IBMCSIDriver {
 	logger, teardown := cloudProvider.GetTestLogger(t)
 	defer teardown()
 	icDriver := GetIBMCSIDriver()
-	nodeMeta = nodeMetadata.InitMetadata
 	// Create fake provider and mounter
 	provider, _ := cloudProvider.NewFakeIBMCloudStorageProvider("", logger)
 	mounter := mountManager.NewFakeNodeMounter()
 	statsUtil := &MockStatUtils{}
 
 	fakeNodeData := nodeMetadata.FakeNodeMetadata{}
+	fakeNodeInfo := nodeInfo.FakeNodeInfo{}
 	fakeNodeData.GetRegionReturns("testregion")
 	fakeNodeData.GetZoneReturns("testzone")
 	fakeNodeData.GetWorkerIDReturns("testworker")
+	fakeNodeInfo.NewNodeMetadataReturns(&fakeNodeData, nil)
 
 	// Setup the IBM CSI driver
-	err := icDriver.SetupIBMCSIDriver(provider, mounter, statsUtil, &fakeNodeData, logger, driver, vendorVersion)
+	err := icDriver.SetupIBMCSIDriver(provider, mounter, statsUtil, &fakeNodeData, &fakeNodeInfo, logger, driver, vendorVersion)
 	if err != nil {
 		t.Fatalf("Failed to setup IBM CSI Driver: %v", err)
 	}
@@ -72,19 +74,21 @@ func TestSetupIBMCSIDriver(t *testing.T) {
 	statsUtil := &MockStatUtils{}
 
 	fakeNodeData := nodeMetadata.FakeNodeMetadata{}
+	fakeNodeInfo := nodeInfo.FakeNodeInfo{}
 	fakeNodeData.GetRegionReturns("testregion")
 	fakeNodeData.GetZoneReturns("testzone")
 	fakeNodeData.GetWorkerIDReturns("testworker")
+	fakeNodeInfo.NewNodeMetadataReturns(&fakeNodeData, nil)
 
 	// Failed setting up driver, provider nil
-	err := icDriver.SetupIBMCSIDriver(nil, mounter, statsUtil, &fakeNodeData, logger, name, vendorVersion)
+	err := icDriver.SetupIBMCSIDriver(nil, mounter, statsUtil, &fakeNodeData, &fakeNodeInfo, logger, name, vendorVersion)
 	assert.NotNil(t, err)
 
 	// Failed setting up driver, mounter nil
-	err = icDriver.SetupIBMCSIDriver(provider, nil, statsUtil, &fakeNodeData, logger, name, vendorVersion)
+	err = icDriver.SetupIBMCSIDriver(provider, nil, statsUtil, &fakeNodeData, &fakeNodeInfo, logger, name, vendorVersion)
 	assert.NotNil(t, err)
 
 	// Failed setting up driver, name empty
-	err = icDriver.SetupIBMCSIDriver(provider, mounter, statsUtil, &fakeNodeData, logger, "", vendorVersion)
+	err = icDriver.SetupIBMCSIDriver(provider, mounter, statsUtil, &fakeNodeData, &fakeNodeInfo, logger, "", vendorVersion)
 	assert.NotNil(t, err)
 }

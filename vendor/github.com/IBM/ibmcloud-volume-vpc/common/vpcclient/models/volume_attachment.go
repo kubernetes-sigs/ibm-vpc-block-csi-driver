@@ -71,7 +71,7 @@ func NewVolumeAttachment(volumeAttachmentRequest provider.VolumeAttachmentReques
 	return va
 }
 
-//ToVolumeAttachmentResponse converts VolumeAttachment VolumeAttachmentResponse
+// ToVolumeAttachmentResponse converts VolumeAttachment VolumeAttachmentResponse
 func (va *VolumeAttachment) ToVolumeAttachmentResponse(providerType string) *provider.VolumeAttachmentResponse {
 	varp := &provider.VolumeAttachmentResponse{
 		VolumeAttachmentRequest: provider.VolumeAttachmentRequest{

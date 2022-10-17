@@ -34,9 +34,22 @@ var maxRetryAttempt = 10
 // maxRetryGap ...
 var maxRetryGap = 60
 
+// minVPCRetryGap ...
+var minVPCRetryGap = 3
+
+// minVPCRetryGapAttempt ...
+var minVPCRetryGapAttempt = 3
+
+// maxRetryAttempt ...
+var maxVPCRetryAttempt = 46
+
 //ConstantRetryGap ...
 const (
-	ConstantRetryGap = 10 // seconds
+	ConstantRetryGap        = 10 // seconds
+	ConstMaxVPCRetryAttempt = 46
+	ConstMinVPCRetryGap     = 3 //seconds
+	SnapshotIDNotFound      = "snapshot_id_not_found"
+	SnapshotNotFound        = "snapshots_not_found"
 )
 
 var volumeIDPartsCount = 5
@@ -53,6 +66,9 @@ var skipErrorCodes = map[string]bool{
 	"volume_profile_capacity_iops_invalid": true,
 	"internal_error":                       false,
 	"invalid_route":                        false,
+	SnapshotNotFound:                       true,
+	"snapshots_not_authorized":             true,
+	SnapshotIDNotFound:                     true,
 
 	// IKS ms error code for skip re-try
 	"ST0008": true, //resources not found
@@ -75,6 +91,7 @@ func retry(logger *zap.Logger, retryfunc func() error) error {
 		}
 		err = retryfunc()
 		if err != nil {
+			logger.Info("err object is not nil", zap.Reflect("ERR", err))
 			//Skip retry for the below type of Errors
 			modelError, ok := err.(*models.Error)
 			if !ok {
@@ -139,16 +156,22 @@ func skipRetryForObviousErrors(err error, isIKS bool) bool {
 
 // FlexyRetry ...
 type FlexyRetry struct {
-	maxRetryAttempt int
-	maxRetryGap     int
+	maxRetryAttempt       int
+	maxRetryGap           int
+	minVPCRetryGap        int
+	minVPCRetryGapAttempt int
+	maxVPCRetryAttempt    int
 }
 
 // NewFlexyRetryDefault ...
 func NewFlexyRetryDefault() FlexyRetry {
 	return FlexyRetry{
 		// Default values as we configuration
-		maxRetryAttempt: maxRetryAttempt,
-		maxRetryGap:     maxRetryGap,
+		maxRetryAttempt:       maxRetryAttempt,
+		maxRetryGap:           maxRetryGap,
+		minVPCRetryGap:        minVPCRetryGap,
+		minVPCRetryGapAttempt: minVPCRetryGapAttempt,
+		maxVPCRetryAttempt:    maxVPCRetryAttempt,
 	}
 }
 
@@ -216,6 +239,57 @@ func (fRetry *FlexyRetry) FlexyRetryWithConstGap(logger *zap.Logger, funcToRetry
 	return err
 }
 
+// FlexyRetryWithCustomGap ...
+/*
+Flow
+1.) First attempt is immediately after attach was done.
+2.) MinVPCRetryGapAttempts will be done with interval MinVPCRetryGap
+3.) 2*MinVPCRetryGapAttempts will be done with interval of MinVPCRetryGap*2 ( it will default to 10 sec if it more than 10)
+4.) Remaining attempts will be done with interval of 10 secs
+*/
+func (fRetry *FlexyRetry) FlexyRetryWithCustomGap(logger *zap.Logger, funcToRetry func() (error, bool)) error {
+	var err error
+	var stopRetry bool
+	var interimRetryGap = (2 * fRetry.minVPCRetryGap)               //InteriRetryGap is always 2 * minVPCRetryGap
+	maxInterimRetryGapAttempt := (3 * fRetry.minVPCRetryGapAttempt) //interimRetryGapAttempts will be 2 * minVPCRetryGapAttempt so the last attempt would be interimRetryGapAttempts + minVPCRetryGapAttempt
+	retryGap := fRetry.minVPCRetryGap
+	totalAttempt := fRetry.maxVPCRetryAttempt // Default = 46, as per default values 3 times 3 sec + 6 times 6 sec + 37 times 10 sec i.e 415 seconds
+
+	//If interimRetryGap is resulting in value more than 10 secs lets default to 10 secs
+	if interimRetryGap > ConstantRetryGap {
+		interimRetryGap = ConstantRetryGap
+	}
+
+	for i := 0; i <= totalAttempt; i++ {
+		if i > 0 {
+			time.Sleep(time.Duration(retryGap) * time.Second)
+		}
+
+		// Call function which required retry, retry is decided by function itself
+		err, stopRetry = funcToRetry()
+		if stopRetry {
+			break
+		}
+
+		//First fRetry.minVPCRetryGapAttempt attempts fRetry.minVPCRetryGap second and next (2 * fRetry.minVPCRetryGap)  attempts (2 * fRetry.minVPCRetryGap) second
+		if i == fRetry.minVPCRetryGapAttempt {
+			retryGap = interimRetryGap
+		}
+
+		//Remaining attempts 10 seconds
+		if i == maxInterimRetryGapAttempt {
+			retryGap = ConstantRetryGap // 10 seconds
+		}
+
+		if (i + 1) < totalAttempt {
+			logger.Info("UNEXPECTED RESULT from FlexyRetryWithCustomGap, Re-attempting execution ..", zap.Int("attempt..", i+2),
+				zap.Int("retry-gap", retryGap), zap.Int("max-retry-Attempts", totalAttempt),
+				zap.Bool("stopRetry", stopRetry), zap.Error(err))
+		}
+	}
+	return err
+}
+
 // ToInt ...
 func ToInt(valueInInt string) int {
 	value, err := strconv.Atoi(valueInInt)
@@ -269,8 +343,42 @@ func FromProviderToLibVolume(vpcVolume *models.Volume, logger *zap.Logger) (libV
 	if vpcVolume.Zone != nil {
 		libVolume.Az = vpcVolume.Zone.Name
 	}
+	if vpcVolume.SourceSnapshot != nil {
+		libVolume.SnapshotID = vpcVolume.SourceSnapshot.ID
+	}
 	libVolume.CRN = vpcVolume.CRN
 	libVolume.Tags = vpcVolume.UserTags
+	return
+}
+
+// FromProviderToLibSnapshot converting vpc provider snapshot type to generic lib snapshot type
+func FromProviderToLibSnapshot(vpcSnapshot *models.Snapshot, logger *zap.Logger) (libSnapshot *provider.Snapshot) {
+	logger.Debug("Entry of FromProviderToLibSnapshot method...")
+	defer logger.Debug("Exit from FromProviderToLibSnapshot method...")
+
+	if vpcSnapshot == nil {
+		logger.Info("Snapshot details are empty")
+		return
+	}
+
+	logger.Debug("Snapshot details of VPC client", zap.Reflect("models.Snapshot", vpcSnapshot))
+
+	var createdTime time.Time
+	if vpcSnapshot.CreatedAt != nil {
+		createdTime = *vpcSnapshot.CreatedAt
+	}
+	libSnapshot = &provider.Snapshot{
+		VolumeID:             vpcSnapshot.SourceVolume.ID,
+		SnapshotID:           vpcSnapshot.ID,
+		SnapshotCreationTime: createdTime,
+		SnapshotSize:         GiBToBytes(vpcSnapshot.Size),
+		VPC:                  provider.VPC{Href: vpcSnapshot.Href},
+	}
+	if vpcSnapshot.LifecycleState == snapshotReadyState {
+		libSnapshot.ReadyToUse = true
+	} else {
+		libSnapshot.ReadyToUse = false
+	}
 	return
 }
 
@@ -293,6 +401,11 @@ func SetRetryParameters(maxAttempts int, maxGap int) {
 
 func roundUpSize(volumeSizeBytes int64, allocationUnitBytes int64) int64 {
 	return (volumeSizeBytes + allocationUnitBytes - 1) / allocationUnitBytes
+}
+
+// GiBToBytes converts GiB to Bytes
+func GiBToBytes(volumeSizeGiB int64) int64 {
+	return volumeSizeGiB * GiB
 }
 
 // isValidServiceSession check if Service Session is valid

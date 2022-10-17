@@ -59,6 +59,10 @@ func (vpcs *VPCSession) CreateVolume(volumeRequest provider.Volume) (volumeRespo
 			Name: volumeRequest.Az,
 		},
 	}
+	// adding snapshot ID in the request if it is provided to create the volume from snapshot
+	if len(volumeRequest.SnapshotID) > 0 {
+		volumeTemplate.SourceSnapshot = &models.Snapshot{ID: volumeRequest.SnapshotID}
+	}
 
 	var encryptionKeyCRN string
 	if volumeRequest.VPCVolume.VolumeEncryptionKey != nil && len(volumeRequest.VPCVolume.VolumeEncryptionKey.CRN) > 0 {
@@ -75,13 +79,17 @@ func (vpcs *VPCSession) CreateVolume(volumeRequest provider.Volume) (volumeRespo
 
 	if err != nil {
 		vpcs.Logger.Debug("Failed to create volume from VPC provider", zap.Reflect("BackendError", err))
+		modelError, ok := err.(*models.Error)
+		if ok && len(modelError.Errors) > 0 && string(modelError.Errors[0].Code) == SnapshotIDNotFound {
+			return nil, userError.GetUserError("SnapshotIDNotFound", err)
+		}
 		return nil, userError.GetUserError("FailedToPlaceOrder", err)
 	}
 
 	vpcs.Logger.Info("Successfully created volume from VPC provider...", zap.Reflect("VolumeDetails", volume))
 
 	vpcs.Logger.Info("Waiting for volume to be in valid (available) state", zap.Reflect("VolumeDetails", volume))
-	err = WaitForValidVolumeState(vpcs, volume.ID)
+	err = WaitForValidVolumeState(vpcs, volume)
 	if err != nil {
 		return nil, userError.GetUserError("VolumeNotInValidState", err, volume.ID)
 	}

@@ -55,12 +55,12 @@ github.com/IBM-Cloud/ibm-cloud-cli-sdk v0.6.7 h1:eHgfQl6IeSmzWUyiSi13CvoFYsovoyq
 github.com/IBM-Cloud/ibm-cloud-cli-sdk v0.6.7/go.mod h1:RiUvKuHKTBmBApDMUQzBL14pQUGKcx/IioKQPIcRQjs=
 github.com/IBM/go-sdk-core/v5 v5.9.1 h1:06pXbD9Rgmqqe2HA5YAeQbB4eYRRFgIoOT+Kh3cp1zo=
 github.com/IBM/go-sdk-core/v5 v5.9.1/go.mod h1:axE2JrRq79gIJTjKPBwV6gWHswvVptBjbcvvCPIxARM=
-github.com/IBM/ibm-csi-common v1.0.1-beta7 h1:phljcQfBBKtG6F2Q/hiqayrWJC+w0EtNvUWCXGsiox0=
-github.com/IBM/ibm-csi-common v1.0.1-beta7/go.mod h1:k6IHdSHGnsnGOxzqir3n9kczW+ttL+KcRZh/chLyyuk=
-github.com/IBM/ibmcloud-volume-interface v1.0.1-beta5 h1:XPNIrp4g7oEx7QOy6eB98jZs7n1tB6DTsUjEigOhouM=
-github.com/IBM/ibmcloud-volume-interface v1.0.1-beta5/go.mod h1:v1aT8G3Tib8pCwdr9VweNFYa94GejBuqIVTysoaVI0g=
-github.com/IBM/ibmcloud-volume-vpc v1.0.1-beta7 h1:3cQCvlTx9fQhBDYm2bn51nebRrLgZGwfAzLu7Zp/gvc=
-github.com/IBM/ibmcloud-volume-vpc v1.0.1-beta7/go.mod h1:CFBvpt4SKwf0mQg3u53qkZ5SxZH9gZSfdhWBa8GIP3Y=
+github.com/IBM/ibm-csi-common v1.0.0-beta21 h1:nLBcEr9+CRmWRXI3Rst7g7fbe5UCEzmzPVeDx6tqc48=
+github.com/IBM/ibm-csi-common v1.0.0-beta21/go.mod h1:RdN1YJT50yxT1BCPMF6czifMva4oXlPCJWRmVIoikNE=
+github.com/IBM/ibmcloud-volume-interface v1.0.1-beta7 h1:xnGyxnRiX1yj64rCaYRZ4txlx6lTR6l3BONwKMHH8h0=
+github.com/IBM/ibmcloud-volume-interface v1.0.1-beta7/go.mod h1:v1aT8G3Tib8pCwdr9VweNFYa94GejBuqIVTysoaVI0g=
+github.com/IBM/ibmcloud-volume-vpc v1.0.1-beta10 h1:AB2NN74hdad32FMPubZSwHM7A67OkFqD7PMZETRaixs=
+github.com/IBM/ibmcloud-volume-vpc v1.0.1-beta10/go.mod h1:me1rd/j1kVvBAUYestM1HfJaZ/RzT7k9pUd2PsfNtfQ=
 github.com/IBM/secret-common-lib v1.0.3 h1:rhhAtAE1ANSuxhA8Nulzzc2IbXWHGE8reoRSr98rRi8=
 github.com/IBM/secret-common-lib v1.0.3/go.mod h1:uoYY5M9G1nJVT8ytPIicdTUujcBXKldBw7ijWolU0yU=
 github.com/IBM/secret-utils-lib v1.0.2 h1:AdhKHo/bMmFLMz7+ZjnqSUHuU22CMQsG5meddvwKaV8=
@@ -177,8 +177,6 @@ github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815/go.mod h1:WwZ+bS3
 github.com/dustin/go-humanize v0.0.0-20171111073723-bb3d318650d4/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/elazarl/goproxy v0.0.0-20180725130230-947c36da3153/go.mod h1:/Zj4wYkgs4iZTTu3o/KG3Itv/qCCa8VVMlb3i9OVuzc=
-github.com/elazarl/goproxy v0.0.0-20191011121108-aa519ddbe484/go.mod h1:Ro8st/ElPeALwNFlcTpWmkr6IoMFfkjXAvTHpevnDsM=
-github.com/elazarl/goproxy/ext v0.0.0-20190711103511-473e67f1d7d2/go.mod h1:gNh8nYJoAm43RfaxurUnxr+N1PwuFV3ZMl/efxlIlY8=
 github.com/emicklei/go-restful v0.0.0-20170410110728-ff4f55a20633/go.mod h1:otzb+WCGbkyDHkqmQmT5YD2WR4BBwUdeQoFo8l/7tVs=
 github.com/emicklei/go-restful v2.9.5+incompatible/go.mod h1:otzb+WCGbkyDHkqmQmT5YD2WR4BBwUdeQoFo8l/7tVs=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
@@ -594,7 +592,6 @@ github.com/quobyte/api v0.1.8/go.mod h1:jL7lIHrmqQ7yh05OJ+eEEdHr0u/kmT1Ff9iHd+4H
 github.com/remyoudompheng/bigfft v0.0.0-20170806203942-52369c62f446/go.mod h1:uYEyJGbgTkfkS4+E/PavXkNJcbFIpEtjt2B0KDQ5+9M=
 github.com/robfig/cron v1.1.0/go.mod h1:JGuDeoQd7Z6yL4zQhZ3OPEVHB7fL6Ka6skscFHfmt2k=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
-github.com/rogpeppe/go-charset v0.0.0-20180617210344-2471d30d28b4/go.mod h1:qgYeAmZ5ZIpBWTGllZSQnw97Dj+woV0toclVaRGI8pc=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rubiojr/go-vhd v0.0.0-20200706105327-02e210299021/go.mod h1:DM5xW0nvfNNm2uytzsvhI3OnX8uzaRAg8UX/CnDqbto=
 github.com/russross/blackfriday v0.0.0-20170610170232-067529f716f4/go.mod h1:JO/DiYxRf+HjHt06OyowR9PTA263kcR/rfWxYHBV53g=
