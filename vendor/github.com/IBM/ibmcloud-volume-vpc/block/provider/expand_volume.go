@@ -69,7 +69,7 @@ func (vpcs *VPCSession) ExpandVolume(expandVolumeRequest provider.ExpandVolumeRe
 	}
 
 	vpcs.Logger.Info("Successfully accepted volume expansion request, now waiting for volume state equal to available")
-	err = WaitForValidVolumeState(vpcs, volume.ID)
+	err = WaitForValidVolumeState(vpcs, volume)
 	if err != nil {
 		return -1, userError.GetUserError("VolumeNotInValidState", err, volume.ID)
 	}

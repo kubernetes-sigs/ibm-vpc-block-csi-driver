@@ -45,7 +45,7 @@ func (vpcs *VPCSession) WaitForDetachVolume(volumeAttachmentTemplate provider.Vo
 		return err
 	}
 
-	err = vpcs.APIRetry.FlexyRetryWithConstGap(vpcs.Logger, func() (error, bool) {
+	err = vpcs.APIRetry.FlexyRetryWithCustomGap(vpcs.Logger, func() (error, bool) {
 		_, err := vpcs.GetVolumeAttachment(volumeAttachmentTemplate)
 		// In case of error we should not retry as there are two conditions for error
 		// 1- some issues at endpoint side --> Which is already covered in vpcs.GetVolumeAttachment

@@ -28,6 +28,7 @@ import (
 	providerError "github.com/IBM/ibmcloud-volume-interface/lib/utils"
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Capacity vs IOPS range for Custom Class
@@ -414,6 +415,16 @@ func checkIfVolumeExists(session provider.Session, vol provider.Volume, ctxLogge
 
 // createCSIVolumeResponse ...
 func createCSIVolumeResponse(vol provider.Volume, capBytes int64, zones []string, clusterID string, region string) *csi.CreateVolumeResponse {
+	var src *csi.VolumeContentSource
+	if vol.SnapshotID != "" {
+		src = &csi.VolumeContentSource{
+			Type: &csi.VolumeContentSource_Snapshot{
+				Snapshot: &csi.VolumeContentSource_SnapshotSource{
+					SnapshotId: vol.SnapshotID,
+				},
+			},
+		}
+	}
 	labels := map[string]string{}
 
 	// Update labels for PV objects
@@ -446,10 +457,26 @@ func createCSIVolumeResponse(vol provider.Volume, capBytes int64, zones []string
 			VolumeId:           vol.VolumeID,
 			VolumeContext:      labels,
 			AccessibleTopology: []*csi.Topology{topology},
+			ContentSource:      src,
 		},
 	}
 	return volResp
 }
+
+// createCSISnapshotResponse ...
+func createCSISnapshotResponse(snapshot provider.Snapshot) *csi.CreateSnapshotResponse {
+	ts := timestamppb.New(snapshot.SnapshotCreationTime)
+	return &csi.CreateSnapshotResponse{
+		Snapshot: &csi.Snapshot{
+			SnapshotId:     snapshot.SnapshotID,
+			SourceVolumeId: snapshot.VolumeID,
+			SizeBytes:      snapshot.SnapshotSize,
+			CreationTime:   ts,
+			ReadyToUse:     snapshot.ReadyToUse,
+		},
+	}
+}
+
 func createControllerPublishVolumeResponse(volumeAttachmentResponse provider.VolumeAttachmentResponse, extraPublishInfo map[string]string) *csi.ControllerPublishVolumeResponse {
 	publishContext := map[string]string{
 		PublishInfoVolumeID:   volumeAttachmentResponse.VolumeID,

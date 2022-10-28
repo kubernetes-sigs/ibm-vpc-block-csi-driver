@@ -26,8 +26,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// DeleteSnapshot DELETEs to /volumes
-func (ss *SnapshotService) DeleteSnapshot(volumeID string, snapshotID string, ctxLogger *zap.Logger) error {
+// DeleteSnapshot DELETEs to /snapshots
+func (ss *SnapshotService) DeleteSnapshot(snapshotID string, ctxLogger *zap.Logger) error {
 	ctxLogger.Debug("Entry Backend DeleteSpanshot")
 	defer ctxLogger.Debug("Exit Backend DeleteSnapshot")
 
@@ -44,7 +44,7 @@ func (ss *SnapshotService) DeleteSnapshot(volumeID string, snapshotID string, ct
 	request := ss.client.NewRequest(operation)
 	ctxLogger.Info("Equivalent curl command", zap.Reflect("URL", request.URL()), zap.Reflect("Operation", operation))
 
-	_, err := request.PathParameter(volumeIDParam, volumeID).PathParameter(snapshotIDParam, snapshotID).JSONError(&apiErr).Invoke()
+	_, err := request.PathParameter(snapshotIDParam, snapshotID).JSONError(&apiErr).Invoke()
 	if err != nil {
 		return err
 	}

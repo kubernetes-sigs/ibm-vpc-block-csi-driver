@@ -33,7 +33,7 @@ import (
 	"go.uber.org/zap"
 )
 
-//IksVpcBlockProvider  handles both IKS and  RIAAS sessions
+// IksVpcBlockProvider  handles both IKS and  RIAAS sessions
 type IksVpcBlockProvider struct {
 	vpcprovider.VPCBlockProvider
 	vpcBlockProvider *vpcprovider.VPCBlockProvider // Holds VPC provider. Requires to avoid recursive calls
@@ -42,7 +42,7 @@ type IksVpcBlockProvider struct {
 
 var _ local.Provider = &IksVpcBlockProvider{}
 
-//NewProvider handles both IKS and  RIAAS sessions
+// NewProvider handles both IKS and  RIAAS sessions
 func NewProvider(conf *vpcconfig.VPCBlockConfig, logger *zap.Logger) (local.Provider, error) {
 	var err error
 	//Setup vpc provider

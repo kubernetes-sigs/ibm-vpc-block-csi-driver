@@ -29,7 +29,7 @@ import (
 	"go.uber.org/zap"
 )
 
-//VpcVolumeAttachment ...
+// VpcVolumeAttachment ...
 const (
 	VpcVolumeAttachment = "vpcVolumeAttachment"
 	StatusAttached      = "attached"

@@ -24,6 +24,7 @@ import (
 )
 
 // Providers is a registry interface for IaaS providers
+//
 //go:generate counterfeiter -o fakes/provider_registry.go --fake-name Providers . Providers
 type Providers interface {
 	Get(providerID string) (local.Provider, error)
