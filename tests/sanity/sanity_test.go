@@ -112,7 +112,7 @@ func TestSanity(t *testing.T) {
 		TargetPath:               TargetPath,
 		StagingPath:              StagePath,
 		Address:                  CSIEndpoint,
-		DialOptions:              []grpc.DialOption{grpc.WithInsecure()},
+		DialOptions:              []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
 		IDGen:                    &providerIDGenerator{},
 		TestVolumeAccessType:     "mount",
 		TestVolumeParametersFile: os.Getenv("SANITY_PARAMS_FILE"),
