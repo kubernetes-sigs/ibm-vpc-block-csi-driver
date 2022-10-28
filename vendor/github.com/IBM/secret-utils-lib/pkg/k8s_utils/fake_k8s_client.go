@@ -73,6 +73,31 @@ func FakeCreateSecret(kc KubernetesClient, fakeAuthType, secretdatafilepath stri
 	return nil
 }
 
+// FakeCreateSecretWithKey ...
+func FakeCreateSecretWithKey(kc KubernetesClient, secretName, dataName, secretdatafilepath string) error {
+	secret := new(v1.Secret)
+	secret.Name = secretName
+
+	secret.Namespace = kc.GetNameSpace()
+	data := make(map[string][]byte)
+
+	byteData, err := ioutil.ReadFile(secretdatafilepath)
+	if err != nil {
+		kc.logger.Error("Error reading secret data", zap.Error(err))
+		return err
+	}
+
+	data[dataName] = byteData
+	secret.Data = data
+	clientset := kc.clientset
+	_, err = clientset.CoreV1().Secrets("kube-system").Create(context.TODO(), secret, metav1.CreateOptions{})
+	if err != nil {
+		kc.logger.Error("Error creating secret", zap.Error(err))
+		return err
+	}
+	return nil
+}
+
 // FakeCreateCM ...
 func FakeCreateCM(kc KubernetesClient, clsuterInfofilepath string) error {
 	byteData, err := ioutil.ReadFile(clsuterInfofilepath)

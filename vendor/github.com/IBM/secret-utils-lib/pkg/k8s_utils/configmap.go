@@ -2,9 +2,9 @@ package k8s_utils
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/IBM/secret-utils-lib/pkg/utils"
-	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -16,14 +16,12 @@ func GetConfigMapData(kc KubernetesClient, configMapName, dataName string) (stri
 
 	cm, err := clientset.CoreV1().ConfigMaps(namespace).Get(context.TODO(), configMapName, metav1.GetOptions{})
 	if err != nil {
-		kc.logger.Error("Error fetching cluster-info configmap", zap.Error(err))
-		return "", utils.Error{Description: utils.ErrFetchingClusterConfig, BackendError: err.Error()}
+		return "", err
 	}
 
 	data, ok := cm.Data[dataName]
 	if !ok {
-		kc.logger.Error("cluster-config.json is not present")
-		return "", utils.Error{Description: utils.ErrEmptyClusterConfig}
+		return "", utils.Error{Description: fmt.Sprintf(utils.ErrEmptyConfigMapData, dataName, configMapName)}
 	}
 
 	return data, nil

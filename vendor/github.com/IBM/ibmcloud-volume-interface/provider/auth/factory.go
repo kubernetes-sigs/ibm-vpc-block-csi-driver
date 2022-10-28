@@ -30,10 +30,10 @@ type ContextCredentialsFactory struct {
 var _ local.ContextCredentialsFactory = &ContextCredentialsFactory{}
 
 // NewContextCredentialsFactory ...
-func NewContextCredentialsFactory(authConfig *iam.AuthConfiguration) (*ContextCredentialsFactory, error) {
+func NewContextCredentialsFactory(authConfig *iam.AuthConfiguration, providerType ...string) (*ContextCredentialsFactory, error) {
 	var tokenExchangeService iam.TokenExchangeService
 
-	tokenExchangeService, err := iam.NewTokenExchangeService(authConfig)
+	tokenExchangeService, err := iam.NewTokenExchangeService(authConfig, providerType...)
 	if err != nil {
 		return nil, err
 	}

@@ -39,6 +39,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	nodeMetadata "github.com/IBM/ibm-csi-common/pkg/metadata"
@@ -112,7 +113,7 @@ func TestSanity(t *testing.T) {
 		TargetPath:               TargetPath,
 		StagingPath:              StagePath,
 		Address:                  CSIEndpoint,
-		DialOptions:              []grpc.DialOption{grpc.WithInsecure()},
+		DialOptions:              []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
 		IDGen:                    &providerIDGenerator{},
 		TestVolumeAccessType:     "mount",
 		TestVolumeParametersFile: os.Getenv("SANITY_PARAMS_FILE"),

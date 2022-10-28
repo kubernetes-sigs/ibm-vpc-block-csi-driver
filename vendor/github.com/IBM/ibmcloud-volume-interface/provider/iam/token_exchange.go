@@ -34,6 +34,15 @@ import (
 	sp "github.com/IBM/secret-utils-lib/pkg/secret_provider"
 )
 
+const (
+	// VPC - if VPC option is provided as providerType, key will read from VPC section.
+	VPC = secret_provider.VPC
+	// Bluemix - if Bluemix option is provided as providerType, key will read from Bluemix section.
+	Bluemix = secret_provider.Bluemix
+	// Softlayer - if Softlayer option is provided as providerType, key will read from Softlayer section.
+	Softlayer = secret_provider.Softlayer
+)
+
 // tokenExchangeService ...
 type tokenExchangeService struct {
 	authConfig     *AuthConfiguration
@@ -60,12 +69,19 @@ func NewTokenExchangeServiceWithClient(authConfig *AuthConfiguration, httpClient
 }
 
 // NewTokenExchangeService ...
-func NewTokenExchangeService(authConfig *AuthConfiguration) (TokenExchangeService, error) {
+func NewTokenExchangeService(authConfig *AuthConfiguration, providerType ...string) (TokenExchangeService, error) {
 	httpClient, err := config.GeneralCAHttpClient()
 	if err != nil {
 		return nil, err
 	}
-	spObject, err := secret_provider.NewSecretProvider()
+
+	providerTypeArg := make(map[string]string)
+	if len(providerType) != 0 {
+		providerTypeArg[secret_provider.ProviderType] = providerType[0]
+	} else {
+		providerTypeArg[secret_provider.ProviderType] = VPC
+	}
+	spObject, err := secret_provider.NewSecretProvider(providerTypeArg)
 	if err != nil {
 		return nil, err
 	}
