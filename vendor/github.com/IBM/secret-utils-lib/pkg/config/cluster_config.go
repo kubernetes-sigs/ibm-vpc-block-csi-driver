@@ -35,6 +35,8 @@ const (
 	stageMasterURLsubstr = ".test."
 	// tokenExchangePath ...
 	tokenExchangePath = "/identity/token"
+	// constTrue ...
+	constTrue = "True"
 )
 
 // ClusterConfig ...
@@ -61,46 +63,23 @@ func GetClusterInfo(kc k8s_utils.KubernetesClient, logger *zap.Logger) (ClusterC
 	return cc, nil
 }
 
-// getTokenExchangeURLfromSecret ...
-func getTokenExchangeURLfromSecret(secret string, logger *zap.Logger) (string, error) {
-	logger.Info("Getting token exchange URL from storage-secret-store")
-
-	secretConfig, err := ParseConfig(logger, secret)
-	if err != nil {
-		return "", err
-	}
-
-	var url string
-	if os.Getenv("IS_SATELLITE") == "True" {
-		logger.Info("Cluster-type: Satellite")
-		// Using provided url for token exchange if cluster type = satellite
-		url = secretConfig.VPC.G2TokenExchangeURL
-	} else {
-		if !strings.Contains(secretConfig.VPC.G2TokenExchangeURL, "stage") {
-			url = utils.ProdIAMURL
-		} else {
-			url = utils.StageIAMURL
-		}
-	}
-
-	if url == "" {
-		return "", utils.Error{Description: utils.WarnFetchingTokenExchangeURL}
-	}
-
-	// Appending the base URL and token exchange path
-	url = url + tokenExchangePath
-
-	return url, nil
-}
-
 // FrameTokenExchangeURL ...
-func FrameTokenExchangeURL(kc k8s_utils.KubernetesClient, logger *zap.Logger) string {
+func FrameTokenExchangeURL(kc k8s_utils.KubernetesClient, providerType string, logger *zap.Logger) string {
 
-	secret, err := k8s_utils.GetSecret(kc, utils.STORAGE_SECRET_STORE_SECRET, utils.SECRET_STORE_FILE)
+	// Fetch token exchange URL from cloud-conf
+	cloudConf, err := GetCloudConf(logger, kc)
+	if err == nil && cloudConf.TokenExchangeURL != "" {
+		return cloudConf.TokenExchangeURL + tokenExchangePath
+	}
+
+	logger.Info("Unable to fetch token exchange URL from cloud-conf")
+	secret, err := k8s_utils.GetSecretData(kc, utils.STORAGE_SECRET_STORE_SECRET, utils.SECRET_STORE_FILE)
 	if err == nil {
-		url, err := getTokenExchangeURLfromSecret(secret, logger)
-		if err == nil {
-			return url
+		if secretConfig, err := ParseConfig(logger, secret); err == nil {
+			url, err := GetTokenExchangeURLfromStorageSecretStore(*secretConfig, providerType)
+			if err == nil {
+				return url
+			}
 		}
 	}
 
@@ -111,6 +90,43 @@ func FrameTokenExchangeURL(kc k8s_utils.KubernetesClient, logger *zap.Logger) st
 		return (utils.PublicIAMURL + tokenExchangePath)
 	}
 
+	return FrameTokenExchangeURLFromClusterInfo(cc, logger)
+}
+
+// GetTokenExchangeURLfromStorageSecretStore ...
+func GetTokenExchangeURLfromStorageSecretStore(config Config, providerType string) (string, error) {
+
+	var url string
+	switch providerType {
+	case utils.VPC:
+		url = config.VPC.G2TokenExchangeURL
+	case utils.Bluemix:
+		url = config.Bluemix.IamURL
+	case utils.Softlayer:
+		url = config.Softlayer.SoftlayerTokenExchangeURL
+	}
+
+	if url == "" {
+		return "", utils.Error{Description: utils.WarnFetchingTokenExchangeURL}
+	}
+
+	// If the cluster is not satellite cluster, use PROD or STAGE URLs
+	if os.Getenv("IS_SATELLITE") != constTrue {
+		if !strings.Contains(url, "stage") && !strings.Contains(url, "test") {
+			url = utils.ProdIAMURL
+		} else {
+			url = utils.StageIAMURL
+		}
+	}
+
+	// Appending the base URL and token exchange path
+	url = url + tokenExchangePath
+
+	return url, nil
+}
+
+// FrameTokenExchangeURLFromClusterInfo ...
+func FrameTokenExchangeURLFromClusterInfo(cc ClusterConfig, logger *zap.Logger) string {
 	if !strings.Contains(cc.MasterURL, stageMasterURLsubstr) {
 		logger.Info("Env-Production")
 		return (utils.ProdIAMURL + tokenExchangePath)

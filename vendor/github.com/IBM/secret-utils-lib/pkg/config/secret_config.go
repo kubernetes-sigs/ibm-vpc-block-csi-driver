@@ -66,7 +66,7 @@ type SoftlayerConfig struct {
 	SoftlayerTimeout             string `toml:"softlayer_api_timeout" envconfig:"SOFTLAYER_API_TIMEOUT"`
 	SoftlayerVolProvisionTimeout string `toml:"softlayer_vol_provision_timeout" envconfig:"SOFTLAYER_VOL_PROVISION_TIMEOUT"`
 	SoftlayerRetryInterval       string `toml:"softlayer_api_retry_interval" envconfig:"SOFTLAYER_API_RETRY_INTERVAL"`
-
+	SoftlayerTokenExchangeURL    string `toml:"softlayer_token_exchange_endpoint_url"`
 	//Configuration values for JWT tokens
 	SoftlayerJWTKID       string `toml:"softlayer_jwt_kid"`
 	SoftlayerJWTTTL       int    `toml:"softlayer_jwt_ttl"`
