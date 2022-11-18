@@ -33,7 +33,6 @@ const (
 	exceededZoneName      = "testzone-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	exceededRegionName    = "us-south-test-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	exceededResourceGID   = "myresourcegroups-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-	exceededTag           = "tag-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	exceededEncryptionKey = "key-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 )
 
@@ -227,16 +226,6 @@ func TestGetVolumeParameters(t *testing.T) {
 			expectedVolume: &provider.Volume{},
 			expectedStatus: true,
 			expectedError:  fmt.Errorf("%s:<%v> exceeds %d chars", ResourceGroup, exceededResourceGID, ResourceGroupIDMaxLen),
-		},
-		{
-			testCaseName: "Max length exceeded for tag",
-			request: &csi.CreateVolumeRequest{Parameters: map[string]string{
-				Tag: exceededTag,
-			},
-			},
-			expectedVolume: &provider.Volume{},
-			expectedStatus: true,
-			expectedError:  fmt.Errorf("%s:<%v> exceeds %d chars", Tag, exceededTag, TagMaxLen),
 		},
 		{
 			testCaseName: "Wrong encrypted key's value",
@@ -500,17 +489,6 @@ func TestOverrideParams(t *testing.T) {
 			expectedVolume: &provider.Volume{},
 			expectedStatus: true,
 			expectedError:  fmt.Errorf("%s exceeds %d bytes", EncryptionKey, EncryptionKeyMaxLen),
-		},
-		{
-			testCaseName: "Tag key size exceeded",
-			request: &csi.CreateVolumeRequest{Name: volumeName, CapacityRange: &csi.CapacityRange{RequiredBytes: 11811160064, LimitBytes: utils.MinimumVolumeSizeInBytes + utils.MinimumVolumeSizeInBytes},
-				Secrets: map[string]string{
-					Tag: exceededTag,
-				},
-			},
-			expectedVolume: &provider.Volume{},
-			expectedStatus: true,
-			expectedError:  fmt.Errorf("%s:<%v> exceeds %d chars", Tag, exceededTag, TagMaxLen),
 		},
 		{
 			testCaseName: "Zone key size exceeded",
