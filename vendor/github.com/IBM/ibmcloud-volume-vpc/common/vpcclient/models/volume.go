@@ -48,11 +48,13 @@ type Volume struct {
 	Status              StatusType           `json:"status,omitempty"`
 	VolumeAttachments   *[]VolumeAttachment  `json:"volume_attachments,omitempty"`
 
-	Zone       *Zone  `json:"zone,omitempty"`
-	CRN        string `json:"crn,omitempty"`
-	Cluster    string `json:"cluster,omitempty"`
-	Provider   string `json:"provider,omitempty"`
-	VolumeType string `json:"volume_type,omitempty"`
+	Zone          *Zone                 `json:"zone,omitempty"`
+	CRN           string                `json:"crn,omitempty"`
+	Cluster       string                `json:"cluster,omitempty"`
+	Provider      string                `json:"provider,omitempty"`
+	VolumeType    string                `json:"volume_type,omitempty"`
+	HealthState   string                `json:"health_state,omitempty"`
+	HealthReasons *[]VolumeHealthReason `json:"health_reasons,omitempty"`
 }
 
 // ListVolumeFilters ...
