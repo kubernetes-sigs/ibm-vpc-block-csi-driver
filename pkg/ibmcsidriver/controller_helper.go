@@ -136,11 +136,9 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 				volume.Region = value
 			}
 		case Tag:
-			if len(value) > TagMaxLen {
-				err = fmt.Errorf("%s:<%v> exceeds %d chars", key, value, TagMaxLen)
-			}
 			if len(value) != 0 {
-				volume.VPCVolume.Tags = []string{value}
+				tagstr := strings.TrimSpace(value)
+				volume.VPCVolume.Tags = strings.Split(tagstr, ",")
 			}
 
 		case ResourceGroup:
@@ -327,7 +325,7 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 					secretTags := strings.Split(tagstr, ",")
 					volume.VPCVolume.Tags = append(volume.VPCVolume.Tags, secretTags...)
 				}
-			}
+		
 		case Zone:
 			if len(value) > ZoneNameMaxLen {
 				err = fmt.Errorf("%s:<%v> exceeds %d chars", key, value, ZoneNameMaxLen)
