@@ -3,9 +3,9 @@ module github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
 go 1.18
 
 require (
-	github.com/IBM/ibm-csi-common v1.0.1-beta7
+	github.com/IBM/ibm-csi-common v1.0.2-beta1
 	github.com/IBM/ibmcloud-volume-interface v1.0.1-beta5
-	github.com/IBM/ibmcloud-volume-vpc v1.0.1-beta7
+	github.com/IBM/ibmcloud-volume-vpc v1.0.2-beta1
 	github.com/container-storage-interface/spec v1.5.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/uuid v1.1.2

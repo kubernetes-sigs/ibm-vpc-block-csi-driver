@@ -321,12 +321,11 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 				}
 			}
 		case Tag:
-			if len(value) > TagMaxLen {
-				err = fmt.Errorf("%s:<%v> exceeds %d chars", key, value, TagMaxLen)
-			} else {
-				if len(value) != 0 {
+			if len(value) != 0 {
 					logger.Info("append", zap.Any(Tag, value))
-					volume.VPCVolume.Tags = append(volume.VPCVolume.Tags, value)
+					tagstr := strings.TrimSpace(value)
+					secretTags := strings.Split(tagstr, ",")
+					volume.VPCVolume.Tags = append(volume.VPCVolume.Tags, secretTags...)
 				}
 			}
 		case Zone:
