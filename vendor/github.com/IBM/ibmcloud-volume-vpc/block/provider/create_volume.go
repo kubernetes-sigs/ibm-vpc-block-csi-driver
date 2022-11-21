@@ -18,6 +18,7 @@
 package provider
 
 import (
+	"strings"
 	"time"
 
 	"github.com/IBM/ibmcloud-volume-interface/lib/metrics"
@@ -149,7 +150,9 @@ func validateVolumeRequest(volumeRequest *provider.Volume, clusterVolumeLabel st
 
 	//Append the clusterVolumeLabel to existing tag list only if it is non-empty
 	if len(clusterVolumeLabel) != 0 {
-		volumeRequest.VPCVolume.Tags = append(volumeRequest.VPCVolume.Tags, clusterVolumeLabel)
+		tagstr := strings.TrimSpace(clusterVolumeLabel)
+		clusterTags := strings.Split(tagstr, ",")
+		volumeRequest.VPCVolume.Tags = append(volumeRequest.VPCVolume.Tags, clusterTags...)
 	}
 
 	return resourceGroup, iops, nil
