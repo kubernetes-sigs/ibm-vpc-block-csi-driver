@@ -2,6 +2,10 @@ kind: DaemonSet
 apiVersion: apps/v1
 metadata:
   name: ibm-vpc-block-csi-node
+  namespace: kube-system
+  labels:
+    app: ibm-vpc-block-csi-driver
+    addonmanager.kubernetes.io/mode: Reconcile
 spec:
   selector:
     matchLabels:
@@ -45,11 +49,11 @@ spec:
                   fieldPath: spec.nodeName
           resources:
             limits:
-              cpu: 100m
-              memory: 100Mi
+              cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSIDriverRegistrarCPULimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSIDriverRegistrarCPULimit}}40m{{/kube-system.addon-vpc-block-csi-driver-configmap.CSIDriverRegistrarCPULimit}}"
+              memory: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSIDriverRegistrarMemoryLimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSIDriverRegistrarMemoryLimit}}80Mi{{/kube-system.addon-vpc-block-csi-driver-configmap.CSIDriverRegistrarMemoryLimit}}"
             requests:
-              cpu: 10m
-              memory: 20Mi
+              cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSIDriverRegistrarCPURequest}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSIDriverRegistrarCPURequest}}10m{{/kube-system.addon-vpc-block-csi-driver-configmap.CSIDriverRegistrarCPURequest}}"
+              memory: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSIDriverRegistrarMemoryRequest}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSIDriverRegistrarMemoryRequest}}20Mi{{/kube-system.addon-vpc-block-csi-driver-configmap.CSIDriverRegistrarMemoryRequest}}"
           volumeMounts:
             - name: plugin-dir
               mountPath: /csi
@@ -75,11 +79,11 @@ spec:
               name: ibm-vpc-block-csi-configmap
           resources:
             limits:
-              cpu: 200m
-              memory: 250Mi
+              cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.NodeDriverCPULimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.NodeDriverCPULimit}}120m{{/kube-system.addon-vpc-block-csi-driver-configmap.NodeDriverCPULimit}}"
+              memory: "{{kube-system.addon-vpc-block-csi-driver-configmap.NodeDriverMemoryLimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.NodeDriverMemoryLimit}}300Mi{{/kube-system.addon-vpc-block-csi-driver-configmap.NodeDriverMemoryLimit}}"
             requests:
-              cpu: 20m
-              memory: 50Mi
+              cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.NodeDriverMemoryRequest}}{{^kube-system.addon-vpc-block-csi-driver-configmap.NodeDriverMemoryRequest}}30m{{/kube-system.addon-vpc-block-csi-driver-configmap.NodeDriverMemoryRequest}}"
+              memory: "{{kube-system.addon-vpc-block-csi-driver-configmap.NodeDriverCPURequest}}{{^kube-system.addon-vpc-block-csi-driver-configmap.NodeDriverCPURequest}}75Mi{{/kube-system.addon-vpc-block-csi-driver-configmap.NodeDriverCPURequest}}"
           ports:
             - name: healthz
               containerPort: 9808
@@ -121,11 +125,11 @@ spec:
             - --csi-address=/csi/csi.sock
           resources:
             limits:
-              cpu: 50m
-              memory: 50Mi
+              cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeCPULimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeCPULimit}}20m{{/kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeCPULimit}}"
+              memory: "{{kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeMemoryLimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeMemoryLimit}}40Mi{{/kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeMemoryLimit}}"
             requests:
-              cpu: 5m
-              memory: 10Mi
+              cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeCPURequest}}{{^kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeCPURequest}}5m{{/kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeCPURequest}}"
+              memory: "{{kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeMemoryRequest}}{{^kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeMemoryRequest}}10Mi{{/kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeMemoryRequest}}"
           volumeMounts:
             - name: plugin-dir
               mountPath: /csi

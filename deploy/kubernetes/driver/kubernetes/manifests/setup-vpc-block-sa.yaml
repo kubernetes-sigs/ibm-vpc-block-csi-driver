@@ -3,6 +3,10 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: ibm-vpc-block-node-sa
+  namespace: kube-system
+  labels:
+    app: ibm-vpc-block-csi-driver
+    addonmanager.kubernetes.io/mode: Reconcile
 imagePullSecrets:
   - name: bluemix-default-secret
   - name: bluemix-default-secret-regional
@@ -14,6 +18,9 @@ kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: vpc-block-driver-registrar-role
+  labels:
+    app: ibm-vpc-block-csi-driver
+    addonmanager.kubernetes.io/mode: Reconcile
 rules:
   - apiGroups: [""]
     resources: ["events"]
@@ -39,6 +46,9 @@ kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: vpc-block-driver-registrar-binding
+  labels:
+    app: ibm-vpc-block-csi-driver
+    addonmanager.kubernetes.io/mode: Reconcile
 subjects:
   - kind: ServiceAccount
     name: ibm-vpc-block-node-sa
@@ -54,6 +64,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: ibm-vpc-block-controller-sa
+  namespace: kube-system
 imagePullSecrets:
   - name: bluemix-default-secret
   - name: bluemix-default-secret-regional
@@ -65,6 +76,9 @@ kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: vpc-block-provisioner-role
+  labels:
+    app: ibm-vpc-block-csi-driver
+    addonmanager.kubernetes.io/mode: Reconcile
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
@@ -106,6 +120,9 @@ kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: vpc-block-provisioner-binding
+  labels:
+    app: ibm-vpc-block-csi-driver
+    addonmanager.kubernetes.io/mode: Reconcile
 subjects:
   - kind: ServiceAccount
     name: ibm-vpc-block-controller-sa
@@ -121,6 +138,9 @@ kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: vpc-block-external-attacher-role
+  labels:
+    app: ibm-vpc-block-csi-driver
+    addonmanager.kubernetes.io/mode: Reconcile
 rules:
   - apiGroups: [""]
     resources: ["persistentvolumes"]
@@ -143,6 +163,9 @@ kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: vpc-block-external-attacher-binding
+  labels:
+    app: ibm-vpc-block-csi-driver
+    addonmanager.kubernetes.io/mode: Reconcile
 subjects:
   - kind: ServiceAccount
     name: ibm-vpc-block-controller-sa
@@ -158,6 +181,9 @@ kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: vpc-block-external-resizer-role
+  labels:
+    app: ibm-vpc-block-csi-driver
+    addonmanager.kubernetes.io/mode: Reconcile
 rules:
   - apiGroups: [""]
     resources: ["persistentvolumes"]
@@ -181,6 +207,9 @@ kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: vpc-block-external-resizer-binding
+  labels:
+    app: ibm-vpc-block-csi-driver
+    addonmanager.kubernetes.io/mode: Reconcile
 subjects:
   - kind: ServiceAccount
     name: ibm-vpc-block-controller-sa
@@ -196,6 +225,9 @@ kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: vpc-block-driver-snapshotter-role
+  labels:
+    app: ibm-vpc-block-csi-driver
+    addonmanager.kubernetes.io/mode: Reconcile
 rules:
   - apiGroups: [""]
     resources: ["events"]
@@ -219,6 +251,9 @@ kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: vpc-block-driver-snapshotter-binding
+  labels:
+    app: ibm-vpc-block-csi-driver
+    addonmanager.kubernetes.io/mode: Reconcile
 subjects:
   - kind: ServiceAccount
     name: ibm-vpc-block-controller-sa

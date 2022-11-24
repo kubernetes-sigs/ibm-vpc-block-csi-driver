@@ -3,6 +3,9 @@ kind: ConfigMap
 metadata:
   name: ibm-vpc-block-csi-configmap
   namespace: kube-system
+  labels:
+    app: ibm-vpc-block-csi-driver
+    addonmanager.kubernetes.io/mode: Reconcile
 data:
   SECRET_CONFIG_PATH: "/etc/storage_ibmc"
   CSI_ENDPOINT: "unix:/csi/csi.sock"
@@ -14,3 +17,60 @@ data:
   VPC_API_VERSION: "2019-07-02"
   VPC_API_GENERATION: "1"
   IKS_BLOCK_PROVIDER_NAME: "iks-vpc-classic"
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: addon-vpc-block-csi-driver-configmap
+  namespace: kube-system
+  labels:
+    app: ibm-vpc-block-csi-driver
+    addonmanager.kubernetes.io/mode: EnsureExists
+data:
+  IsStorageClassDefault: "true"
+  AttachDetachMinRetryGAP: "3"              #Initial retry interval for checking Attach/Detach Status. Default 3 seconds
+  AttachDetachMinRetryAttempt: "3"          #Number of attempts for AttachDetachMinRetryGAP. Default is 3 retries for 3 seconds retry gap.
+  AttachDetachMaxRetryAttempt: "46"         #Total number of retries for for checking Attach/Detach Status. Default is 46 times i.e ~7 mins (3 secs * 3 times + 6 secs * 6 times + 10 secs * 10 times)
+  AttacherWorkerThreads: "15"               #The number of goroutines for processing VolumeAttachments
+  AttacherKubeAPIBurst: "10"                #The number of requests to the Kubernetes API server, exceeding the QPS, that can be sent at any given time
+  AttacherKubeAPIQPS: "5.0"                 #The number of requests per second sent by a Kubernetes client to the Kubernetes API server.
+  #Requested resources per container
+  CSIDriverRegistrarCPURequest: "10m"       #container:csi-driver-registrar, resource-type: cpu-request
+  CSIDriverRegistrarMemoryRequest: "20Mi"   #container:csi-driver-registrar,  resource-type: memory-request
+  NodeDriverMemoryRequest: "30m"            #container:iks-vpc-block-node-driver, resource-type: cpu-request
+  NodeDriverCPURequest: "75Mi"              #container:iks-vpc-block-node-driver, resource-type: memory-request
+  LivenessProbeCPURequest: "5m"             #container:liveness-probe, resource-type: cpu-request
+  LivenessProbeMemoryRequest: "10Mi"        #container:liveness-probe, resource-type: memory-request
+  SecretSidecarCPURequest: "10m"            #container:storage-secret-sidecar, resource-type: cpu-request
+  SecretSidecarMemoryRequest: "20Mi"        #container:storage-secret-sidecar, resource-type: memory-request
+  CSIProvisionerCPURequest: "20m"           #container:csi-provisioner, resource-type: cpu-request
+  CSIProvisionerMemoryRequest: "40Mi"       #container:csi-provisioner, resource-type: memory-request
+  CSIAttacherCPURequest: "15m"              #container:csi-attacher, resource-type: cpu-request
+  CSIAttacherMemoryRequest: "30Mi"          #container:csi-attacher, resource-type: memory-request
+  CSIResizerCPURequest: "20m"               #container:csi-resizer, resource-type: cpu-request
+  CSIResizerMemoryRequest: "40Mi"           #container:csi-resizer, resource-type: memory-request
+  BlockDriverCPURequest: "75m"              #container:iks-vpc-block-driver, resource-type: cpu-request
+  BlockDriverMemoryRequest: "150Mi"         #container:iks-vpc-block-driver, resource-type: memory-request
+  CSISnapshotterCPURequest: "20m"           #container:csi-snapshotter, resource-type: cpu-request
+  CSISnapshotterMemoryRequest: "40Mi"       #container:csi-snapshotter, resource-type: memory-request
+  #Resource Limits per container
+  CSIDriverRegistrarCPULimit: "40m"         #container:csi-driver-registrar, resource-type: cpu-limit
+  CSIDriverRegistrarMemoryLimit: "80Mi"     #container:csi-driver-registrar, resource-type: memory-limit
+  NodeDriverCPULimit: "120m"                #container:iks-vpc-block-node-driver, resource-type: cpu-limit
+  NodeDriverMemoryLimit: "300Mi"            #container:iks-vpc-block-node-driver, resource-type: memory-limit
+  LivenessProbeCPULimit: "20m"              #container:liveness-probe, resource-type: cpu-limit
+  LivenessProbeMemoryLimit: "40Mi"          #container:liveness-probe, resource-type: memory-limit
+  SecretSidecarCPULimit: "40m"              #container:storage-secret-sidecar, resource-type: cpu-limit
+  SecretSidecarMemoryLimit: "80Mi"          #container:storage-secret-sidecar, resource-type: memory-limit
+  CSIProvisionerCPULimit: "80m"             #container:csi-provisioner, resource-type: cpu-limit
+  CSIProvisionerMemoryLimit: "160Mi"        #container:csi-provisioner, resource-type: memory-limit
+  CSIAttacherCPULimits: "60m"               #container:csi-attacher, resource-type: cpu-limit
+  CSIAttacherMemoryLimit: "120Mi"           #container:csi-attacher, resource-type: memory-limit
+  CSIResizerCPULimit: "80m"                 #container:csi-resizer, resource-type: cpu-limit
+  CSIResizerMemoryLimit: "160Mi"            #container:csi-resizer, resource-type: memory-limit
+  BlockDriverCPULimit: "300m"               #container:iks-vpc-block-driver, resource-type: cpu-limit
+  BlockDriverMemoryLimit: "600Mi"           #container:iks-vpc-block-driver, resource-type: memory-limit
+  CSISnapshotterCPULimit: "80m"             #container:csi-snapshotter, resource-type: cpu-limit
+  CSISnapshotterMemoryLimit: "160Mi"        #container:csi-snapshotter, resource-type: memory-limit
