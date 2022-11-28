@@ -15,6 +15,11 @@ import (
 	"errors"
 )
 
+const (
+	// fakeEndpoint ...
+	fakeEndpoint = "https://fakehost.com"
+)
+
 // FakeSecretProvider ...
 type FakeSecretProvider struct {
 }
@@ -37,21 +42,25 @@ func (fs *FakeSecretProvider) GetIAMToken(secret string, freshTokenRequired bool
 
 // GetRIAASEndpoint ...
 func (fs *FakeSecretProvider) GetRIAASEndpoint(readConfig bool) (string, error) {
-	return "", nil
+	return fakeEndpoint, nil
 }
 
+// GetPrivateRIAASEndpoint ...
 func (fs *FakeSecretProvider) GetPrivateRIAASEndpoint(readConfig bool) (string, error) {
-	return "", nil
+	return fakeEndpoint, nil
 }
 
+// GetContainerAPIRoute ...
 func (fs *FakeSecretProvider) GetContainerAPIRoute(readConfig bool) (string, error) {
-	return "", nil
+	return fakeEndpoint, nil
 }
 
+// GetPrivateContainerAPIRoute ...
 func (fs *FakeSecretProvider) GetPrivateContainerAPIRoute(readConfig bool) (string, error) {
-	return "", nil
+	return fakeEndpoint, nil
 }
 
+// GetResourceGroupID ...
 func (fs *FakeSecretProvider) GetResourceGroupID() string {
-	return ""
+	return "resource-group-id"
 }

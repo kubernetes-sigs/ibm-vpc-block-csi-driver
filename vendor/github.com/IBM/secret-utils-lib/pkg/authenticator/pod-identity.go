@@ -17,6 +17,8 @@
 package authenticator
 
 import (
+	"strings"
+
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/secret-utils-lib/pkg/token"
 	"github.com/IBM/secret-utils-lib/pkg/utils"
@@ -56,6 +58,18 @@ func (ca *ComputeIdentityAuthenticator) GetToken(freshTokenRequired bool) (strin
 	tokenResponse, err := ca.authenticator.RequestToken()
 	if err != nil {
 		ca.logger.Error("Error fetching fresh token", zap.Error(err))
+		if !strings.Contains(strings.ToLower(err.Error()), "timeout") {
+			return "", tokenlifetime, utils.Error{Description: "Error fetching iam token using compute identity", BackendError: err.Error()}
+		}
+		ca.logger.Info("Updating iam URL to public, if it is private and retrying to fetch token")
+		if strings.Contains(ca.authenticator.URL, utils.ProdIAMURL) {
+			ca.SetURL(utils.PublicIAMURL + "/identity/token")
+			return ca.GetToken(freshTokenRequired)
+		}
+		if strings.Contains(ca.authenticator.URL, utils.StageIAMURL) {
+			ca.SetURL(utils.StagePublicIAMURL + "/identity/token")
+			return ca.GetToken(freshTokenRequired)
+		}
 		return "", tokenlifetime, utils.Error{Description: "Error fetching iam token using compute identity", BackendError: err.Error()}
 	}
 
