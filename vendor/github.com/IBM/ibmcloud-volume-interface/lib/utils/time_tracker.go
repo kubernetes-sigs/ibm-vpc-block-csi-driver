@@ -18,7 +18,6 @@
 package util
 
 import (
-	"fmt"
 	"log"
 	"time"
 )
@@ -27,5 +26,5 @@ import (
 func TimeTracker(functionName string, start time.Time) {
 	elapsed := time.Since(start)
 
-	log.Println(fmt.Sprintf("TIME TAKEN BY FUNCTION %s IS %s", functionName, elapsed))
+	log.Printf("TIME TAKEN BY FUNCTION %s IS %s", functionName, elapsed)
 }
