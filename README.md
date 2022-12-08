@@ -119,7 +119,7 @@ IBM VPC endpoints which supports Gen2 is documented [here](https://cloud.ibm.com
 - Install `kustomize` tool. The instructions are available [here](https://kubectl.docs.kubernetes.io/installation/kustomize/)
 - Export cluster config i.e configuring kubectl command
 - Deploy IBM VPC Block CSI Driver on your cluster
-  - You can use any overlays available under `deploy/kubernetes/driver/kubernetes/overlays/` and edit the image tag if you want to use your own build image from this source code, although defualt overalys are already using released IBM VPC Block CSI Driver image 
+  - You can use any overlays available under `deploy/kubernetes/driver/kubernetes/overlays/` and edit the image tag if you want to use your own build image from this source code, although default overlays are already using released IBM VPC Block CSI Driver image 
 
   - `gcr.io/k8s-staging-cloud-provider-ibm/ibm-vpc-block-csi-driver:master` image is always the latest image build using `master` branch code.	
   - Example using `stage` overlay to update the image tag
