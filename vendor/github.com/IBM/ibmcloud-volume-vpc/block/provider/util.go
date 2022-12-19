@@ -371,7 +371,7 @@ func FromProviderToLibSnapshot(vpcSnapshot *models.Snapshot, logger *zap.Logger)
 		VolumeID:             vpcSnapshot.SourceVolume.ID,
 		SnapshotID:           vpcSnapshot.ID,
 		SnapshotCreationTime: createdTime,
-		SnapshotSize:         GiBToBytes(vpcSnapshot.Size),
+		SnapshotSize:         GiBToBytes(vpcSnapshot.MinimumCapacity),
 		VPC:                  provider.VPC{Href: vpcSnapshot.Href},
 	}
 	if vpcSnapshot.LifecycleState == snapshotReadyState {
