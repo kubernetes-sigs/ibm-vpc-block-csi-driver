@@ -501,7 +501,7 @@ func (csiNS *CSINodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeE
 		return nil, commonError.GetCSIError(ctxLogger, commonError.EmptyDevicePath, requestID, err)
 	}
 
-	if _, err := mountmgr.Resize(csiNS.Mounter, devicePath, volumePath); err != nil {
+	if _, err := csiNS.Mounter.Resize(devicePath, volumePath); err != nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.FileSystemResizeFailed, requestID, err)
 	}
 	return &csi.NodeExpandVolumeResponse{CapacityBytes: req.CapacityRange.RequiredBytes}, nil
