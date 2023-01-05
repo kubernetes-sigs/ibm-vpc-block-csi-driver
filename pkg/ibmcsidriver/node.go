@@ -302,7 +302,7 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 
 	// FormatAndMount will format only if needed
 	ctxLogger.Info("Formating and mounting ", zap.String("source", source), zap.String("stagingTargetPath", stagingTargetPath), zap.String("fsType", fsType), zap.Reflect("options", options))
-	err = csiNS.Mounter.NewSafeFormatAndMount().FormatAndMount(source, stagingTargetPath, fsType, options)
+	err = csiNS.Mounter.GetSafeFormatAndMount().FormatAndMount(source, stagingTargetPath, fsType, options)
 	if err != nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.FormatAndMountFailed, requestID, err, source, stagingTargetPath)
 	}
@@ -544,7 +544,7 @@ func (su *VolumeStatUtils) IsDevicePathNotExist(devicePath string) bool {
 
 // Resize expands the fs
 func (volMountUtils *VolumeMountUtils) Resize(mounter mountmanager.Mounter, devicePath string, deviceMountPath string) (bool, error) {
-	r := mount.NewResizeFs(mounter.NewSafeFormatAndMount().Exec)
+	r := mount.NewResizeFs(mounter.GetSafeFormatAndMount().Exec)
 	if _, err := r.Resize(devicePath, deviceMountPath); err != nil {
 		return false, err
 	}

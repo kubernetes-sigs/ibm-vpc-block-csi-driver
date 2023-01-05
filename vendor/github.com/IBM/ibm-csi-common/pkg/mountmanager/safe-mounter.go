@@ -28,10 +28,11 @@ type mountInterface = mount.Interface
 type Mounter interface {
 	mountInterface
 
-	NewSafeFormatAndMount() *mount.SafeFormatAndMount
+	GetSafeFormatAndMount() *mount.SafeFormatAndMount
 	MakeFile(path string) error
 	MakeDir(path string) error
 	PathExists(path string) (bool, error)
+	Resize(string, string) (bool, error)
 }
 
 // NodeMounter implements Mounter.

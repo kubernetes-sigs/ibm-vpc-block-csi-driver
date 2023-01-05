@@ -40,6 +40,7 @@ type Authenticator interface {
 	SetURL(url string)
 	SetEncryption(bool)
 	IsSecretEncrypted() bool
+	getURL() string
 }
 
 // NewAuthenticator initializes the particular authenticator based on the configuration provided.
@@ -209,4 +210,26 @@ func parseIBMCloudCredentials(logger *zap.Logger, data string) (map[string]strin
 	}
 
 	return credentialsmap, nil
+}
+
+// isTimeout ...
+func isTimeout(err error) bool {
+	// If the error message contains "Client.Timeout" substring, return true
+	if strings.Contains(err.Error(), "Client.Timeout") {
+		return true
+	}
+	return false
+}
+
+// resetURL resets URL from private IAM url to public IAM url ...
+func resetIAMURL(auth Authenticator) bool {
+	if strings.Contains(auth.getURL(), utils.ProdPrivateIAMURL) {
+		auth.SetURL(utils.ProdPublicIAMURL + "/identity/token")
+		return true
+	}
+	if strings.Contains(auth.getURL(), utils.StagePrivateIAMURL) {
+		auth.SetURL(utils.StagePublicIAMURL + "/identity/token")
+		return true
+	}
+	return false
 }

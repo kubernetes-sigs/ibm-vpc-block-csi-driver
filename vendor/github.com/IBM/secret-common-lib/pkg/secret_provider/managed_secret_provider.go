@@ -91,7 +91,7 @@ func newManagedSecretProvider(logger *zap.Logger, optionalArgs ...string) (*Mana
 	err = msp.initEndpointsUsingStorageSecretStore()
 	if err != nil {
 		// Do not return even if there is an error reading endpoints, just logging error
-		logger.Error("Unable to fetch endpoints from storage-secret-store", zap.Error(err))
+		logger.Warn("Unable to fetch endpoints from storage-secret-store", zap.Error(err))
 	}
 
 	logger.Info("Initialized managed secret provider")
