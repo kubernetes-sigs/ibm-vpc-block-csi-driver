@@ -64,3 +64,7 @@ func (fa *FakeAuthenticator) IsSecretEncrypted() bool {
 func (fa *FakeAuthenticator) SetEncryption(encrypted bool) {
 	fa.logger.Info("Unimplemented")
 }
+
+func (fa *FakeAuthenticator) getURL() string {
+	return fa.url
+}

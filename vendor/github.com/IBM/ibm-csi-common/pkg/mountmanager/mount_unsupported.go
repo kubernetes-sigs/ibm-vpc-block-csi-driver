@@ -47,3 +47,8 @@ func (m *NodeMounter) PathExists(pathname string) (bool, error) {
 func (m *NodeMounter) NewSafeFormatAndMount() *mount.SafeFormatAndMount {
 	return nil
 }
+
+// Resize returns boolean and error if any
+func (m *NodeMounter) Resize(devicePath string, deviceMountPath string) (bool, error) {
+	return true, errors.New("not implemented")
+}

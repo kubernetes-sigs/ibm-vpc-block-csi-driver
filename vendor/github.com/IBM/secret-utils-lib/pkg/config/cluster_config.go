@@ -87,7 +87,7 @@ func FrameTokenExchangeURL(kc k8s_utils.KubernetesClient, providerType string, l
 	cc, err := GetClusterInfo(kc, logger)
 	if err != nil {
 		logger.Error("Error fetching cluster master URL", zap.Error(err))
-		return (utils.PublicIAMURL + tokenExchangePath)
+		return (utils.ProdPublicIAMURL + tokenExchangePath)
 	}
 
 	return FrameTokenExchangeURLFromClusterInfo(cc, logger)
@@ -113,9 +113,9 @@ func GetTokenExchangeURLfromStorageSecretStore(config Config, providerType strin
 	// If the cluster is not satellite cluster, use PROD or STAGE URLs
 	if os.Getenv("IS_SATELLITE") != constTrue {
 		if !strings.Contains(url, "stage") && !strings.Contains(url, "test") {
-			url = utils.ProdIAMURL
+			url = utils.ProdPrivateIAMURL
 		} else {
-			url = utils.StageIAMURL
+			url = utils.StagePrivateIAMURL
 		}
 	}
 
@@ -129,9 +129,9 @@ func GetTokenExchangeURLfromStorageSecretStore(config Config, providerType strin
 func FrameTokenExchangeURLFromClusterInfo(cc ClusterConfig, logger *zap.Logger) string {
 	if !strings.Contains(cc.MasterURL, stageMasterURLsubstr) {
 		logger.Info("Env-Production")
-		return (utils.ProdIAMURL + tokenExchangePath)
+		return (utils.ProdPrivateIAMURL + tokenExchangePath)
 	}
 
 	logger.Info("Env-Stage")
-	return (utils.StageIAMURL + tokenExchangePath)
+	return (utils.StagePrivateIAMURL + tokenExchangePath)
 }
