@@ -307,6 +307,10 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 		return nil, commonError.GetCSIError(ctxLogger, commonError.FormatAndMountFailed, requestID, err, source, stagingTargetPath)
 	}
 
+	if _, err := csiNS.Mounter.Resize(devicePath, stagingTargetPath); err != nil {
+		return nil, commonError.GetCSIError(ctxLogger, commonError.FileSystemResizeFailed, requestID, err)
+	}
+
 	nodeStageVolumeResponse := &csi.NodeStageVolumeResponse{}
 	return nodeStageVolumeResponse, err
 }

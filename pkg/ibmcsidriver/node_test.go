@@ -20,6 +20,8 @@ package ibmcsidriver
 import (
 	"errors"
 	"fmt"
+	"k8s.io/utils/exec"
+	testingexec "k8s.io/utils/exec/testing"
 	"os"
 	"reflect"
 	"runtime"
@@ -347,7 +349,60 @@ func TestNodeStageVolume(t *testing.T) {
 		},
 	}
 
-	icDriver := initIBMCSIDriver(t)
+	actionList := []testingexec.FakeCommandAction{
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte("DEVNAME=/dev/sdb\nTYPE=ext4"), nil, nil
+					},
+				},
+			},
+			"blkid",
+		),
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte("1"), nil, nil
+					},
+				},
+			},
+			"mkfs.ext2",
+		),
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte("1"), nil, nil
+					},
+				},
+			},
+			"blockdev",
+		),
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte("DEVNAME=/dev/sdb\nTYPE=ext4"), nil, nil
+					},
+				},
+			},
+			"blkid",
+		),
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte("block size: 1\nblock count: 1"), nil, nil
+					},
+				},
+			},
+			"dumpe2fs",
+		),
+	}
+
+	icDriver := initIBMCSIDriver(t, actionList...)
 	for _, tc := range testCases {
 		t.Logf("Test case: %s", tc.name)
 		_, err := icDriver.ns.NodeStageVolume(context.Background(), tc.req)
@@ -649,7 +704,41 @@ func TestNodeExpandVolume(t *testing.T) {
 			expErrCode: codes.NotFound,
 		},
 	}
-	icDriver := initIBMCSIDriver(t)
+
+	actionList := []testingexec.FakeCommandAction{
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte("1"), nil, nil
+					},
+				},
+			},
+			"blockdev",
+		),
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte("DEVNAME=/dev/sdb\nTYPE=ext4"), nil, nil
+					},
+				},
+			},
+			"blkid",
+		),
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte("block size: 1\nblock count: 1"), nil, nil
+					},
+				},
+			},
+			"dumpe2fs",
+		),
+	}
+
+	icDriver := initIBMCSIDriver(t, actionList...)
 	_ = os.MkdirAll("valid-vol-path", os.FileMode(0755))
 	_ = icDriver.ns.Mounter.Mount("valid-devicePath", "valid-vol-path", "ext4", []string{})
 	for _, tc := range testCases {
@@ -759,5 +848,14 @@ func TestDeviceInfo(t *testing.T) {
 		} else {
 			assert.Nil(t, err)
 		}*/
+	}
+}
+
+func makeFakeCmd(fakeCmd *testingexec.FakeCmd, cmd string, args ...string) testingexec.FakeCommandAction {
+	c := cmd
+	a := args
+	return func(cmd string, args ...string) exec.Cmd {
+		command := testingexec.InitFakeCmd(fakeCmd, c, a...)
+		return command
 	}
 }
