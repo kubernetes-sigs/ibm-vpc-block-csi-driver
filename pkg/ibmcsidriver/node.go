@@ -60,11 +60,6 @@ type StatsUtils interface {
 	IsDevicePathNotExist(devicePath string) bool
 }
 
-// MountUtils ...
-type MountUtils interface {
-	Resize(mounter mountmanager.Mounter, devicePath string, deviceMountPath string) (bool, error)
-}
-
 // VolumeStatUtils ...
 type VolumeStatUtils struct {
 }
@@ -105,11 +100,6 @@ const (
 )
 
 var _ csi.NodeServer = &CSINodeServer{}
-var mountmgr MountUtils
-
-func init() {
-	mountmgr = &VolumeMountUtils{}
-}
 
 // NodePublishVolume ...
 func (csiNS *CSINodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
@@ -544,13 +534,4 @@ func (su *VolumeStatUtils) IsDevicePathNotExist(devicePath string) bool {
 		}
 	}
 	return false
-}
-
-// Resize expands the fs
-func (volMountUtils *VolumeMountUtils) Resize(mounter mountmanager.Mounter, devicePath string, deviceMountPath string) (bool, error) {
-	r := mount.NewResizeFs(mounter.GetSafeFormatAndMount().Exec)
-	if _, err := r.Resize(devicePath, deviceMountPath); err != nil {
-		return false, err
-	}
-	return true, nil
 }

@@ -28,7 +28,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/IBM/ibm-csi-common/pkg/mountmanager"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/stretchr/testify/assert"
@@ -47,19 +46,6 @@ const errorBlockDevice = "/for/errorblock"
 const notBlockDevice = "/for/notblocktest"
 
 type MockStatUtils struct {
-}
-
-type MockMountUtils struct {
-}
-
-// Resize expands the fs
-func (mu *MockMountUtils) Resize(mounter mountmanager.Mounter, devicePath string, deviceMountPath string) (bool, error) {
-	if strings.Contains(deviceMountPath, "fake-") {
-		return false, fmt.Errorf("failed to resize fs")
-	} else if strings.Contains(deviceMountPath, "valid-") {
-		return true, nil
-	}
-	return false, fmt.Errorf("failed to resize fs")
 }
 
 func (su *MockStatUtils) FSInfo(path string) (int64, int64, int64, int64, int64, int64, error) {
