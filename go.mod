@@ -3,7 +3,7 @@ module github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
 go 1.18
 
 require (
-	github.com/IBM/ibm-csi-common v1.1.2
+	github.com/IBM/ibm-csi-common v1.1.3
 	github.com/IBM/ibmcloud-volume-interface v1.1.1
 	github.com/IBM/ibmcloud-volume-vpc v1.1.2
 	github.com/container-storage-interface/spec v1.6.0
@@ -19,6 +19,7 @@ require (
 	google.golang.org/protobuf v1.28.1
 	k8s.io/kubernetes v1.25.4
 	k8s.io/mount-utils v0.25.4
+	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed
 )
 
 require (
@@ -102,7 +103,6 @@ require (
 	k8s.io/component-base v0.25.4 // indirect
 	k8s.io/klog/v2 v2.70.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803162953-67bda5d908f1 // indirect
-	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
