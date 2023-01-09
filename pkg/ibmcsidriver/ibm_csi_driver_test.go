@@ -18,6 +18,7 @@ limitations under the License.
 package ibmcsidriver
 
 import (
+	testingexec "k8s.io/utils/exec/testing"
 	"testing"
 
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
@@ -27,7 +28,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func initIBMCSIDriver(t *testing.T) *IBMCSIDriver {
+func initIBMCSIDriver(t *testing.T, fakeActions ...testingexec.FakeCommandAction) *IBMCSIDriver {
 	vendorVersion := "test-vendor-version-1.1.2"
 	driver := "mydriver"
 	// Creating test logger
@@ -36,7 +37,14 @@ func initIBMCSIDriver(t *testing.T) *IBMCSIDriver {
 	icDriver := GetIBMCSIDriver()
 	// Create fake provider and mounter
 	provider, _ := cloudProvider.NewFakeIBMCloudStorageProvider("", logger)
-	mounter := mountManager.NewFakeNodeMounter()
+
+	var mounter mountManager.Mounter
+	if len(fakeActions) != 0 {
+		mounter = mountManager.NewFakeNodeMounterWithCustomActions(fakeActions)
+	} else {
+		mounter = mountManager.NewFakeNodeMounter()
+	}
+
 	statsUtil := &MockStatUtils{}
 
 	fakeNodeData := nodeMetadata.FakeNodeMetadata{}

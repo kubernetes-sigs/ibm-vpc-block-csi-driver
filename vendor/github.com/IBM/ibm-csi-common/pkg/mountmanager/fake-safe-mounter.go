@@ -76,7 +76,7 @@ func (f *FakeNodeMounter) PathExists(pathname string) (bool, error) {
 	return false, nil
 }
 
-// NewSafeFormatAndMount ...
+// GetSafeFormatAndMount returns the existing SafeFormatAndMount object of NodeMounter.
 func (f *FakeNodeMounter) GetSafeFormatAndMount() *mount.SafeFormatAndMount {
 	return f.SafeFormatAndMount
 }
