@@ -86,6 +86,7 @@ func NewProvider(conf *vpcconfig.VPCBlockConfig, spObject sp.SecretProviderInter
 
 	// update iam based public toke exchange endpoint
 	conf.VPCConfig.TokenExchangeURL = conf.VPCConfig.G2TokenExchangeURL
+	// TODO - authentication is already handled, this config assignment can be removed eventually.
 	conf.VPCConfig.APIKey = conf.VPCConfig.G2APIKey
 	conf.VPCConfig.ResourceGroupID = conf.VPCConfig.G2ResourceGroupID
 

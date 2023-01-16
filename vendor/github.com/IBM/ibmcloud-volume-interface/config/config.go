@@ -19,7 +19,6 @@ package config
 
 import (
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -163,14 +162,6 @@ type IKSConfig struct {
 // APIConfig config
 type APIConfig struct {
 	PassthroughSecret string `toml:"PassthroughSecret" json:"-"`
-}
-
-// GetEtcPath returns the path to the etc directory
-func GetEtcPath() string {
-	goPath := GetGoPath()
-	srcPath := filepath.Join("src", "github.com", "IBM",
-		"ibmcloud-volume-interface")
-	return filepath.Join(goPath, srcPath, "etc")
 }
 
 // ParseConfig loads the config from file

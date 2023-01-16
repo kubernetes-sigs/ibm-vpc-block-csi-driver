@@ -52,7 +52,7 @@ func NewIBMCloudStorageProvider(clusterVolumeLabel string, k8sClient k8s_utils.K
 	// Load config file
 	conf, err := config.ReadConfig(k8sClient, logger)
 	if err != nil {
-		logger.Fatal("Error loading configuration")
+		logger.Error("Error loading configuration")
 		return nil, err
 	}
 
@@ -70,7 +70,7 @@ func NewIBMCloudStorageProvider(clusterVolumeLabel string, k8sClient k8s_utils.K
 	if conf.IKS != nil && conf.IKS.Enabled || os.Getenv("IKS_ENABLED") == "True" {
 		clusterInfo, err = utilsConfig.GetClusterInfo(k8sClient, logger)
 		if err != nil {
-			logger.Fatal("Unable to load ClusterInfo", local.ZapError(err))
+			logger.Error("Unable to load ClusterInfo", local.ZapError(err))
 			return nil, err
 		}
 		logger.Info("Fetched clusterInfo..")

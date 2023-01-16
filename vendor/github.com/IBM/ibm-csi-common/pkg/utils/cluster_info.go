@@ -24,23 +24,3 @@ type ClusterInfo struct {
 	DataCenter  string `json:"datacenter,omitempty"`
 	CustomerID  string `json:"customer_id,omitempty"`
 }
-
-/*
-// NewClusterInfo loads cluster info
-func NewClusterInfo(logger *zap.Logger) (*ClusterInfo, error) {
-	configBasePath := config.GetConfPathDir()
-	clusterInfo := &ClusterInfo{}
-	clusterInfoFile := filepath.Join(configBasePath, ClusterInfoPath)
-	clusterInfoContent, err := ioutil.ReadFile(filepath.Clean(clusterInfoFile))
-	if err != nil {
-		logger.Error("Error while reading  cluster-config.json", zap.Error(err))
-		return nil, err
-	}
-	err = json.Unmarshal(clusterInfoContent, clusterInfo)
-	if err != nil {
-		logger.Error("Error while parsing cluster-config", zap.Error(err))
-		return nil, err
-	}
-	return clusterInfo, nil
-}
-*/
