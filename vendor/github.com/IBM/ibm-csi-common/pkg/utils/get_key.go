@@ -17,15 +17,6 @@
 // Package utils ...
 package utils
 
-import (
-	"encoding/json"
-	"io/ioutil"
-	"path/filepath"
-
-	"github.com/IBM/ibmcloud-volume-interface/config"
-	"go.uber.org/zap"
-)
-
 // ClusterInfo contains the cluster information
 type ClusterInfo struct {
 	ClusterID   string `json:"cluster_id"`
@@ -34,6 +25,7 @@ type ClusterInfo struct {
 	CustomerID  string `json:"customer_id,omitempty"`
 }
 
+/*
 // NewClusterInfo loads cluster info
 func NewClusterInfo(logger *zap.Logger) (*ClusterInfo, error) {
 	configBasePath := config.GetConfPathDir()
@@ -51,3 +43,4 @@ func NewClusterInfo(logger *zap.Logger) (*ClusterInfo, error) {
 	}
 	return clusterInfo, nil
 }
+*/

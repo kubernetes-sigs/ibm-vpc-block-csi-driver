@@ -23,6 +23,8 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/IBM/secret-utils-lib/pkg/k8s_utils"
+	"github.com/IBM/secret-utils-lib/pkg/utils"
 	"github.com/kelseyhightower/envconfig"
 	"go.uber.org/zap"
 )
@@ -49,57 +51,20 @@ type Config struct {
 	API       *APIConfig
 }
 
-//ReadConfig loads the config from file
-func ReadConfig(confPath string, logger *zap.Logger) (*Config, error) {
-	// load the default config, if confPath not provided
-	if confPath == "" {
-		confPath = GetDefaultConfPath()
-	}
-
-	// Parse config file
-	conf := Config{
-		IKS: &IKSConfig{}, // IKS block may not be populated in secrete toml. Make sure its not nil
-	}
-	logger.Info("parsing conf file", zap.String("confpath", confPath))
-	err := ParseConfig(confPath, &conf, logger)
-	return &conf, err
-}
-
-// GetConfPath get configuration file path
-func GetConfPath() string {
-	if confPath := getEnv("SECRET_CONFIG_PATH"); confPath != "" {
-		return filepath.Join(confPath, "libconfig.toml")
-	}
-	//Get default conf path
-	return GetDefaultConfPath()
-}
-
-// GetConfPathDir get configuration  dir path
-func GetConfPathDir() string {
-	if confPath := getEnv("SECRET_CONFIG_PATH"); confPath != "" {
-		return confPath
-	}
-	//Get default conf path
-	return GetEtcPath()
-}
-
-// GetDefaultConfPath get default config file path
-func GetDefaultConfPath() string {
-	return filepath.Join(GetEtcPath(), "libconfig.toml")
-}
-
-// ParseConfig ...
-func ParseConfig(filePath string, conf interface{}, logger *zap.Logger) error {
-	_, err := toml.DecodeFile(filePath, conf)
+//ReadConfig loads the config from k8s secret ...
+func ReadConfig(k8sClient k8s_utils.KubernetesClient, logger *zap.Logger) (*Config, error) {
+	data, err := k8s_utils.GetSecretData(k8sClient, utils.STORAGE_SECRET_STORE_SECRET, utils.SECRET_STORE_FILE)
 	if err != nil {
-		logger.Error("Failed to parse config file", zap.Error(err))
+		logger.Error("Error reading config", zap.Error(err))
+		return nil, err
 	}
-	// Read environment variables
-	err = envconfig.Process("", conf)
+	conf, err := ParseConfig(logger, data)
 	if err != nil {
-		logger.Error("Failed to gather environment config variable", zap.Error(err))
+		logger.Error("Error parsing config", zap.Error(err))
+		return nil, err
 	}
-	return err
+
+	return conf, nil
 }
 
 // ServerConfig configuration options for the provider server itself
@@ -206,4 +171,22 @@ func GetEtcPath() string {
 	srcPath := filepath.Join("src", "github.com", "IBM",
 		"ibmcloud-volume-interface")
 	return filepath.Join(goPath, srcPath, "etc")
+}
+
+// ParseConfig loads the config from file
+func ParseConfig(logger *zap.Logger, data string) (*Config, error) {
+	configData := new(Config)
+	_, err := toml.Decode(data, configData)
+	if err != nil {
+		logger.Error("Failed to parse config", zap.Error(err))
+		return nil, err
+	}
+
+	err = envconfig.Process("", configData)
+	if err != nil {
+		logger.Error("Failed to gather environment config variable", zap.Error(err))
+		return nil, err
+	}
+
+	return configData, nil
 }

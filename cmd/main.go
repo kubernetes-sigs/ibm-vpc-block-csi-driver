@@ -21,15 +21,15 @@ import (
 	"flag"
 	"strings"
 
-	"github.com/IBM/ibmcloud-volume-interface/config"
-	libMetrics "github.com/IBM/ibmcloud-volume-interface/lib/metrics"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
 	"math/rand"
 	"net/http"
 	"os"
-	"path/filepath"
 	"time"
+
+	libMetrics "github.com/IBM/ibmcloud-volume-interface/lib/metrics"
+	sp "github.com/IBM/secret-common-lib/pkg/secret_provider"
+	k8sUtils "github.com/IBM/secret-utils-lib/pkg/k8s_utils"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	nodeInfoManager "github.com/IBM/ibm-csi-common/pkg/metadata"
@@ -59,6 +59,7 @@ var (
 
 const (
 	configFileName = "slclient.toml"
+	vpc            = "vpc"
 )
 
 func main() {
@@ -92,8 +93,18 @@ func handle(logger *zap.Logger) {
 	logger.Info("IBM CSI driver version", zap.Reflect("DriverVersion", vendorVersion))
 	logger.Info("Controller Mutex Lock enabled", zap.Bool("LockEnabled", *utils.LockEnabled))
 	// Setup Cloud Provider
-	configPath := filepath.Join(config.GetConfPathDir(), configFileName)
-	ibmcloudProvider, err := cloudProvider.NewIBMCloudStorageProvider(configPath, *extraVolumeLabelsStr, logger)
+	k8sClient, err := k8sUtils.Getk8sClientSet(logger)
+	if err != nil {
+		logger.Fatal("Failed to instantiate IKS-Storage provider", zap.Error(err))
+	}
+	// Setup secret provider for IKS/VPC sessions
+	providerTypeArg := make(map[string]string)
+	providerTypeArg[sp.ProviderType] = vpc
+	spObject, err := sp.NewSecretProvider(providerTypeArg)
+	if err != nil {
+		logger.Fatal("Failed to instantiate IKS-Storage provider", zap.Error(err))
+	}
+	ibmcloudProvider, err := cloudProvider.NewIBMCloudStorageProvider(*extraVolumeLabelsStr, k8sClient, spObject, logger)
 	if err != nil {
 		logger.Fatal("Failed to instantiate IKS-Storage provider", zap.Error(err))
 	}

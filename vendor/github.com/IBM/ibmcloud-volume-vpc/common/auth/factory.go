@@ -22,16 +22,17 @@ import (
 	"github.com/IBM/ibmcloud-volume-interface/provider/iam"
 	vpcconfig "github.com/IBM/ibmcloud-volume-vpc/block/vpcconfig"
 	vpciam "github.com/IBM/ibmcloud-volume-vpc/common/iam"
+	sp "github.com/IBM/secret-utils-lib/pkg/secret_provider"
 )
 
 // NewVPCContextCredentialsFactory ...
-func NewVPCContextCredentialsFactory(config *vpcconfig.VPCBlockConfig) (*auth.ContextCredentialsFactory, error) {
+func NewVPCContextCredentialsFactory(config *vpcconfig.VPCBlockConfig, spObject sp.SecretProviderInterface) (*auth.ContextCredentialsFactory, error) {
 	authConfig := &iam.AuthConfiguration{
 		IamURL:          config.VPCConfig.TokenExchangeURL,
 		IamClientID:     config.VPCConfig.IamClientID,
 		IamClientSecret: config.VPCConfig.IamClientSecret,
 	}
-	ccf, err := auth.NewContextCredentialsFactory(authConfig, iam.VPC)
+	ccf, err := auth.NewContextCredentialsFactory(authConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +42,7 @@ func NewVPCContextCredentialsFactory(config *vpcconfig.VPCBlockConfig) (*auth.Co
 			PrivateAPIRoute: config.VPCConfig.IKSTokenExchangePrivateURL, // Only for private cluster
 			CSRFToken:       config.APIConfig.PassthroughSecret,          // required for private cluster
 		}
-		ccf.TokenExchangeService, err = vpciam.NewTokenExchangeIKSService(authIKSConfig)
+		ccf.TokenExchangeService, err = vpciam.NewTokenExchangeIKSService(authIKSConfig, spObject)
 		if err != nil {
 			return nil, err
 		}
