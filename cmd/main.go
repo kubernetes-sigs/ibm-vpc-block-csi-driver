@@ -58,8 +58,7 @@ var (
 )
 
 const (
-	configFileName = "slclient.toml"
-	vpc            = "vpc"
+	vpc = "vpc"
 )
 
 func main() {
