@@ -31,6 +31,7 @@ func NewVPCContextCredentialsFactory(config *vpcconfig.VPCBlockConfig, spObject 
 		IamURL:          config.VPCConfig.TokenExchangeURL,
 		IamClientID:     config.VPCConfig.IamClientID,
 		IamClientSecret: config.VPCConfig.IamClientSecret,
+		Secretprovider:  spObject,
 	}
 	ccf, err := auth.NewContextCredentialsFactory(authConfig)
 	if err != nil {
