@@ -113,7 +113,7 @@ func TestCreateVolumeArguments(t *testing.T) {
 			expVol: &csi.Volume{
 				CapacityBytes:      20 * 1024 * 1024 * 1024, // In byte
 				VolumeId:           "testVolumeId",
-				VolumeContext:      map[string]string{utils.NodeRegionLabel: "myregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: ""},
+				VolumeContext:      map[string]string{utils.NodeRegionLabel: "myregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: "fake-clusterID"},
 				AccessibleTopology: stdTopology,
 			},
 			libVolumeResponse: &provider.Volume{Capacity: &cap, Name: &volName, VolumeID: "testVolumeId", Iops: &iopsStr, Az: "myzone", Region: "myregion"},
@@ -220,7 +220,7 @@ func TestCreateVolumeArguments(t *testing.T) {
 			expVol: &csi.Volume{
 				CapacityBytes: 20 * 1024 * 1024 * 1024, // In byte
 				VolumeId:      "testVolumeId",
-				VolumeContext: map[string]string{utils.NodeRegionLabel: "testregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: ""},
+				VolumeContext: map[string]string{utils.NodeRegionLabel: "testregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: "fake-clusterID"},
 				AccessibleTopology: []*csi.Topology{
 					{
 						Segments: map[string]string{utils.NodeZoneLabel: "myzone", utils.NodeRegionLabel: "testregion"},
@@ -253,7 +253,7 @@ func TestCreateVolumeArguments(t *testing.T) {
 			expVol: &csi.Volume{
 				CapacityBytes: 20 * 1024 * 1024 * 1024, // In byte
 				VolumeId:      "testVolumeId",
-				VolumeContext: map[string]string{utils.NodeRegionLabel: "testregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: ""},
+				VolumeContext: map[string]string{utils.NodeRegionLabel: "testregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: "fake-clusterID"},
 				AccessibleTopology: []*csi.Topology{
 					{
 						Segments: map[string]string{utils.NodeZoneLabel: "myzone", utils.NodeRegionLabel: "testregion"},
@@ -310,7 +310,7 @@ func TestCreateVolumeArguments(t *testing.T) {
 			expVol: &csi.Volume{
 				CapacityBytes:      20 * 1024 * 1024 * 1024, // In byte
 				VolumeId:           "testVolumeId",
-				VolumeContext:      map[string]string{utils.NodeRegionLabel: "myregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: ""},
+				VolumeContext:      map[string]string{utils.NodeRegionLabel: "myregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: "fake-clusterID"},
 				AccessibleTopology: stdTopology,
 			},
 			libVolumeResponse: &provider.Volume{Capacity: &cap, Name: &volName, VolumeID: "testVolumeId", Iops: &iopsStr, Az: "myzone", Region: "myregion"},
