@@ -45,8 +45,9 @@ const (
 
 // tokenExchangeService ...
 type tokenExchangeService struct {
-	authConfig *AuthConfiguration
-	httpClient *http.Client
+	authConfig     *AuthConfiguration
+	httpClient     *http.Client
+	secretprovider sp.SecretProviderInterface
 }
 
 // AuthConfiguration ...
@@ -54,7 +55,6 @@ type AuthConfiguration struct {
 	IamURL          string
 	IamClientID     string
 	IamClientSecret string
-	Secretprovider  sp.SecretProviderInterface
 }
 
 // TokenExchangeService ...
@@ -69,15 +69,21 @@ func NewTokenExchangeServiceWithClient(authConfig *AuthConfiguration, httpClient
 }
 
 // NewTokenExchangeService ...
-func NewTokenExchangeService(authConfig *AuthConfiguration, providerType ...string) (TokenExchangeService, error) {
+func NewTokenExchangeService(authConfig *AuthConfiguration, secretProviderArgs ...map[string]interface{}) (TokenExchangeService, error) {
 	httpClient, err := config.GeneralCAHttpClient()
 	if err != nil {
 		return nil, err
 	}
 
+	spObject, err := secret_provider.NewSecretProvider(secretProviderArgs...)
+	if err != nil {
+		return nil, err
+	}
+
 	return &tokenExchangeService{
-		authConfig: authConfig,
-		httpClient: httpClient,
+		authConfig:     authConfig,
+		httpClient:     httpClient,
+		secretprovider: spObject,
 	}, nil
 }
 
@@ -132,7 +138,7 @@ func (tes *tokenExchangeService) ExchangeIAMAPIKeyForIMSToken(iamAPIKey string, 
 // ExchangeIAMAPIKeyForAccessToken ...
 func (tes *tokenExchangeService) ExchangeIAMAPIKeyForAccessToken(iamAPIKey string, logger *zap.Logger) (*AccessToken, error) {
 	logger.Info("Fetching using secret provider")
-	token, _, err := tes.authConfig.Secretprovider.GetDefaultIAMToken(false)
+	token, _, err := tes.secretprovider.GetDefaultIAMToken(false)
 	if err != nil {
 		logger.Error("Error fetching iam token", zap.Error(err))
 		return nil, err

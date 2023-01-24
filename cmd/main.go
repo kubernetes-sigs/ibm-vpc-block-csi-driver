@@ -27,7 +27,6 @@ import (
 	"time"
 
 	libMetrics "github.com/IBM/ibmcloud-volume-interface/lib/metrics"
-	sp "github.com/IBM/secret-common-lib/pkg/secret_provider"
 	k8sUtils "github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -96,14 +95,8 @@ func handle(logger *zap.Logger) {
 	if err != nil {
 		logger.Fatal("Failed to instantiate IKS-Storage provider", zap.Error(err))
 	}
-	// Setup secret provider for IKS/VPC sessions
-	providerTypeArg := make(map[string]string)
-	providerTypeArg[sp.ProviderType] = vpc
-	spObject, err := sp.NewSecretProvider(providerTypeArg)
-	if err != nil {
-		logger.Fatal("Failed to instantiate IKS-Storage provider", zap.Error(err))
-	}
-	ibmcloudProvider, err := cloudProvider.NewIBMCloudStorageProvider(*extraVolumeLabelsStr, k8sClient, spObject, logger)
+
+	ibmcloudProvider, err := cloudProvider.NewIBMCloudStorageProvider(*extraVolumeLabelsStr, k8sClient, logger)
 	if err != nil {
 		logger.Fatal("Failed to instantiate IKS-Storage provider", zap.Error(err))
 	}

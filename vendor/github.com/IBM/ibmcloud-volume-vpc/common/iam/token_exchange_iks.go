@@ -28,6 +28,8 @@ import (
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	util "github.com/IBM/ibmcloud-volume-interface/lib/utils"
 	"github.com/IBM/ibmcloud-volume-interface/provider/iam"
+	"github.com/IBM/secret-common-lib/pkg/secret_provider"
+	k8s_utils "github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 	sp "github.com/IBM/secret-utils-lib/pkg/secret_provider"
 	"go.uber.org/zap"
 )
@@ -50,11 +52,16 @@ type IksAuthConfiguration struct {
 var _ iam.TokenExchangeService = &tokenExchangeIKSService{}
 
 // NewTokenExchangeIKSService ...
-func NewTokenExchangeIKSService(iksAuthConfig *IksAuthConfiguration, spObject sp.SecretProviderInterface) (iam.TokenExchangeService, error) {
+func NewTokenExchangeIKSService(iksAuthConfig *IksAuthConfiguration, k8sClient k8s_utils.KubernetesClient) (iam.TokenExchangeService, error) {
 	httpClient, err := config.GeneralCAHttpClient()
 	if err != nil {
 		return nil, err
 	}
+	secretProviderArgs := map[string]interface{}{
+		secret_provider.ProviderType: secret_provider.VPC,
+		secret_provider.K8sClient:    k8sClient,
+	}
+	spObject, err := secret_provider.NewSecretProvider(secretProviderArgs)
 	return &tokenExchangeIKSService{
 		iksAuthConfig: iksAuthConfig,
 		httpClient:    httpClient,

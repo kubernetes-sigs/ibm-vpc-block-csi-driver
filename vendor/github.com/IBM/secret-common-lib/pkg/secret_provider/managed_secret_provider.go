@@ -48,12 +48,36 @@ type ManagedSecretProvider struct {
 }
 
 // newManagedSecretProvider ...
-func newManagedSecretProvider(logger *zap.Logger, optionalArgs ...string) (*ManagedSecretProvider, error) {
+func newManagedSecretProvider(logger *zap.Logger, optionalArgs ...map[string]interface{}) (*ManagedSecretProvider, error) {
 	logger.Info("Connecting to sidecar")
-	kc, err := k8s_utils.Getk8sClientSet(logger)
-	if err != nil {
-		logger.Info("Error fetching k8s client set", zap.Error(err))
-		return nil, err
+
+	var kc k8s_utils.KubernetesClient
+	var providerName string
+	var err error
+	// If arguments are provided, check if providerType and K8s client exists and use the same
+	if len(optionalArgs) == 1 {
+		if providerNameInterface, ok := optionalArgs[0][ProviderType]; ok {
+			providerName = providerNameInterface.(string)
+			logger.Info("Provider type given", zap.String("Provider type", providerName))
+		}
+		if k8sClientInterface, ok := optionalArgs[0][K8sClient]; ok {
+			kc = k8sClientInterface.(k8s_utils.KubernetesClient)
+			logger.Info("K8s client provided")
+		}
+	}
+
+	if providerName == "" {
+		// If providerName (VPC/Bluemix) isn't provided, default to VPC
+		providerName = utils.VPC
+	}
+
+	// If k8sClient is empty, initialise our own k8s client
+	if (k8s_utils.KubernetesClient{}) == kc {
+		kc, err = k8s_utils.Getk8sClientSet(logger)
+		if err != nil {
+			logger.Info("Error fetching k8s client set", zap.Error(err))
+			return nil, err
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -72,7 +96,7 @@ func newManagedSecretProvider(logger *zap.Logger, optionalArgs ...string) (*Mana
 	if len(optionalArgs) != 0 {
 		c := sp.NewSecretProviderClient(conn)
 		// NewSecretProvider call to sidecar
-		_, err = c.NewSecretProvider(ctx, &sp.InitRequest{ProviderType: optionalArgs[0]})
+		_, err = c.NewSecretProvider(ctx, &sp.InitRequest{ProviderType: providerName})
 		if err != nil {
 			logger.Error("Error initiliazing managed secret provider", zap.Error(err))
 			return nil, err

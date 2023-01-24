@@ -31,7 +31,6 @@ import (
 	"github.com/IBM/ibmcloud-volume-vpc/common/registry"
 	utilsConfig "github.com/IBM/secret-utils-lib/pkg/config"
 	"github.com/IBM/secret-utils-lib/pkg/k8s_utils"
-	sp "github.com/IBM/secret-utils-lib/pkg/secret_provider"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 )
@@ -47,7 +46,7 @@ type IBMCloudStorageProvider struct {
 var _ CloudProviderInterface = &IBMCloudStorageProvider{}
 
 // NewIBMCloudStorageProvider ...
-func NewIBMCloudStorageProvider(clusterVolumeLabel string, k8sClient k8s_utils.KubernetesClient, spObject sp.SecretProviderInterface, logger *zap.Logger) (*IBMCloudStorageProvider, error) {
+func NewIBMCloudStorageProvider(clusterVolumeLabel string, k8sClient k8s_utils.KubernetesClient, logger *zap.Logger) (*IBMCloudStorageProvider, error) {
 	logger.Info("NewIBMCloudStorageProvider-Reading provider configuration...")
 	// Load config file
 	conf, err := config.ReadConfig(k8sClient, logger)
@@ -86,7 +85,7 @@ func NewIBMCloudStorageProvider(clusterVolumeLabel string, k8sClient k8s_utils.K
 		ServerConfig: conf.Server,
 	}
 	// Prepare provider registry
-	registry, err := provider_util.InitProviders(vpcBlockConfig, spObject, logger)
+	registry, err := provider_util.InitProviders(vpcBlockConfig, k8sClient, logger)
 	if err != nil {
 		logger.Error("Error configuring providers", local.ZapError(err))
 		return nil, err

@@ -29,7 +29,7 @@ import (
 	vpcauth "github.com/IBM/ibmcloud-volume-vpc/common/auth"
 	userError "github.com/IBM/ibmcloud-volume-vpc/common/messages"
 	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/riaas"
-	sp "github.com/IBM/secret-utils-lib/pkg/secret_provider"
+	k8s_utils "github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 
 	"go.uber.org/zap"
 )
@@ -44,10 +44,10 @@ type IksVpcBlockProvider struct {
 var _ local.Provider = &IksVpcBlockProvider{}
 
 // NewProvider handles both IKS and  RIAAS sessions
-func NewProvider(conf *vpcconfig.VPCBlockConfig, spObject sp.SecretProviderInterface, logger *zap.Logger) (local.Provider, error) {
+func NewProvider(conf *vpcconfig.VPCBlockConfig, k8sClient k8s_utils.KubernetesClient, logger *zap.Logger) (local.Provider, error) {
 	var err error
 	//Setup vpc provider
-	provider, err := vpcprovider.NewProvider(conf, spObject, logger)
+	provider, err := vpcprovider.NewProvider(conf, k8sClient, logger)
 	if err != nil {
 		logger.Error("Error initializing VPC Provider", zap.Error(err))
 		return nil, err
@@ -55,7 +55,7 @@ func NewProvider(conf *vpcconfig.VPCBlockConfig, spObject sp.SecretProviderInter
 	vpcBlockProvider, _ := provider.(*vpcprovider.VPCBlockProvider)
 
 	// Setup IKS provider
-	provider, err = vpcprovider.NewProvider(conf, spObject, logger)
+	provider, err = vpcprovider.NewProvider(conf, k8sClient, logger)
 	if err != nil {
 		logger.Error("Error initializing IKS Provider", zap.Error(err))
 		return nil, err
@@ -71,7 +71,7 @@ func NewProvider(conf *vpcconfig.VPCBlockConfig, spObject sp.SecretProviderInter
 		iksBlockProvider: iksBlockProvider,
 	}
 
-	iksVpcBlockProvider.iksBlockProvider.ContextCF, err = vpcauth.NewVPCContextCredentialsFactory(iksVpcBlockProvider.vpcBlockProvider.Config, spObject)
+	iksVpcBlockProvider.iksBlockProvider.ContextCF, err = vpcauth.NewVPCContextCredentialsFactory(iksVpcBlockProvider.vpcBlockProvider.Config, k8sClient)
 	if err != nil {
 		logger.Error("Error initializing context credentials factory", zap.Error(err))
 		return nil, err

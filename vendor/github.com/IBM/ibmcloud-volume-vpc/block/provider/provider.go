@@ -26,6 +26,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/IBM/secret-utils-lib/pkg/k8s_utils"
+
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	"github.com/IBM/ibmcloud-volume-interface/lib/metrics"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
@@ -37,7 +39,6 @@ import (
 	"github.com/IBM/ibmcloud-volume-vpc/common/messages"
 	userError "github.com/IBM/ibmcloud-volume-vpc/common/messages"
 	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/riaas"
-	sp "github.com/IBM/secret-utils-lib/pkg/secret_provider"
 	"go.uber.org/zap"
 )
 
@@ -71,7 +72,7 @@ type VPCBlockProvider struct {
 var _ local.Provider = &VPCBlockProvider{}
 
 // NewProvider initialises an instance of an IaaS provider.
-func NewProvider(conf *vpcconfig.VPCBlockConfig, spObject sp.SecretProviderInterface, logger *zap.Logger) (local.Provider, error) {
+func NewProvider(conf *vpcconfig.VPCBlockConfig, k8sClient k8s_utils.KubernetesClient, logger *zap.Logger) (local.Provider, error) {
 	logger.Info("Entering NewProvider")
 
 	if conf.VPCConfig == nil {
@@ -90,28 +91,22 @@ func NewProvider(conf *vpcconfig.VPCBlockConfig, spObject sp.SecretProviderInter
 	conf.VPCConfig.APIKey = conf.VPCConfig.G2APIKey
 	conf.VPCConfig.ResourceGroupID = conf.VPCConfig.G2ResourceGroupID
 
-	//Set API Generation As 2 (if unspecified in config/ENV-VAR)
-	if conf.VPCConfig.G2VPCAPIGeneration <= 0 {
-		conf.VPCConfig.G2VPCAPIGeneration = NEXTGenProvider
-	}
-	conf.VPCConfig.VPCAPIGeneration = conf.VPCConfig.G2VPCAPIGeneration
+	//Set API Generation As 2
+	conf.VPCConfig.G2VPCAPIGeneration = NEXTGenProvider
+	conf.VPCConfig.VPCAPIGeneration = NEXTGenProvider
 
 	//Set the APIVersion Date, it can be different in GC and NG
 	if conf.VPCConfig.G2APIVersion != "" {
 		conf.VPCConfig.APIVersion = conf.VPCConfig.G2APIVersion
 	}
 
-	//set provider-type (this usually comes from the secret)
-	if conf.VPCConfig.VPCBlockProviderType != VPCNextGen {
-		conf.VPCConfig.VPCBlockProviderType = VPCNextGen
-	}
+	//set provider-type
+	conf.VPCConfig.VPCBlockProviderType = VPCNextGen
 
 	//Mark this as enabled/active
-	if conf.VPCConfig.VPCTypeEnabled != VPCNextGen {
-		conf.VPCConfig.VPCTypeEnabled = VPCNextGen
-	}
+	conf.VPCConfig.VPCTypeEnabled = VPCNextGen
 
-	contextCF, err := vpcauth.NewVPCContextCredentialsFactory(conf, spObject)
+	contextCF, err := vpcauth.NewVPCContextCredentialsFactory(conf, k8sClient)
 	if err != nil {
 		return nil, err
 	}

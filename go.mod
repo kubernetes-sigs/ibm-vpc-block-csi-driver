@@ -3,10 +3,9 @@ module github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
 go 1.18
 
 require (
-	github.com/IBM/ibm-csi-common v1.1.4-0.20230117101621-95940928ac1e
-	github.com/IBM/ibmcloud-volume-interface v1.1.2-0.20230116094327-084d382598e9
-	github.com/IBM/ibmcloud-volume-vpc v1.1.3-0.20230117101519-05925237c1f7
-	github.com/IBM/secret-common-lib v1.1.1
+	github.com/IBM/ibm-csi-common v1.1.4-0.20230124092418-e5b0fd0d820f
+	github.com/IBM/ibmcloud-volume-interface v1.1.2-0.20230124090055-49343e71990e
+	github.com/IBM/ibmcloud-volume-vpc v1.1.3-0.20230124091845-426bfa73e935
 	github.com/IBM/secret-utils-lib v1.1.1
 	github.com/container-storage-interface/spec v1.6.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
@@ -28,6 +27,7 @@ require (
 	github.com/BurntSushi/toml v1.0.0 // indirect
 	github.com/IBM-Cloud/ibm-cloud-cli-sdk v0.6.7 // indirect
 	github.com/IBM/go-sdk-core/v5 v5.9.1 // indirect
+	github.com/IBM/secret-common-lib v1.1.2-0.20230124082300-2bf2e5e0b2ba // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef // indirect
