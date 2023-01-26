@@ -56,10 +56,6 @@ var (
 	logger               *zap.Logger
 )
 
-const (
-	vpc = "vpc"
-)
-
 func main() {
 	flag.Parse()
 	rand.Seed(time.Now().UnixNano())
