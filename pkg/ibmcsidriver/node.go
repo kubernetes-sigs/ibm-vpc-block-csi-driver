@@ -19,6 +19,7 @@ package ibmcsidriver
 
 import (
 	"fmt"
+	"k8s.io/klog/v2"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -235,10 +236,12 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 		return nil, commonError.GetCSIError(ctxLogger, commonError.VolumeCapabilitiesNotSupported, requestID, nil)
 	}
 
-	// If the access type is block, do nothing for stage
-	switch volumeCapability.GetAccessType().(type) {
-	case *csi.VolumeCapability_Block:
-		return &csi.NodeStageVolumeResponse{}, nil
+	// If the access type is block, do nothing for stage.
+	if volumeCapability != nil {
+		if blk := volumeCapability.GetBlock(); blk != nil {
+			klog.V(4).InfoS("NodeStageVolume: called. Since it is a block device, ignoring...", "volumeID", volumeID)
+			return &csi.NodeStageVolumeResponse{}, nil
+		}
 	}
 
 	// Check devicePath is available in the publish context
