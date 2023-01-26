@@ -19,6 +19,8 @@ package ibmcsidriver
 
 import (
 	"fmt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"k8s.io/klog/v2"
 	"os"
 	"path/filepath"
@@ -476,6 +478,34 @@ func (csiNS *CSINodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeE
 	if len(volumePath) == 0 {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.EmptyVolumePath, requestID, nil)
 	}
+
+	volumeCapability := req.GetVolumeCapability()
+	isBlock := false
+	// VolumeCapability is optional, if specified, use that as source of truth.
+	if volumeCapability != nil {
+		volumeCapabilities := []*csi.VolumeCapability{volumeCapability}
+		if !areVolumeCapabilitiesSupported(volumeCapabilities, csiNS.Driver.vcap) {
+			return nil, commonError.GetCSIError(ctxLogger, commonError.VolumeCapabilitiesNotSupported, requestID, nil)
+		}
+		isBlock = volumeCapability.GetBlock() != nil
+	} else {
+		// VolumeCapability is nil, check if volumePath points to a block device.
+		var err error
+		isBlock, err = csiNS.Stats.IsBlockDevice(volumePath)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to determine if volumePath [%v] is a block device: %v", volumePath, err)
+		}
+	}
+	// Noop for block NodeExpandVolume.
+	if isBlock {
+		capacity, err := csiNS.Stats.DeviceInfo(volumePath)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to get block capacity on path %s: %v", volumePath, err)
+		}
+		klog.V(4).InfoS("NodeExpandVolume: called, since given volumePath is a block device, ignoring...", "volumeID", volumeID, "volumePath", volumePath)
+		return &csi.NodeExpandVolumeResponse{CapacityBytes: capacity}, nil
+	}
+
 	notMounted, err := csiNS.Mounter.IsLikelyNotMountPoint(volumePath)
 	if err != nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.ObjectNotFound, requestID, err, volumePath)
