@@ -45,46 +45,26 @@ type UnmanagedSecretProvider struct {
 }
 
 // newUnmanagedSecretProvider ...
-func newUnmanagedSecretProvider(logger *zap.Logger, optionalArgs ...map[string]interface{}) (*UnmanagedSecretProvider, error) {
-	var k8sClient k8s_utils.KubernetesClient
-	var providerName, secretKey string
-	var err error
-	// If arguments are provided, check if providerType and K8s client exists and use the same
-	if len(optionalArgs) == 1 {
-		if providerNameInterface, ok := optionalArgs[0][ProviderType]; ok {
-			providerName = providerNameInterface.(string)
-			logger.Info("Provider type given", zap.String("Provider type", providerName))
-		}
-		if k8sClientInterface, ok := optionalArgs[0][K8sClient]; ok {
-			k8sClient = k8sClientInterface.(k8s_utils.KubernetesClient)
-			logger.Info("K8s client provided")
-		}
-		if secretKeyInterface, ok := optionalArgs[0][SecretKey]; ok {
-			secretKey = secretKeyInterface.(string)
-			logger.Info("Secret key provided", zap.String("Secret key", secretKey))
-		}
+func newUnmanagedSecretProvider(k8sClient *k8s_utils.KubernetesClient, logger *zap.Logger, optionalArgs ...map[string]string) (*UnmanagedSecretProvider, error) {
+	// Validate the argument k8s client
+	err := k8s_utils.ValidateK8SClient(k8sClient)
+	if err == nil {
+		return InitUnmanagedSecretProvider(logger, *k8sClient, optionalArgs...)
 	}
 
-	if providerName == "" {
-		// If providerName (VPC/Bluemix) isn't provided, default to VPC
-		providerName = utils.VPC
+	// If the k8s client passed as argument is nil or is invalid, fetch k8s client internally.
+	logger.Error("Provided k8s client is invalid", zap.Error(err))
+	kc, err := k8s_utils.Getk8sClientSet()
+	if err != nil {
+		logger.Error("Error fetching k8s client set", zap.Error(err))
+		return nil, err
 	}
+	return InitUnmanagedSecretProvider(logger, kc, optionalArgs...)
+}
 
-	// If k8sClient is empty, initialise our own k8s client
-	if (k8s_utils.KubernetesClient{}) == k8sClient {
-		k8sClient, err = k8s_utils.Getk8sClientSet(logger)
-		if err != nil {
-			logger.Info("Error fetching k8s client set", zap.Error(err))
-			return nil, err
-		}
-	}
-
-	args := make(map[string]string)
-	args[ProviderType] = providerName
-	if secretKey != "" {
-		args[SecretKey] = secretKey
-	}
-	authenticator, authType, err := auth.NewAuthenticator(logger, k8sClient, args)
+// initUnmanagedSecretProvider ...
+func InitUnmanagedSecretProvider(logger *zap.Logger, kc k8s_utils.KubernetesClient, optionalArgs ...map[string]string) (*UnmanagedSecretProvider, error) {
+	authenticator, authType, err := auth.NewAuthenticator(logger, kc, optionalArgs...)
 	if err != nil {
 		logger.Error("Error initializing unmanaged secret provider", zap.Error(err))
 		return nil, err
@@ -111,15 +91,21 @@ func newUnmanagedSecretProvider(logger *zap.Logger, optionalArgs ...map[string]i
 	usp.authenticator = authenticator
 	usp.logger = logger
 	usp.authType = authType
-	usp.k8sClient = k8sClient
+	usp.k8sClient = kc
 
-	// Iniitialise endpoints (container api route, riaas url, token exhange url using cloud-conf config map
 	err = usp.initEndpointsUsingCloudConf()
 	if err == nil {
 		logger.Info("Initialized unmanaged secret provider")
 		return usp, nil
 	}
 
+	var providerName string
+	if len(optionalArgs) == 1 {
+		providerName, _ = optionalArgs[0][ProviderType]
+	}
+	if providerName == "" {
+		providerName = utils.VPC
+	}
 	err = usp.initEndpointsUsingStorageSecretStore(providerName)
 	if err != nil {
 		logger.Error("Error initializing secret provider")

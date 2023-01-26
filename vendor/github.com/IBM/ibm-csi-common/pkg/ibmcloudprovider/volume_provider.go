@@ -46,10 +46,10 @@ type IBMCloudStorageProvider struct {
 var _ CloudProviderInterface = &IBMCloudStorageProvider{}
 
 // NewIBMCloudStorageProvider ...
-func NewIBMCloudStorageProvider(clusterVolumeLabel string, k8sClient k8s_utils.KubernetesClient, logger *zap.Logger) (*IBMCloudStorageProvider, error) {
+func NewIBMCloudStorageProvider(clusterVolumeLabel string, k8sClient *k8s_utils.KubernetesClient, logger *zap.Logger) (*IBMCloudStorageProvider, error) {
 	logger.Info("NewIBMCloudStorageProvider-Reading provider configuration...")
 	// Load config file
-	conf, err := config.ReadConfig(k8sClient, logger)
+	conf, err := config.ReadConfig(*k8sClient, logger)
 	if err != nil {
 		logger.Error("Error loading configuration")
 		return nil, err
@@ -67,7 +67,7 @@ func NewIBMCloudStorageProvider(clusterVolumeLabel string, k8sClient k8s_utils.K
 	var clusterInfo utilsConfig.ClusterConfig
 	logger.Info("Fetching clusterInfo")
 	if conf.IKS != nil && conf.IKS.Enabled || os.Getenv("IKS_ENABLED") == "True" {
-		clusterInfo, err = utilsConfig.GetClusterInfo(k8sClient, logger)
+		clusterInfo, err = utilsConfig.GetClusterInfo(*k8sClient, logger)
 		if err != nil {
 			logger.Error("Unable to load ClusterInfo", local.ZapError(err))
 			return nil, err

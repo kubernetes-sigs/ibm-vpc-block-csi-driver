@@ -31,7 +31,6 @@ import (
 const (
 	ProviderType string = "ProviderType"
 	SecretKey    string = "SecretKey"
-	K8sClient    string = "K8sClient"
 	VPC          string = "vpc"
 	Bluemix      string = "bluemix"
 	Softlayer    string = "softlayer"
@@ -39,62 +38,56 @@ const (
 
 // NewSecretProvider initializes new secret provider
 // Note: providerType which can be VPC, Bluemix, Softlayer (the constants defined above) and is only used when we need to read storage-secret-store, this is kept to support backward compatibility.
-func NewSecretProvider(optionalArgs ...map[string]interface{}) (sp.SecretProviderInterface, error) {
+func NewSecretProvider(k8sClient *k8s_utils.KubernetesClient, optionalArgs ...map[string]string) (sp.SecretProviderInterface, error) {
 	var managed bool
 	if iksEnabled := os.Getenv("IKS_ENABLED"); strings.ToLower(iksEnabled) == "true" {
 		managed = true
 	}
 	logger := setUpLogger(managed)
 
-	err := validateArguments(logger, optionalArgs...)
+	err := validateArguments(optionalArgs...)
 	if err != nil {
 		logger.Error("Error seen while validating arguments", zap.Error(err), zap.Any("Provided arguments", optionalArgs))
 		return nil, err
 	}
 
-	var secretKeyExists bool
-	if len(optionalArgs) > 0 {
-		_, secretKeyExists = optionalArgs[0][SecretKey]
-	}
-
-	// If IKS_ENABLED is set to true, and client has not passed any secret key, init managed secret provider
-	if managed && !secretKeyExists {
-		return newManagedSecretProvider(logger, optionalArgs...)
+	if managed { // If IKS_ENABLED is set to true
+		if len(optionalArgs) == 0 {
+			return newManagedSecretProvider(logger)
+		}
+		// If ProviderType is given, fetch providerName and pass to initialise managed secret provider
+		if providerName, ok := optionalArgs[0][ProviderType]; ok {
+			return newManagedSecretProvider(logger, providerName)
+		}
 	}
 
 	// If a secret key was passed, or IKS ENABLED was set to false, initialise unmanaged secret provider
-	return newUnmanagedSecretProvider(logger, optionalArgs...)
+	return newUnmanagedSecretProvider(k8sClient, logger, optionalArgs...)
 }
 
 // validateArguments ...
-func validateArguments(logger *zap.Logger, optionalArgs ...map[string]interface{}) error {
+func validateArguments(optionalArgs ...map[string]string) error {
 	// Only one argument is expected
 	if len(optionalArgs) > 1 {
-		return utils.Error{Description: localutils.ErrMultipleArgsUnsupported}
+		return utils.Error{Description: localutils.ErrMultipleKeysUnsupported}
 	}
 
 	if len(optionalArgs) == 1 {
 		// If an argument is given and it is neither ProviderType nor SecretKey, return error
-		providerNameInterface, providerExists := optionalArgs[0][ProviderType]
-		secretKeyNameInterface, secretKeyExists := optionalArgs[0][SecretKey]
-		k8sClientInterface, k8sClientExists := optionalArgs[0][K8sClient]
-
-		if !secretKeyExists && !providerExists && !k8sClientExists {
+		providerName, providerExists := optionalArgs[0][ProviderType]
+		secretKeyName, secretKeyExists := optionalArgs[0][SecretKey]
+		if !providerExists && !secretKeyExists {
 			return utils.Error{Description: localutils.ErrInvalidArgument}
 		}
 
-		if secretKeyExists && !isSecretKey(logger, secretKeyNameInterface) {
-			return utils.Error{Description: localutils.ErrInvalidSecretKey}
-		}
-
 		// If secretKeyName is empty return error
-		if providerExists && !isProviderType(logger, providerNameInterface) {
-			return utils.Error{Description: localutils.ErrInvalidProviderType}
+		if secretKeyExists && secretKeyName == "" {
+			return utils.Error{Description: localutils.ErrEmptySecretKeyProvided}
 		}
 
 		// If ProviderType is given, but it is invalid, return error
-		if k8sClientExists && !isK8SClient(logger, k8sClientInterface) {
-			return utils.Error{Description: localutils.ErrInvalidK8sClient}
+		if providerExists && !isProviderType(providerName) {
+			return utils.Error{Description: localutils.ErrInvalidProviderType}
 		}
 	}
 
@@ -102,47 +95,8 @@ func validateArguments(logger *zap.Logger, optionalArgs ...map[string]interface{
 }
 
 // isProviderType ...
-func isProviderType(logger *zap.Logger, arg interface{}) bool {
-	providerType, valid := arg.(string)
-	if valid {
-		logger.Info("provider type", zap.String("Provider type", providerType))
-		return providerType == VPC || providerType == Bluemix || providerType == Softlayer
-	}
-
-	logger.Error("Provider type is not of type string", zap.Any("Provider type", arg))
-	return false
-}
-
-// isSecretKey ...
-func isSecretKey(logger *zap.Logger, arg interface{}) bool {
-	secretKey, valid := arg.(string)
-	if valid && secretKey != "" {
-		return true
-	}
-
-	logger.Error("Secret key is either empty or not of type string", zap.Any("Secret key", arg))
-	return false
-}
-
-// isK8SClient ...
-func isK8SClient(logger *zap.Logger, arg interface{}) bool {
-	k8sClient, valid := arg.(k8s_utils.KubernetesClient)
-	if !valid {
-		logger.Error("Provided K8S client is not of type KubernetesClient")
-		return false
-	}
-
-	if k8sClient.GetNameSpace() == "" {
-		logger.Error("Namespace in the kubernetes client is not initialised")
-		return false
-	}
-
-	if k8sClient.GetClientSet() == nil {
-		logger.Error("K8S clientset is not initialised")
-		return false
-	}
-
-	return true
+func isProviderType(arg string) bool {
+	return (arg == VPC || arg == Bluemix || arg == Softlayer)
 }
 
 // setUpLogger ...

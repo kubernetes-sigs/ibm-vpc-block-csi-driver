@@ -44,7 +44,7 @@ type IksVpcBlockProvider struct {
 var _ local.Provider = &IksVpcBlockProvider{}
 
 // NewProvider handles both IKS and  RIAAS sessions
-func NewProvider(conf *vpcconfig.VPCBlockConfig, k8sClient k8s_utils.KubernetesClient, logger *zap.Logger) (local.Provider, error) {
+func NewProvider(conf *vpcconfig.VPCBlockConfig, k8sClient *k8s_utils.KubernetesClient, logger *zap.Logger) (local.Provider, error) {
 	var err error
 	//Setup vpc provider
 	provider, err := vpcprovider.NewProvider(conf, k8sClient, logger)

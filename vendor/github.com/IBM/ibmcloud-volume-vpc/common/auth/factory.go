@@ -22,22 +22,17 @@ import (
 	"github.com/IBM/ibmcloud-volume-interface/provider/iam"
 	vpcconfig "github.com/IBM/ibmcloud-volume-vpc/block/vpcconfig"
 	vpciam "github.com/IBM/ibmcloud-volume-vpc/common/iam"
-	"github.com/IBM/secret-common-lib/pkg/secret_provider"
 	"github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 )
 
 // NewVPCContextCredentialsFactory ...
-func NewVPCContextCredentialsFactory(config *vpcconfig.VPCBlockConfig, k8sClient k8s_utils.KubernetesClient) (*auth.ContextCredentialsFactory, error) {
+func NewVPCContextCredentialsFactory(config *vpcconfig.VPCBlockConfig, k8sClient *k8s_utils.KubernetesClient) (*auth.ContextCredentialsFactory, error) {
 	authConfig := &iam.AuthConfiguration{
 		IamURL:          config.VPCConfig.TokenExchangeURL,
 		IamClientID:     config.VPCConfig.IamClientID,
 		IamClientSecret: config.VPCConfig.IamClientSecret,
 	}
-	args := map[string]interface{}{
-		secret_provider.ProviderType: secret_provider.VPC,
-		secret_provider.K8sClient:    k8sClient,
-	}
-	ccf, err := auth.NewContextCredentialsFactory(authConfig, args)
+	ccf, err := auth.NewContextCredentialsFactory(authConfig, k8sClient, iam.VPC)
 	if err != nil {
 		return nil, err
 	}

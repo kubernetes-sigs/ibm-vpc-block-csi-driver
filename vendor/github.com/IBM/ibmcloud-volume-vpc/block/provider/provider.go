@@ -72,7 +72,7 @@ type VPCBlockProvider struct {
 var _ local.Provider = &VPCBlockProvider{}
 
 // NewProvider initialises an instance of an IaaS provider.
-func NewProvider(conf *vpcconfig.VPCBlockConfig, k8sClient k8s_utils.KubernetesClient, logger *zap.Logger) (local.Provider, error) {
+func NewProvider(conf *vpcconfig.VPCBlockConfig, k8sClient *k8s_utils.KubernetesClient, logger *zap.Logger) (local.Provider, error) {
 	logger.Info("Entering NewProvider")
 
 	if conf.VPCConfig == nil {

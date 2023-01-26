@@ -20,6 +20,7 @@ package auth
 import (
 	"github.com/IBM/ibmcloud-volume-interface/provider/iam"
 	"github.com/IBM/ibmcloud-volume-interface/provider/local"
+	"github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 )
 
 // ContextCredentialsFactory ...
@@ -30,10 +31,10 @@ type ContextCredentialsFactory struct {
 var _ local.ContextCredentialsFactory = &ContextCredentialsFactory{}
 
 // NewContextCredentialsFactory ...
-func NewContextCredentialsFactory(authConfig *iam.AuthConfiguration, secretProviderArgs ...map[string]interface{}) (*ContextCredentialsFactory, error) {
+func NewContextCredentialsFactory(authConfig *iam.AuthConfiguration, k8sClient *k8s_utils.KubernetesClient, providerType ...string) (*ContextCredentialsFactory, error) {
 	var tokenExchangeService iam.TokenExchangeService
 
-	tokenExchangeService, err := iam.NewTokenExchangeService(authConfig, secretProviderArgs...)
+	tokenExchangeService, err := iam.NewTokenExchangeService(authConfig, k8sClient, providerType...)
 	if err != nil {
 		return nil, err
 	}

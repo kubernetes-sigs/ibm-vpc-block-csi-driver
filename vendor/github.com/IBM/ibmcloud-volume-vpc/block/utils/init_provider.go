@@ -33,7 +33,7 @@ import (
 )
 
 // InitProviders initialization for all providers as per configurations
-func InitProviders(conf *vpcconfig.VPCBlockConfig, k8sClient k8s_utils.KubernetesClient, logger *zap.Logger) (registry.Providers, error) {
+func InitProviders(conf *vpcconfig.VPCBlockConfig, k8sClient *k8s_utils.KubernetesClient, logger *zap.Logger) (registry.Providers, error) {
 	var haveProviders bool
 	providerRegistry := &registry.ProviderRegistry{}
 

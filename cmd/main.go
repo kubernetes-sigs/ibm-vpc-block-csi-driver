@@ -91,12 +91,12 @@ func handle(logger *zap.Logger) {
 	logger.Info("IBM CSI driver version", zap.Reflect("DriverVersion", vendorVersion))
 	logger.Info("Controller Mutex Lock enabled", zap.Bool("LockEnabled", *utils.LockEnabled))
 	// Setup Cloud Provider
-	k8sClient, err := k8sUtils.Getk8sClientSet(logger)
+	k8sClient, err := k8sUtils.Getk8sClientSet()
 	if err != nil {
 		logger.Fatal("Failed to instantiate IKS-Storage provider", zap.Error(err))
 	}
 
-	ibmcloudProvider, err := cloudProvider.NewIBMCloudStorageProvider(*extraVolumeLabelsStr, k8sClient, logger)
+	ibmcloudProvider, err := cloudProvider.NewIBMCloudStorageProvider(*extraVolumeLabelsStr, &k8sClient, logger)
 	if err != nil {
 		logger.Fatal("Failed to instantiate IKS-Storage provider", zap.Error(err))
 	}

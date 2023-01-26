@@ -21,7 +21,7 @@ import (
 	"io/ioutil"
 
 	"github.com/IBM/secret-utils-lib/pkg/utils"
-	"go.uber.org/zap"
+	"github.com/go-playground/validator/v10"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -33,65 +33,57 @@ const (
 
 // KubernetesClient ...
 type KubernetesClient struct {
-	namespace string
-	logger    *zap.Logger
-	clientset kubernetes.Interface
-}
-
-// GetNameSpace ...
-func (kc KubernetesClient) GetNameSpace() string {
-	return kc.namespace
-}
-
-// GetClientSet ...
-func (kc KubernetesClient) GetClientSet() kubernetes.Interface {
-	return kc.clientset
+	Namespace string               `validate:"required"`
+	Clientset kubernetes.Interface `validate:"required"`
 }
 
 // Getk8sClientSet ...
-func Getk8sClientSet(logger *zap.Logger) (KubernetesClient, error) {
+func Getk8sClientSet() (KubernetesClient, error) {
 
 	var kc KubernetesClient
 	// Fetching cluster config used to create k8s client
 	k8sConfig, err := rest.InClusterConfig()
 	if err != nil {
-		logger.Error("Error fetching in cluster config", zap.Error(err))
 		return kc, utils.Error{Description: utils.ErrFetchingK8sClusterConfig, BackendError: err.Error()}
 	}
 
 	// Creating k8s client used to read secret
 	clientset, err := kubernetes.NewForConfig(k8sConfig)
 	if err != nil {
-		logger.Error("Error creating k8s client", zap.Error(err))
 		return kc, utils.Error{Description: utils.ErrFetchingK8sClusterConfig, BackendError: err.Error()}
 	}
 
-	namespace, err := getNameSpace(logger)
+	namespace, err := getNameSpace()
 	if err != nil {
-		logger.Error("Error fetching namespace", zap.Error(err))
 		return kc, err
 	}
 
-	kc.clientset = clientset
-	kc.logger = logger
-	kc.namespace = namespace
+	kc.Clientset = clientset
+	kc.Namespace = namespace
 	return kc, nil
 }
 
 // getNameSpace ...
-func getNameSpace(logger *zap.Logger) (string, error) {
+func getNameSpace() (string, error) {
 	// Reading the namespace in which the pod is deployed
 	byteData, err := ioutil.ReadFile(nameSpacePath)
 	if err != nil {
-		logger.Error("Error fetching namespace", zap.Error(err))
 		return "", utils.Error{Description: utils.ErrFetchingNamespace, BackendError: err.Error()}
 	}
 
 	namespace := string(byteData)
 	if namespace == "" {
-		logger.Error("Unable to fetch namespace", zap.Error(err))
 		return "", utils.Error{Description: utils.ErrFetchingNamespace, BackendError: "namespace empty"}
 	}
 
 	return namespace, nil
+}
+
+// ValidateK8SClient ...
+func ValidateK8SClient(k8sClient *KubernetesClient) error {
+	if k8sClient == nil {
+		return utils.Error{Description: "K8S client is nil"}
+	}
+	validate := validator.New()
+	return validate.Struct(k8sClient)
 }
