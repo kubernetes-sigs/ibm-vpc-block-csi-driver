@@ -61,7 +61,7 @@ func FakeCreateSecret(kc KubernetesClient, fakeAuthType, secretdatafilepath stri
 
 	data[dataname] = byteData
 	secret.Data = data
-	_, err = kc.Clientset.CoreV1().Secrets("kube-system").Create(context.TODO(), secret, metav1.CreateOptions{})
+	_, err = kc.Clientset.CoreV1().Secrets(kc.Namespace).Create(context.TODO(), secret, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}

@@ -48,8 +48,8 @@ type ManagedSecretProvider struct {
 }
 
 // newManagedSecretProvider makes a call to storage-secret-sidecar to initialise the secret provider.
-// arguments1: logger
-// arguments2: optionalArgs which can hold the providerType which is VPC/Bluemix/Softlayer.
+// argument1: logger
+// argument2: optionalArgs which can hold the providerType which is VPC/Bluemix/Softlayer. Currently, VPC/Bluemix is supported.
 func newManagedSecretProvider(logger *zap.Logger, optionalArgs ...string) (*ManagedSecretProvider, error) {
 	logger.Info("Connecting to sidecar")
 	kc, err := k8s_utils.Getk8sClientSet()
