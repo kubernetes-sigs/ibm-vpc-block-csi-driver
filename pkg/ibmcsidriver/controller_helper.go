@@ -366,7 +366,7 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 	}
 	// Assign ResourceGroupID from config
 	if volume.VPCVolume.ResourceGroup == nil || len(volume.VPCVolume.ResourceGroup.ID) < 1 {
-		volume.VPCVolume.ResourceGroup = &provider.ResourceGroup{ID: config.VPC.ResourceGroupID}
+		volume.VPCVolume.ResourceGroup = &provider.ResourceGroup{ID: config.VPC.G2ResourceGroupID}
 	}
 	if encrypt == FalseStr {
 		volume.VPCVolume.VolumeEncryptionKey = nil
