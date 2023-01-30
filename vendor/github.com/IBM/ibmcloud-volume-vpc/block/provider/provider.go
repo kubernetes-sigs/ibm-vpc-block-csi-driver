@@ -80,20 +80,13 @@ func NewProvider(conf *vpcconfig.VPCBlockConfig, k8sClient *k8s_utils.Kubernetes
 	}
 
 	if conf.VPCConfig.G2EndpointPrivateURL != "" {
-		conf.VPCConfig.EndpointURL = conf.VPCConfig.G2EndpointPrivateURL
+		conf.VPCConfig.G2EndpointURL = conf.VPCConfig.G2EndpointPrivateURL
 	} else {
-		conf.VPCConfig.EndpointURL = conf.VPCConfig.G2EndpointURL
+		conf.VPCConfig.G2EndpointURL = conf.VPCConfig.G2EndpointURL
 	}
-
-	// update iam based public toke exchange endpoint
-	conf.VPCConfig.TokenExchangeURL = conf.VPCConfig.G2TokenExchangeURL
-	// TODO - authentication is already handled, this config assignment can be removed eventually.
-	conf.VPCConfig.APIKey = conf.VPCConfig.G2APIKey
-	conf.VPCConfig.ResourceGroupID = conf.VPCConfig.G2ResourceGroupID
 
 	//Set API Generation As 2
 	conf.VPCConfig.G2VPCAPIGeneration = NEXTGenProvider
-	conf.VPCConfig.VPCAPIGeneration = NEXTGenProvider
 
 	//Set the APIVersion Date, it can be different in GC and NG
 	if conf.VPCConfig.G2APIVersion != "" {
@@ -135,11 +128,11 @@ func NewProvider(conf *vpcconfig.VPCBlockConfig, k8sClient *k8s_utils.Kubernetes
 		ContextCF:      contextCF,
 		httpClient:     httpClient,
 		APIConfig: riaas.Config{
-			BaseURL:       conf.VPCConfig.EndpointURL,
+			BaseURL:       conf.VPCConfig.G2EndpointURL,
 			HTTPClient:    httpClient,
-			APIVersion:    conf.VPCConfig.APIVersion,
-			APIGeneration: conf.VPCConfig.VPCAPIGeneration,
-			ResourceGroup: conf.VPCConfig.ResourceGroupID,
+			APIVersion:    conf.VPCConfig.G2APIVersion,
+			APIGeneration: conf.VPCConfig.G2VPCAPIGeneration,
+			ResourceGroup: conf.VPCConfig.G2ResourceGroupID,
 		},
 	}
 	// Update VPC config for IKS deployment

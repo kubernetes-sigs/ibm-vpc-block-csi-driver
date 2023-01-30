@@ -107,7 +107,7 @@ func GenerateContextCredentials(conf *vpcconfig.VPCBlockConfig, providerID strin
 	switch {
 	case (conf.VPCConfig != nil && providerID == conf.VPCConfig.VPCBlockProviderName):
 		ctxLogger.Info("Calling provider/init_provider.go ForIAMAccessToken")
-		return contextCredentialsFactory.ForIAMAccessToken(conf.VPCConfig.APIKey, ctxLogger)
+		return contextCredentialsFactory.ForIAMAccessToken(conf.VPCConfig.G2APIKey, ctxLogger)
 
 	case (conf.IKSConfig != nil && providerID == conf.IKSConfig.IKSBlockProviderName):
 		return provider.ContextCredentials{}, nil // Get credentials  in OpenSession method

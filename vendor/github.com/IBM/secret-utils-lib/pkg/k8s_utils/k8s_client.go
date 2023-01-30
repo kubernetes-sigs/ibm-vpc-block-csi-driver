@@ -21,7 +21,6 @@ import (
 	"io/ioutil"
 
 	"github.com/IBM/secret-utils-lib/pkg/utils"
-	"github.com/go-playground/validator/v10"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -77,13 +76,4 @@ func getNameSpace() (string, error) {
 	}
 
 	return namespace, nil
-}
-
-// ValidateK8SClient ...
-func ValidateK8SClient(k8sClient *KubernetesClient) error {
-	if k8sClient == nil {
-		return utils.Error{Description: "K8S client is nil"}
-	}
-	validate := validator.New()
-	return validate.Struct(k8sClient)
 }

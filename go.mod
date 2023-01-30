@@ -3,10 +3,10 @@ module github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
 go 1.18
 
 require (
-	github.com/IBM/ibm-csi-common v1.1.4-0.20230126221629-88b1d9795241
-	github.com/IBM/ibmcloud-volume-interface v1.1.2-0.20230126215232-644f32546a1c
-	github.com/IBM/ibmcloud-volume-vpc v1.1.3-0.20230126215357-8e8b4ae30297
-	github.com/IBM/secret-utils-lib v1.1.2-0.20230126205657-f30b56d8a191
+	github.com/IBM/ibm-csi-common v1.1.4-0.20230130000608-8fdd438ccbf1
+	github.com/IBM/ibmcloud-volume-interface v1.1.2-0.20230129233420-af776646ee5b
+	github.com/IBM/ibmcloud-volume-vpc v1.1.3-0.20230130000427-fd4263130297
+	github.com/IBM/secret-utils-lib v1.1.2-0.20230129232900-2c013a1ff593
 	github.com/container-storage-interface/spec v1.6.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/uuid v1.1.2
@@ -27,7 +27,7 @@ require (
 	github.com/BurntSushi/toml v1.0.0 // indirect
 	github.com/IBM-Cloud/ibm-cloud-cli-sdk v0.6.7 // indirect
 	github.com/IBM/go-sdk-core/v5 v5.9.1 // indirect
-	github.com/IBM/secret-common-lib v1.1.2-0.20230126210227-804d495635b6 // indirect
+	github.com/IBM/secret-common-lib v1.1.2-0.20230129233028-e0a78d7feebe // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef // indirect

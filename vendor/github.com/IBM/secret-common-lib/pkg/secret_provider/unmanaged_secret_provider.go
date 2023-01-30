@@ -26,6 +26,7 @@ import (
 	"github.com/IBM/secret-utils-lib/pkg/config"
 	"github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 	"github.com/IBM/secret-utils-lib/pkg/utils"
+	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 )
 
@@ -47,19 +48,14 @@ type UnmanagedSecretProvider struct {
 // newUnmanagedSecretProvider ...
 func newUnmanagedSecretProvider(k8sClient *k8s_utils.KubernetesClient, logger *zap.Logger, optionalArgs ...map[string]string) (*UnmanagedSecretProvider, error) {
 	// Validate the argument k8s client
-	err := k8s_utils.ValidateK8SClient(k8sClient)
-	if err == nil {
-		return InitUnmanagedSecretProvider(logger, *k8sClient, optionalArgs...)
+	validate := validator.New()
+	err := validate.Struct(k8sClient)
+	if err != nil {
+		logger.Error("Provided k8s client is invalid", zap.Error(err))
+		return nil, utils.Error{Description: "Error initialising k8s client", BackendError: err.Error()}
 	}
 
-	// If the k8s client passed as argument is nil or is invalid, fetch k8s client internally.
-	logger.Error("Provided k8s client is invalid", zap.Error(err))
-	kc, err := k8s_utils.Getk8sClientSet()
-	if err != nil {
-		logger.Error("Error fetching k8s client set", zap.Error(err))
-		return nil, err
-	}
-	return InitUnmanagedSecretProvider(logger, kc, optionalArgs...)
+	return InitUnmanagedSecretProvider(logger, *k8sClient, optionalArgs...)
 }
 
 // initUnmanagedSecretProvider ...

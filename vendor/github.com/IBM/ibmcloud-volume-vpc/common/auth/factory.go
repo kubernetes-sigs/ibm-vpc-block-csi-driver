@@ -28,7 +28,7 @@ import (
 // NewVPCContextCredentialsFactory ...
 func NewVPCContextCredentialsFactory(config *vpcconfig.VPCBlockConfig, k8sClient *k8s_utils.KubernetesClient) (*auth.ContextCredentialsFactory, error) {
 	authConfig := &iam.AuthConfiguration{
-		IamURL:          config.VPCConfig.TokenExchangeURL,
+		IamURL:          config.VPCConfig.G2TokenExchangeURL,
 		IamClientID:     config.VPCConfig.IamClientID,
 		IamClientSecret: config.VPCConfig.IamClientSecret,
 	}
@@ -38,7 +38,7 @@ func NewVPCContextCredentialsFactory(config *vpcconfig.VPCBlockConfig, k8sClient
 	}
 	if config.VPCConfig.IKSTokenExchangePrivateURL != "" {
 		authIKSConfig := &vpciam.IksAuthConfiguration{
-			IamAPIKey:       config.VPCConfig.APIKey,
+			IamAPIKey:       config.VPCConfig.G2APIKey,
 			PrivateAPIRoute: config.VPCConfig.IKSTokenExchangePrivateURL, // Only for private cluster
 			CSRFToken:       config.APIConfig.PassthroughSecret,          // required for private cluster
 		}
