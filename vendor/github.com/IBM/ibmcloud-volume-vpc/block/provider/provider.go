@@ -81,8 +81,6 @@ func NewProvider(conf *vpcconfig.VPCBlockConfig, k8sClient *k8s_utils.Kubernetes
 
 	if conf.VPCConfig.G2EndpointPrivateURL != "" {
 		conf.VPCConfig.G2EndpointURL = conf.VPCConfig.G2EndpointPrivateURL
-	} else {
-		conf.VPCConfig.G2EndpointURL = conf.VPCConfig.G2EndpointURL
 	}
 
 	//Set API Generation As 2
