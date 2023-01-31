@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	localutils "github.com/IBM/secret-common-lib/pkg/utils"
+	"github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 	sp "github.com/IBM/secret-utils-lib/pkg/secret_provider"
 	"github.com/IBM/secret-utils-lib/pkg/utils"
 	"go.uber.org/zap"
@@ -36,8 +37,10 @@ const (
 )
 
 // NewSecretProvider initializes new secret provider
-// Note: providerType which can be VPC, Bluemix, Softlayer (the constants defined above) and is only used when we need to read storage-secret-store, this is kept to support backward compatibility.
-func NewSecretProvider(optionalArgs ...map[string]string) (sp.SecretProviderInterface, error) {
+// argument1: k8sClient - this is the k8s client which holds k8s clientset and namespace which the client code must pass, if they are intending to use only unmanaged secret provider.
+// argument2: optionalArgs - in this map, two keys can be provided - 1. providerType which can be VPC, Bluemix, Softlayer (the constants defined above) and is only used when we need to read storage-secret-store, this is kept to support backward compatibility.
+// and 2. SecretKey which is given, when different keys other than the default needs to be referred. (Defaults are slclient.toml in storage-secret-store, ibm-credetentials.env in ibm-cloud-credentials.)
+func NewSecretProvider(k8sClient *k8s_utils.KubernetesClient, optionalArgs ...map[string]string) (sp.SecretProviderInterface, error) {
 	var managed bool
 	if iksEnabled := os.Getenv("IKS_ENABLED"); strings.ToLower(iksEnabled) == "true" {
 		managed = true
@@ -61,7 +64,7 @@ func NewSecretProvider(optionalArgs ...map[string]string) (sp.SecretProviderInte
 	}
 
 	// If a secret key was passed, or IKS ENABLED was set to false, initialise unmanaged secret provider
-	return newUnmanagedSecretProvider(logger, optionalArgs...)
+	return newUnmanagedSecretProvider(k8sClient, logger, optionalArgs...)
 }
 
 // validateArguments ...

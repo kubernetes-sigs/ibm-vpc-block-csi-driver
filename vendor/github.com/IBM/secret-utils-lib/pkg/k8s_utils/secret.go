@@ -28,10 +28,8 @@ import (
 
 // GetSecretData ...
 func GetSecretData(kc KubernetesClient, secretName, secretKey string) (string, error) {
-	namespace := kc.GetNameSpace()
-	clientset := kc.clientset
 
-	secret, err := clientset.CoreV1().Secrets(namespace).Get(context.TODO(), secretName, v1.GetOptions{})
+	secret, err := kc.Clientset.CoreV1().Secrets(kc.Namespace).Get(context.TODO(), secretName, v1.GetOptions{})
 	if err != nil {
 		return "", err
 	}

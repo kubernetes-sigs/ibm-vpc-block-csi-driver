@@ -45,7 +45,6 @@ import (
 	nodeMetadata "github.com/IBM/ibm-csi-common/pkg/metadata"
 
 	mountManager "github.com/IBM/ibm-csi-common/pkg/mountmanager"
-	"github.com/IBM/ibm-csi-common/pkg/utils"
 
 	csiConfig "github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/config"
 	csiDriver "github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/pkg/ibmcsidriver"
@@ -210,11 +209,10 @@ func (su *MockStatSanity) IsDevicePathNotExist(devicePath string) bool {
 
 // FakeSanityCloudProvider Provider
 type FakeSanityCloudProvider struct {
-	ProviderName     string
-	ProviderConfig   *config.Config
-	ClusterInfo      *utils.ClusterInfo
-	fakeSession      *fakeProviderSession
-	FakeUpdateAPIKey error
+	ProviderName   string
+	ProviderConfig *config.Config
+	fakeSession    *fakeProviderSession
+	ClusterID      string
 }
 
 var _ cloudProvider.CloudProviderInterface = &FakeSanityCloudProvider{}
@@ -223,8 +221,7 @@ var _ cloudProvider.CloudProviderInterface = &FakeSanityCloudProvider{}
 func NewFakeSanityCloudProvider(configPath string, logger *zap.Logger) (*FakeSanityCloudProvider, error) {
 	return &FakeSanityCloudProvider{ProviderName: "FakeSanityCloudProvider",
 		ProviderConfig: &config.Config{VPC: &config.VPCProviderConfig{VPCBlockProviderName: "VPCFakeProvider"}},
-		ClusterInfo:    &utils.ClusterInfo{}, fakeSession: newFakeProviderSession(),
-		FakeUpdateAPIKey: nil}, nil
+		ClusterID:      "", fakeSession: newFakeProviderSession()}, nil
 }
 
 // GetProviderSession ...
@@ -237,14 +234,9 @@ func (ficp *FakeSanityCloudProvider) GetConfig() *config.Config {
 	return ficp.ProviderConfig
 }
 
-// GetClusterInfo ...
-func (ficp *FakeSanityCloudProvider) GetClusterInfo() *utils.ClusterInfo {
-	return ficp.ClusterInfo
-}
-
-// UpdateAPIKey ...
-func (ficp *FakeSanityCloudProvider) UpdateAPIKey(logger *zap.Logger) error {
-	return ficp.FakeUpdateAPIKey
+// GetClusterID ...
+func (ficp *FakeSanityCloudProvider) GetClusterID() string {
+	return ficp.ClusterID
 }
 
 type fakeVolume struct {

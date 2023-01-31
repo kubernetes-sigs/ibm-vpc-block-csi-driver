@@ -19,15 +19,17 @@ package ibmcloudprovider
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
 	"testing"
 
-	"github.com/IBM/ibm-csi-common/pkg/utils"
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider/fake"
 	"github.com/IBM/ibmcloud-volume-interface/provider/local"
 	provider_util "github.com/IBM/ibmcloud-volume-vpc/block/utils"
 	vpcconfig "github.com/IBM/ibmcloud-volume-vpc/block/vpcconfig"
+	"github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/net/context"
@@ -152,7 +154,18 @@ func GetTestProvider(t *testing.T, logger *zap.Logger) (*IBMCloudStorageProvider
 	}
 
 	// Prepare provider registry
-	registry, err := provider_util.InitProviders(vpcBlockConfig, logger)
+	k8sClient, _ := k8s_utils.FakeGetk8sClientSet()
+	pwd, err := os.Getwd()
+	if err != nil {
+		logger.Fatal("Failed to get current working directory, test related to read config will fail, error: %v", local.ZapError(err))
+	}
+
+	clusterConfPath := filepath.Join(pwd, "..", "..", "test-fixtures", "valid", "cluster_info", "cluster-config.json")
+	_ = k8s_utils.FakeCreateCM(k8sClient, clusterConfPath)
+
+	secretConfPath := filepath.Join(pwd, "..", "..", "test-fixtures", "slconfig.toml")
+	_ = k8s_utils.FakeCreateSecret(k8sClient, "DEFAULT", secretConfPath)
+	registry, err := provider_util.InitProviders(vpcBlockConfig, &k8sClient, logger)
 	if err != nil {
 		logger.Fatal("Error configuring providers", local.ZapError(err))
 	}
@@ -161,7 +174,7 @@ func GetTestProvider(t *testing.T, logger *zap.Logger) (*IBMCloudStorageProvider
 		ProviderName:   "vpc-classic",
 		ProviderConfig: conf,
 		Registry:       registry,
-		ClusterInfo:    nil,
+		ClusterID:      "",
 	}
 	logger.Info("Successfully read provider configuration...")
 	return cloudProvider, nil
@@ -171,7 +184,7 @@ func GetTestProvider(t *testing.T, logger *zap.Logger) (*IBMCloudStorageProvider
 type FakeIBMCloudStorageProvider struct {
 	ProviderName   string
 	ProviderConfig *config.Config
-	ClusterInfo    *utils.ClusterInfo
+	ClusterID      string
 	fakeSession    *fake.FakeSession
 }
 
@@ -181,7 +194,7 @@ var _ CloudProviderInterface = &FakeIBMCloudStorageProvider{}
 func NewFakeIBMCloudStorageProvider(configPath string, logger *zap.Logger) (*FakeIBMCloudStorageProvider, error) {
 	return &FakeIBMCloudStorageProvider{ProviderName: "FakeIBMCloudStorageProvider",
 		ProviderConfig: &config.Config{VPC: &config.VPCProviderConfig{VPCBlockProviderName: "VPCFakeProvider"}},
-		ClusterInfo:    &utils.ClusterInfo{}, fakeSession: &fake.FakeSession{}}, nil
+		ClusterID:      "fake-clusterID", fakeSession: &fake.FakeSession{}}, nil
 }
 
 // GetProviderSession ...
@@ -194,7 +207,7 @@ func (ficp *FakeIBMCloudStorageProvider) GetConfig() *config.Config {
 	return ficp.ProviderConfig
 }
 
-// GetClusterInfo ...
-func (ficp *FakeIBMCloudStorageProvider) GetClusterInfo() *utils.ClusterInfo {
-	return ficp.ClusterInfo
+// GetClusterID ...
+func (ficp *FakeIBMCloudStorageProvider) GetClusterID() string {
+	return ficp.ClusterID
 }

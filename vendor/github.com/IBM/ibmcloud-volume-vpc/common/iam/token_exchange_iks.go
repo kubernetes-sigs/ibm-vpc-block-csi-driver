@@ -29,15 +29,16 @@ import (
 	util "github.com/IBM/ibmcloud-volume-interface/lib/utils"
 	"github.com/IBM/ibmcloud-volume-interface/provider/iam"
 	"github.com/IBM/secret-common-lib/pkg/secret_provider"
+	k8s_utils "github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 	sp "github.com/IBM/secret-utils-lib/pkg/secret_provider"
 	"go.uber.org/zap"
 )
 
 // tokenExchangeIKSService ...
 type tokenExchangeIKSService struct {
-	iksAuthConfig  *IksAuthConfiguration
-	httpClient     *http.Client
-	secretprovider sp.SecretProviderInterface
+	iksAuthConfig *IksAuthConfiguration
+	httpClient    *http.Client
+	spObject      sp.SecretProviderInterface
 }
 
 // IksAuthConfiguration ...
@@ -51,7 +52,7 @@ type IksAuthConfiguration struct {
 var _ iam.TokenExchangeService = &tokenExchangeIKSService{}
 
 // NewTokenExchangeIKSService ...
-func NewTokenExchangeIKSService(iksAuthConfig *IksAuthConfiguration) (iam.TokenExchangeService, error) {
+func NewTokenExchangeIKSService(iksAuthConfig *IksAuthConfiguration, k8sClient *k8s_utils.KubernetesClient) (iam.TokenExchangeService, error) {
 	httpClient, err := config.GeneralCAHttpClient()
 	if err != nil {
 		return nil, err
@@ -59,14 +60,11 @@ func NewTokenExchangeIKSService(iksAuthConfig *IksAuthConfiguration) (iam.TokenE
 	providerType := map[string]string{
 		secret_provider.ProviderType: secret_provider.VPC,
 	}
-	spObject, err := secret_provider.NewSecretProvider(providerType)
-	if err != nil {
-		return nil, err
-	}
+	spObject, err := secret_provider.NewSecretProvider(k8sClient, providerType)
 	return &tokenExchangeIKSService{
-		iksAuthConfig:  iksAuthConfig,
-		httpClient:     httpClient,
-		secretprovider: spObject,
+		iksAuthConfig: iksAuthConfig,
+		httpClient:    httpClient,
+		spObject:      spObject,
 	}, nil
 }
 
@@ -94,7 +92,7 @@ func (tes *tokenExchangeIKSService) ExchangeRefreshTokenForAccessToken(refreshTo
 // ExchangeIAMAPIKeyForAccessToken ...
 func (tes *tokenExchangeIKSService) ExchangeIAMAPIKeyForAccessToken(iamAPIKey string, logger *zap.Logger) (*iam.AccessToken, error) {
 	logger.Info("Fetching using secret provider")
-	token, _, err := tes.secretprovider.GetDefaultIAMToken(false)
+	token, _, err := tes.spObject.GetDefaultIAMToken(false)
 	if err != nil {
 		logger.Error("Error fetching iam token", zap.Error(err))
 		return nil, err

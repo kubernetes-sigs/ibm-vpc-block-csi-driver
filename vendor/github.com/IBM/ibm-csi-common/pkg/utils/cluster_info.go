@@ -17,37 +17,10 @@
 // Package utils ...
 package utils
 
-import (
-	"encoding/json"
-	"io/ioutil"
-	"path/filepath"
-
-	"github.com/IBM/ibmcloud-volume-interface/config"
-	"go.uber.org/zap"
-)
-
 // ClusterInfo contains the cluster information
 type ClusterInfo struct {
 	ClusterID   string `json:"cluster_id"`
 	ClusterName string `json:"cluster_name,omitempty"`
 	DataCenter  string `json:"datacenter,omitempty"`
 	CustomerID  string `json:"customer_id,omitempty"`
-}
-
-// NewClusterInfo loads cluster info
-func NewClusterInfo(logger *zap.Logger) (*ClusterInfo, error) {
-	configBasePath := config.GetConfPathDir()
-	clusterInfo := &ClusterInfo{}
-	clusterInfoFile := filepath.Join(configBasePath, ClusterInfoPath)
-	clusterInfoContent, err := ioutil.ReadFile(filepath.Clean(clusterInfoFile))
-	if err != nil {
-		logger.Error("Error while reading  cluster-config.json", zap.Error(err))
-		return nil, err
-	}
-	err = json.Unmarshal(clusterInfoContent, clusterInfo)
-	if err != nil {
-		logger.Error("Error while parsing cluster-config", zap.Error(err))
-		return nil, err
-	}
-	return clusterInfo, nil
 }

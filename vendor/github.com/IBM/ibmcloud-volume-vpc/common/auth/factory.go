@@ -22,26 +22,27 @@ import (
 	"github.com/IBM/ibmcloud-volume-interface/provider/iam"
 	vpcconfig "github.com/IBM/ibmcloud-volume-vpc/block/vpcconfig"
 	vpciam "github.com/IBM/ibmcloud-volume-vpc/common/iam"
+	"github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 )
 
 // NewVPCContextCredentialsFactory ...
-func NewVPCContextCredentialsFactory(config *vpcconfig.VPCBlockConfig) (*auth.ContextCredentialsFactory, error) {
+func NewVPCContextCredentialsFactory(config *vpcconfig.VPCBlockConfig, k8sClient *k8s_utils.KubernetesClient) (*auth.ContextCredentialsFactory, error) {
 	authConfig := &iam.AuthConfiguration{
-		IamURL:          config.VPCConfig.TokenExchangeURL,
+		IamURL:          config.VPCConfig.G2TokenExchangeURL,
 		IamClientID:     config.VPCConfig.IamClientID,
 		IamClientSecret: config.VPCConfig.IamClientSecret,
 	}
-	ccf, err := auth.NewContextCredentialsFactory(authConfig, iam.VPC)
+	ccf, err := auth.NewContextCredentialsFactory(authConfig, k8sClient, iam.VPC)
 	if err != nil {
 		return nil, err
 	}
 	if config.VPCConfig.IKSTokenExchangePrivateURL != "" {
 		authIKSConfig := &vpciam.IksAuthConfiguration{
-			IamAPIKey:       config.VPCConfig.APIKey,
+			IamAPIKey:       config.VPCConfig.G2APIKey,
 			PrivateAPIRoute: config.VPCConfig.IKSTokenExchangePrivateURL, // Only for private cluster
 			CSRFToken:       config.APIConfig.PassthroughSecret,          // required for private cluster
 		}
-		ccf.TokenExchangeService, err = vpciam.NewTokenExchangeIKSService(authIKSConfig)
+		ccf.TokenExchangeService, err = vpciam.NewTokenExchangeIKSService(authIKSConfig, k8sClient)
 		if err != nil {
 			return nil, err
 		}

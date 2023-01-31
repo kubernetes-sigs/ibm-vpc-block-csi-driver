@@ -31,6 +31,7 @@ import (
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	util "github.com/IBM/ibmcloud-volume-interface/lib/utils"
 	"github.com/IBM/secret-common-lib/pkg/secret_provider"
+	"github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 	sp "github.com/IBM/secret-utils-lib/pkg/secret_provider"
 )
 
@@ -69,7 +70,7 @@ func NewTokenExchangeServiceWithClient(authConfig *AuthConfiguration, httpClient
 }
 
 // NewTokenExchangeService ...
-func NewTokenExchangeService(authConfig *AuthConfiguration, providerType ...string) (TokenExchangeService, error) {
+func NewTokenExchangeService(authConfig *AuthConfiguration, k8sClient *k8s_utils.KubernetesClient, providerType ...string) (TokenExchangeService, error) {
 	httpClient, err := config.GeneralCAHttpClient()
 	if err != nil {
 		return nil, err
@@ -81,10 +82,12 @@ func NewTokenExchangeService(authConfig *AuthConfiguration, providerType ...stri
 	} else {
 		providerTypeArg[secret_provider.ProviderType] = VPC
 	}
-	spObject, err := secret_provider.NewSecretProvider(providerTypeArg)
+
+	spObject, err := secret_provider.NewSecretProvider(k8sClient, providerTypeArg)
 	if err != nil {
 		return nil, err
 	}
+
 	return &tokenExchangeService{
 		authConfig:     authConfig,
 		httpClient:     httpClient,
