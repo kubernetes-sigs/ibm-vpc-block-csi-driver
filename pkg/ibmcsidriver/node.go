@@ -511,7 +511,7 @@ func (su *VolumeStatUtils) IsBlockDevice(devicePath string) (bool, error) {
 // DeviceInfo ...
 func (su *VolumeStatUtils) DeviceInfo(devicePath string) (int64, error) {
 	// See http://man7.org/linux/man-pages/man8/blockdev.8.html for details
-	output, err := exec.Command("blockdev", "getsize64", devicePath).CombinedOutput() // #nosec G204: The blockdev is command which allows on to call block device ioctls so we must pass in a dynamic value here.
+	output, err := exec.Command("blockdev", "--getsize64", devicePath).CombinedOutput() // #nosec G204: The blockdev is command which allows on to call block device ioctls so we must pass in a dynamic value here.
 	if err != nil {
 		return 0, fmt.Errorf("failed to get size of block volume at path %s: output: %s, err: %v", devicePath, string(output), err)
 	}
