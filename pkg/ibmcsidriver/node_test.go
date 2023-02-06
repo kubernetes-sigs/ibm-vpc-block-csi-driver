@@ -666,7 +666,7 @@ func TestNodeExpandVolume(t *testing.T) {
 			name: "Invalid volumePath",
 			req: &csi.NodeExpandVolumeRequest{
 				VolumeId:   defaultVolumeID,
-				VolumePath: "/invalid-volPath",
+				VolumePath: "/invalid-volPath_notblock",
 			},
 			expErrCode: codes.NotFound,
 		},
@@ -685,7 +685,7 @@ func TestNodeExpandVolume(t *testing.T) {
 			name: "volumePath not mounted",
 			req: &csi.NodeExpandVolumeRequest{
 				VolumeId:   defaultVolumeID,
-				VolumePath: "fake-volPath",
+				VolumePath: "fake-volPath_notblock",
 			},
 			expErrCode: codes.NotFound,
 		},
