@@ -21,6 +21,7 @@ spec:
       labels:
         app: ibm-vpc-block-csi-driver
     spec:
+      priorityClassName: system-cluster-critical
       serviceAccountName: ibm-vpc-block-controller-sa
       securityContext:
         runAsNonRoot: true
