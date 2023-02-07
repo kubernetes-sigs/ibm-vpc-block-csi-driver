@@ -20,7 +20,6 @@ package metadata
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/IBM/ibm-csi-common/pkg/utils"
@@ -79,17 +78,23 @@ func (nodeManager *NodeInfoManager) NewNodeMetadata(logger *zap.Logger) (NodeMet
 	}
 
 	nodeLabels := node.ObjectMeta.Labels
-	if len(nodeLabels[utils.NodeWorkerIDLabel]) == 0 || len(nodeLabels[utils.NodeRegionLabel]) == 0 || len(nodeLabels[utils.NodeZoneLabel]) == 0 {
-		errorMsg := fmt.Errorf("One or few required node label(s) is/are missing [%s, %s, %s]. Node Labels Found = [#%v]", utils.NodeWorkerIDLabel, utils.NodeRegionLabel, utils.NodeZoneLabel, nodeLabels) //nolint:golint
+	if len(nodeLabels[utils.NodeRegionLabel]) == 0 || len(nodeLabels[utils.NodeZoneLabel]) == 0 {
+		errorMsg := fmt.Errorf("One or few required node label(s) is/are missing [%s, %s]. Node Labels Found = [#%v]", utils.NodeRegionLabel, utils.NodeZoneLabel, nodeLabels) //nolint:golint
 		return nil, errorMsg
 	}
 
 	var workerID string
-	// In case of unmanaged cluster use label NodeInstanceIDLabel for workerID.
-	if os.Getenv(strings.ToUpper("IKS_ENABLED")) != "True" {
+
+	// If the cluster is satellite, the machine-type label equals to UPI
+	if nodeLabels[utils.MachineTypeLabel] == utils.UPI {
+		// For a satellite cluster, workerID is fetched from vpc-instance-id node label, which is updated by the vpc-node-label-updater (init container)
 		workerID = nodeLabels[utils.NodeInstanceIDLabel]
 	} else {
-		workerID = nodeLabels[utils.NodeWorkerIDLabel]
+		// For managed and IPI cluster, workerID is fetched from the ProviderID in node spec.
+		workerID = fetchInstanceID(node.Spec.ProviderID)
+		if workerID == "" {
+			return nil, fmt.Errorf("Unable to fetch instance ID from node provider ID - %s", node.Spec.ProviderID)
+		}
 	}
 
 	return &nodeMetadataManager{
@@ -109,4 +114,14 @@ func (manager *nodeMetadataManager) GetRegion() string {
 
 func (manager *nodeMetadataManager) GetWorkerID() string {
 	return manager.workerID
+}
+
+// fetchInstanceID fetches instance ID from the provider ID in node spec.
+func fetchInstanceID(providerID string) string {
+	s := strings.Split(providerID, "/")
+	if len(s) != 7 {
+		return ""
+	}
+
+	return s[6]
 }
