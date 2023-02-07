@@ -19,6 +19,7 @@ spec:
       labels:
         app: ibm-vpc-block-csi-driver
     spec:
+      priorityClassName: system-node-critical
       serviceAccountName: ibm-vpc-block-node-sa
       tolerations:
       - operator: Exists
