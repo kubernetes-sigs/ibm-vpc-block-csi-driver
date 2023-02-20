@@ -19,6 +19,9 @@ package ibmcsidriver
 
 import (
 	"fmt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"k8s.io/klog/v2"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -58,11 +61,6 @@ type StatsUtils interface {
 	IsBlockDevice(devicePath string) (bool, error)
 	DeviceInfo(devicePath string) (int64, error)
 	IsDevicePathNotExist(devicePath string) bool
-}
-
-// MountUtils ...
-type MountUtils interface {
-	Resize(mounter mountmanager.Mounter, devicePath string, deviceMountPath string) (bool, error)
 }
 
 // VolumeStatUtils ...
@@ -105,11 +103,6 @@ const (
 )
 
 var _ csi.NodeServer = &CSINodeServer{}
-var mountmgr MountUtils
-
-func init() {
-	mountmgr = &VolumeMountUtils{}
-}
 
 // NodePublishVolume ...
 func (csiNS *CSINodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
@@ -245,10 +238,12 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 		return nil, commonError.GetCSIError(ctxLogger, commonError.VolumeCapabilitiesNotSupported, requestID, nil)
 	}
 
-	// If the access type is block, do nothing for stage
-	switch volumeCapability.GetAccessType().(type) {
-	case *csi.VolumeCapability_Block:
-		return &csi.NodeStageVolumeResponse{}, nil
+	// If the access type is block, do nothing for stage.
+	if volumeCapability != nil {
+		if blk := volumeCapability.GetBlock(); blk != nil {
+			klog.V(4).InfoS("NodeStageVolume: called. Since it is a block device, ignoring...", "volumeID", volumeID)
+			return &csi.NodeStageVolumeResponse{}, nil
+		}
 	}
 
 	// Check devicePath is available in the publish context
@@ -302,9 +297,13 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 
 	// FormatAndMount will format only if needed
 	ctxLogger.Info("Formating and mounting ", zap.String("source", source), zap.String("stagingTargetPath", stagingTargetPath), zap.String("fsType", fsType), zap.Reflect("options", options))
-	err = csiNS.Mounter.NewSafeFormatAndMount().FormatAndMount(source, stagingTargetPath, fsType, options)
+	err = csiNS.Mounter.GetSafeFormatAndMount().FormatAndMount(source, stagingTargetPath, fsType, options)
 	if err != nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.FormatAndMountFailed, requestID, err, source, stagingTargetPath)
+	}
+
+	if _, err := csiNS.Mounter.Resize(devicePath, stagingTargetPath); err != nil {
+		return nil, commonError.GetCSIError(ctxLogger, commonError.FileSystemResizeFailed, requestID, err)
 	}
 
 	nodeStageVolumeResponse := &csi.NodeStageVolumeResponse{}
@@ -479,6 +478,34 @@ func (csiNS *CSINodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeE
 	if len(volumePath) == 0 {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.EmptyVolumePath, requestID, nil)
 	}
+
+	volumeCapability := req.GetVolumeCapability()
+	isBlock := false
+	// VolumeCapability is optional, if specified, use that as source of truth.
+	if volumeCapability != nil {
+		volumeCapabilities := []*csi.VolumeCapability{volumeCapability}
+		if !areVolumeCapabilitiesSupported(volumeCapabilities, csiNS.Driver.vcap) {
+			return nil, commonError.GetCSIError(ctxLogger, commonError.VolumeCapabilitiesNotSupported, requestID, nil)
+		}
+		isBlock = volumeCapability.GetBlock() != nil
+	} else {
+		// VolumeCapability is nil, check if volumePath points to a block device.
+		var err error
+		isBlock, err = csiNS.Stats.IsBlockDevice(volumePath)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to determine if volumePath [%v] is a block device: %v", volumePath, err)
+		}
+	}
+	// Noop for block NodeExpandVolume.
+	if isBlock {
+		capacity, err := csiNS.Stats.DeviceInfo(volumePath)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to get block capacity on path %s: %v", volumePath, err)
+		}
+		klog.V(4).InfoS("NodeExpandVolume: called, since given volumePath is a block device, ignoring...", "volumeID", volumeID, "volumePath", volumePath)
+		return &csi.NodeExpandVolumeResponse{CapacityBytes: capacity}, nil
+	}
+
 	notMounted, err := csiNS.Mounter.IsLikelyNotMountPoint(volumePath)
 	if err != nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.ObjectNotFound, requestID, err, volumePath)
@@ -497,7 +524,7 @@ func (csiNS *CSINodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeE
 		return nil, commonError.GetCSIError(ctxLogger, commonError.EmptyDevicePath, requestID, err)
 	}
 
-	if _, err := mountmgr.Resize(csiNS.Mounter, devicePath, volumePath); err != nil {
+	if _, err := csiNS.Mounter.Resize(devicePath, volumePath); err != nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.FileSystemResizeFailed, requestID, err)
 	}
 	return &csi.NodeExpandVolumeResponse{CapacityBytes: req.CapacityRange.RequiredBytes}, nil
@@ -517,7 +544,7 @@ func (su *VolumeStatUtils) IsBlockDevice(devicePath string) (bool, error) {
 // DeviceInfo ...
 func (su *VolumeStatUtils) DeviceInfo(devicePath string) (int64, error) {
 	// See http://man7.org/linux/man-pages/man8/blockdev.8.html for details
-	output, err := exec.Command("blockdev", "getsize64", devicePath).CombinedOutput() // #nosec G204: The blockdev is command which allows on to call block device ioctls so we must pass in a dynamic value here.
+	output, err := exec.Command("blockdev", "--getsize64", devicePath).CombinedOutput() // #nosec G204: The blockdev is command which allows on to call block device ioctls so we must pass in a dynamic value here.
 	if err != nil {
 		return 0, fmt.Errorf("failed to get size of block volume at path %s: output: %s, err: %v", devicePath, string(output), err)
 	}
@@ -540,13 +567,4 @@ func (su *VolumeStatUtils) IsDevicePathNotExist(devicePath string) bool {
 		}
 	}
 	return false
-}
-
-// Resize expands the fs
-func (volMountUtils *VolumeMountUtils) Resize(mounter mountmanager.Mounter, devicePath string, deviceMountPath string) (bool, error) {
-	r := mount.NewResizeFs(mounter.NewSafeFormatAndMount().Exec)
-	if _, err := r.Resize(devicePath, deviceMountPath); err != nil {
-		return false, err
-	}
-	return true, nil
 }

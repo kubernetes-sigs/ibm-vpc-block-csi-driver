@@ -23,16 +23,14 @@ import (
 	"io/ioutil"
 
 	"github.com/IBM/secret-utils-lib/pkg/utils"
-	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 )
 
 // FakeGetk8sClientSet ...
-func FakeGetk8sClientSet(logger *zap.Logger) (KubernetesClient, error) {
-	logger.Info("Getting fake k8s client")
-	return KubernetesClient{namespace: "kube-system", logger: logger, clientset: fake.NewSimpleClientset()}, nil
+func FakeGetk8sClientSet() (KubernetesClient, error) {
+	return KubernetesClient{Namespace: "kube-system", Clientset: fake.NewSimpleClientset()}, nil
 }
 
 // FakeCreateSecret ...
@@ -53,21 +51,40 @@ func FakeCreateSecret(kc KubernetesClient, fakeAuthType, secretdatafilepath stri
 		return errors.New("undefined auth type")
 	}
 
-	secret.Namespace = kc.GetNameSpace()
+	secret.Namespace = kc.Namespace
 	data := make(map[string][]byte)
 
 	byteData, err := ioutil.ReadFile(secretdatafilepath)
 	if err != nil {
-		kc.logger.Error("Error reading secret data", zap.Error(err))
 		return err
 	}
 
 	data[dataname] = byteData
 	secret.Data = data
-	clientset := kc.clientset
-	_, err = clientset.CoreV1().Secrets("kube-system").Create(context.TODO(), secret, metav1.CreateOptions{})
+	_, err = kc.Clientset.CoreV1().Secrets(kc.Namespace).Create(context.TODO(), secret, metav1.CreateOptions{})
 	if err != nil {
-		kc.logger.Error("Error creating secret", zap.Error(err))
+		return err
+	}
+	return nil
+}
+
+// FakeCreateSecretWithKey ...
+func FakeCreateSecretWithKey(kc KubernetesClient, secretName, dataName, secretdatafilepath string) error {
+	secret := new(v1.Secret)
+	secret.Name = secretName
+
+	secret.Namespace = kc.Namespace
+	data := make(map[string][]byte)
+
+	byteData, err := ioutil.ReadFile(secretdatafilepath)
+	if err != nil {
+		return err
+	}
+
+	data[dataName] = byteData
+	secret.Data = data
+	_, err = kc.Clientset.CoreV1().Secrets(kc.Namespace).Create(context.TODO(), secret, metav1.CreateOptions{})
+	if err != nil {
 		return err
 	}
 	return nil
@@ -77,7 +94,6 @@ func FakeCreateSecret(kc KubernetesClient, fakeAuthType, secretdatafilepath stri
 func FakeCreateCM(kc KubernetesClient, clsuterInfofilepath string) error {
 	byteData, err := ioutil.ReadFile(clsuterInfofilepath)
 	if err != nil {
-		kc.logger.Error("Error reading content to create config map", zap.Error(err))
 		return err
 	}
 
@@ -86,11 +102,9 @@ func FakeCreateCM(kc KubernetesClient, clsuterInfofilepath string) error {
 	cm := new(v1.ConfigMap)
 	cm.Data = data
 	cm.Name = "cluster-info"
-	clientset := kc.clientset
 
-	_, err = clientset.CoreV1().ConfigMaps("kube-system").Create(context.TODO(), cm, metav1.CreateOptions{})
+	_, err = kc.Clientset.CoreV1().ConfigMaps(kc.Namespace).Create(context.TODO(), cm, metav1.CreateOptions{})
 	if err != nil {
-		kc.logger.Error("Error creating config map", zap.Error(err))
 		return err
 	}
 	return nil

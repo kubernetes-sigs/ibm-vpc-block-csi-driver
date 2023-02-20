@@ -56,7 +56,22 @@ func (m *NodeMounter) PathExists(path string) (bool, error) {
 	return mount.PathExists(path)
 }
 
-// NewSafeFormatAndMount returns the new object of SafeFormatAndMount.
-func (m *NodeMounter) NewSafeFormatAndMount() *mount.SafeFormatAndMount {
-	return newSafeMounter()
+// GetSafeFormatAndMount returns the existing SafeFormatAndMount object of NodeMounter.
+func (m *NodeMounter) GetSafeFormatAndMount() *mount.SafeFormatAndMount {
+	return m.SafeFormatAndMount
+}
+
+// Resize returns boolean and error if any
+func (m *NodeMounter) Resize(devicePath string, deviceMountPath string) (bool, error) {
+	r := mount.NewResizeFs(m.GetSafeFormatAndMount().Exec)
+	needResize, err := r.NeedResize(devicePath, deviceMountPath)
+	if err != nil {
+		return false, err
+	}
+	if needResize {
+		if _, err := r.Resize(devicePath, deviceMountPath); err != nil {
+			return false, err
+		}
+	}
+	return true, nil
 }

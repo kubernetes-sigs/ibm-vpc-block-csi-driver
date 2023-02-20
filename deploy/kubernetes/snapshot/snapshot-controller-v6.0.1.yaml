@@ -1,0 +1,78 @@
+---
+
+# Source: https://github.com/kubernetes-csi/external-snapshotter/blob/v6.0.1/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: snapshot-controller
+  namespace: kube-system
+  labels:
+    app: snapshot-controller
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: snapshot-controller
+  minReadySeconds: 30
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: snapshot-controller
+    spec:
+      priorityClassName: system-cluster-critical
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - snapshot-controller
+              topologyKey: topology.kubernetes.io/zone
+            weight: 100
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - snapshot-controller
+              topologyKey: kubernetes.io/hostname
+            weight: 100
+      serviceAccountName: snapshot-controller
+      containers:
+        - name: snapshot-controller
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 2121
+            privileged: false
+            allowPrivilegeEscalation: false
+          image: gcr.io/k8s-staging-sig-storage/snapshot-controller:v6.0.1
+          args:
+            - "--v=3"
+            - "--leader-election=true"
+            - "--http-endpoint=:9878"
+            - "--leader-election-lease-duration=137s"
+            - "--leader-election-renew-deadline=107s"
+            - "--leader-election-retry-period=26s"
+          resources:
+            requests:
+              cpu: 10m
+              memory: 50Mi
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /healthz/leader-election
+              port: 9878
+            failureThreshold: 3
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5

@@ -47,7 +47,7 @@ func (vpcs *VPCSession) CreateSnapshot(sourceVolumeID string, snapshotParameters
 	snapshotTemplate := &models.Snapshot{
 		Name:          snapshotParameters.Name,
 		SourceVolume:  &models.SourceVolume{ID: sourceVolumeID},
-		ResourceGroup: &models.ResourceGroup{ID: vpcs.Config.VPCConfig.ResourceGroupID},
+		ResourceGroup: &models.ResourceGroup{ID: vpcs.Config.VPCConfig.G2ResourceGroupID},
 	}
 
 	err = retry(vpcs.Logger, func() error {

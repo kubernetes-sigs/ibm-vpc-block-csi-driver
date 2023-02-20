@@ -109,4 +109,10 @@ const (
 
 	// WarnFetchingTokenExchangeURL ...
 	WarnFetchingTokenExchangeURL = "Token exchange url not found in the secret"
+
+	// ErrInvalidProviderType ...
+	ErrInvalidProviderType = "Invalid provider type. Valid options are - vpc, bluemix, softlayer"
+
+	// ErrEmptyConfigMapData ...
+	ErrEmptyConfigMapData = "Unable to find %s key in %s config map"
 )

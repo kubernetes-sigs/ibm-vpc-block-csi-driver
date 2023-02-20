@@ -21,6 +21,7 @@ import (
 	mount "k8s.io/mount-utils"
 	exec "k8s.io/utils/exec"
 	testExec "k8s.io/utils/exec/testing"
+	testingexec "k8s.io/utils/exec/testing"
 )
 
 // FakeNodeMounter ...
@@ -75,7 +76,88 @@ func (f *FakeNodeMounter) PathExists(pathname string) (bool, error) {
 	return false, nil
 }
 
+// GetSafeFormatAndMount returns the existing SafeFormatAndMount object of NodeMounter.
+func (f *FakeNodeMounter) GetSafeFormatAndMount() *mount.SafeFormatAndMount {
+	return f.SafeFormatAndMount
+}
+
+// FakeNodeMounterWithCustomActions ...
+type FakeNodeMounterWithCustomActions struct {
+	*mount.SafeFormatAndMount
+	actionList []testingexec.FakeCommandAction
+}
+
+// NewFakeNodeMounterWithCustomActions ...
+func NewFakeNodeMounterWithCustomActions(actionList []testingexec.FakeCommandAction) Mounter {
+	fakeSafeMounter := NewFakeSafeMounterWithCustomActions(actionList)
+	return &FakeNodeMounterWithCustomActions{fakeSafeMounter, actionList}
+}
+
+// MakeDir ...
+func (f *FakeNodeMounterWithCustomActions) MakeDir(pathname string) error {
+	return nil
+}
+
+// MakeFile ...
+func (f *FakeNodeMounterWithCustomActions) MakeFile(pathname string) error {
+	return nil
+}
+
+// Resize returns boolean and error if any
+func (f *FakeNodeMounterWithCustomActions) Resize(devicePath string, deviceMountPath string) (bool, error) {
+	r := mount.NewResizeFs(f.GetSafeFormatAndMount().Exec)
+	needResize, err := r.NeedResize(devicePath, deviceMountPath)
+	if err != nil {
+		return false, err
+	}
+	if needResize {
+		if _, err := r.Resize(devicePath, deviceMountPath); err != nil {
+			return false, err
+		}
+	}
+	return true, nil
+}
+
+// PathExists ...
+func (f *FakeNodeMounterWithCustomActions) PathExists(pathname string) (bool, error) {
+	if pathname == "fake" {
+		return true, nil
+	}
+	return false, nil
+}
+
 // NewSafeFormatAndMount ...
-func (f *FakeNodeMounter) NewSafeFormatAndMount() *mount.SafeFormatAndMount {
-	return NewFakeSafeMounter()
+func (f *FakeNodeMounterWithCustomActions) GetSafeFormatAndMount() *mount.SafeFormatAndMount {
+	return f.SafeFormatAndMount
+}
+
+func NewFakeSafeMounterWithCustomActions(actionList []testingexec.FakeCommandAction) *mount.SafeFormatAndMount {
+	var fakeExec exec.Interface = &testingexec.FakeExec{
+		//DisableScripts: false,
+		//ExactOrder:    true,
+		CommandScript: actionList,
+	}
+
+	fakeMounter := &mount.FakeMounter{MountPoints: []mount.MountPoint{{
+		Device: "devicePath",
+		Path:   "vol-path",
+		Type:   "ext4",
+		Opts:   []string{"defaults"},
+		Freq:   1,
+		Pass:   2,
+	}},
+	}
+
+	return &mount.SafeFormatAndMount{
+		Interface: fakeMounter,
+		Exec:      fakeExec,
+	}
+}
+
+// Resize returns boolean and error if any
+func (f *FakeNodeMounter) Resize(devicePath string, deviceMountPath string) (bool, error) {
+	if devicePath == "fake" {
+		return true, nil
+	}
+	return false, nil
 }

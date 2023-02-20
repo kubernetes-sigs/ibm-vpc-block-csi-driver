@@ -43,7 +43,12 @@ func (m *NodeMounter) PathExists(pathname string) (bool, error) {
 	return true, errors.New("not implemented")
 }
 
-// NewSafeFormatAndMount ...
-func (m *NodeMounter) NewSafeFormatAndMount() *mount.SafeFormatAndMount {
+// GetSafeFormatAndMount returns the existing SafeFormatAndMount object of NodeMounter.
+func (m *NodeMounter) GetSafeFormatAndMount() *mount.SafeFormatAndMount {
 	return nil
+}
+
+// Resize returns boolean and error if any
+func (m *NodeMounter) Resize(devicePath string, deviceMountPath string) (bool, error) {
+	return true, errors.New("not implemented")
 }

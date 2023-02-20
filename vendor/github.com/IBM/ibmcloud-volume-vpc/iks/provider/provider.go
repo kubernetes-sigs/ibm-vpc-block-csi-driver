@@ -29,6 +29,7 @@ import (
 	vpcauth "github.com/IBM/ibmcloud-volume-vpc/common/auth"
 	userError "github.com/IBM/ibmcloud-volume-vpc/common/messages"
 	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/riaas"
+	k8s_utils "github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 
 	"go.uber.org/zap"
 )
@@ -43,10 +44,10 @@ type IksVpcBlockProvider struct {
 var _ local.Provider = &IksVpcBlockProvider{}
 
 // NewProvider handles both IKS and  RIAAS sessions
-func NewProvider(conf *vpcconfig.VPCBlockConfig, logger *zap.Logger) (local.Provider, error) {
+func NewProvider(conf *vpcconfig.VPCBlockConfig, k8sClient *k8s_utils.KubernetesClient, logger *zap.Logger) (local.Provider, error) {
 	var err error
 	//Setup vpc provider
-	provider, err := vpcprovider.NewProvider(conf, logger)
+	provider, err := vpcprovider.NewProvider(conf, k8sClient, logger)
 	if err != nil {
 		logger.Error("Error initializing VPC Provider", zap.Error(err))
 		return nil, err
@@ -54,7 +55,7 @@ func NewProvider(conf *vpcconfig.VPCBlockConfig, logger *zap.Logger) (local.Prov
 	vpcBlockProvider, _ := provider.(*vpcprovider.VPCBlockProvider)
 
 	// Setup IKS provider
-	provider, err = vpcprovider.NewProvider(conf, logger)
+	provider, err = vpcprovider.NewProvider(conf, k8sClient, logger)
 	if err != nil {
 		logger.Error("Error initializing IKS Provider", zap.Error(err))
 		return nil, err
@@ -70,7 +71,7 @@ func NewProvider(conf *vpcconfig.VPCBlockConfig, logger *zap.Logger) (local.Prov
 		iksBlockProvider: iksBlockProvider,
 	}
 
-	iksVpcBlockProvider.iksBlockProvider.ContextCF, err = vpcauth.NewVPCContextCredentialsFactory(iksVpcBlockProvider.vpcBlockProvider.Config)
+	iksVpcBlockProvider.iksBlockProvider.ContextCF, err = vpcauth.NewVPCContextCredentialsFactory(iksVpcBlockProvider.vpcBlockProvider.Config, k8sClient)
 	if err != nil {
 		logger.Error("Error initializing context credentials factory", zap.Error(err))
 		return nil, err
@@ -89,7 +90,7 @@ func (iksp *IksVpcBlockProvider) OpenSession(ctx context.Context, contextCredent
 	ctxLogger.Info("Opening VPC block session")
 	ccf, _ := iksp.vpcBlockProvider.ContextCredentialsFactory(nil)
 	ctxLogger.Info("Its IKS dual session. Getttng IAM token for  VPC block session")
-	vpcContextCredentials, err := ccf.ForIAMAccessToken(iksp.iksBlockProvider.Config.VPCConfig.APIKey, ctxLogger)
+	vpcContextCredentials, err := ccf.ForIAMAccessToken(iksp.iksBlockProvider.Config.VPCConfig.G2APIKey, ctxLogger)
 	if err != nil {
 		ctxLogger.Error("Error occurred while generating IAM token for VPC", zap.Error(err))
 		if util.ErrorReasonCode(err) == utilReasonCode.EndpointNotReachable {
@@ -114,7 +115,7 @@ func (iksp *IksVpcBlockProvider) OpenSession(ctx context.Context, contextCredent
 	iksp.iksBlockProvider.ClientProvider = riaas.IKSRegionalAPIClientProvider{}
 
 	ctxLogger.Info("Its ISK dual session. Getttng IAM token for  IKS block session")
-	iksContextCredentials, err := ccf.ForIAMAccessToken(iksp.iksBlockProvider.Config.VPCConfig.APIKey, ctxLogger)
+	iksContextCredentials, err := ccf.ForIAMAccessToken(iksp.iksBlockProvider.Config.VPCConfig.G2APIKey, ctxLogger)
 	if err != nil {
 		ctxLogger.Warn("Error occurred while generating IAM token for IKS. But continue with VPC session alone. \n Volume Mount operation will fail but volume provisioning will work", zap.Error(err))
 		session = &vpcprovider.VPCSession{

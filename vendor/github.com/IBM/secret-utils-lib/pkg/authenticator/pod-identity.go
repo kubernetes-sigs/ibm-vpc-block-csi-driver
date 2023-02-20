@@ -56,7 +56,16 @@ func (ca *ComputeIdentityAuthenticator) GetToken(freshTokenRequired bool) (strin
 	tokenResponse, err := ca.authenticator.RequestToken()
 	if err != nil {
 		ca.logger.Error("Error fetching fresh token", zap.Error(err))
-		return "", tokenlifetime, utils.Error{Description: "Error fetching iam token using compute identity", BackendError: err.Error()}
+		// If the cluster cannot access private iam endpoint, hence returns timeout error, switch to public IAM endpoint.
+		if !isTimeout(err) {
+			return "", tokenlifetime, utils.Error{Description: "Error fetching iam token using compute identity", BackendError: err.Error()}
+		}
+
+		ca.logger.Info("Updating iam URL to public, if it is private and retrying to fetch token")
+		if !resetIAMURL(ca) {
+			return "", tokenlifetime, utils.Error{Description: "Error fetching iam token using compute identity", BackendError: err.Error()}
+		}
+		return ca.GetToken(freshTokenRequired)
 	}
 
 	if tokenResponse == nil {
@@ -98,4 +107,9 @@ func (ca *ComputeIdentityAuthenticator) IsSecretEncrypted() bool {
 // SetEncryption ...
 func (ca *ComputeIdentityAuthenticator) SetEncryption(encrypted bool) {
 	ca.logger.Info("Unimplemented")
+}
+
+// getURL ...
+func (ca *ComputeIdentityAuthenticator) getURL() string {
+	return ca.authenticator.URL
 }

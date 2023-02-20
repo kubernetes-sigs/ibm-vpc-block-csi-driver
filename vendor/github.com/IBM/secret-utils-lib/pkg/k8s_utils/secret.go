@@ -19,61 +19,29 @@ package k8s_utils
 
 import (
 	"context"
-	b64 "encoding/base64"
 	"fmt"
+	"strings"
 
 	"github.com/IBM/secret-utils-lib/pkg/utils"
-	"go.uber.org/zap"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // GetSecretData ...
-func GetSecretData(kc KubernetesClient) (string, string, error) {
+func GetSecretData(kc KubernetesClient, secretName, secretKey string) (string, error) {
 
-	data, err := GetSecret(kc, utils.IBMCLOUD_CREDENTIALS_SECRET, utils.CLOUD_PROVIDER_ENV)
-	if err == nil {
-		kc.logger.Info("Fetched secret data", zap.String("Secret", utils.IBMCLOUD_CREDENTIALS_SECRET))
-		return data, utils.IBMCLOUD_CREDENTIALS_SECRET, nil
-	}
-
-	kc.logger.Warn("Unable to find secret", zap.Error(err), zap.String("Secret name", utils.IBMCLOUD_CREDENTIALS_SECRET))
-	kc.logger.Info("Trying to fetch storage-secret-store secret")
-	data, err = GetSecret(kc, utils.STORAGE_SECRET_STORE_SECRET, utils.SECRET_STORE_FILE)
+	secret, err := kc.Clientset.CoreV1().Secrets(kc.Namespace).Get(context.TODO(), secretName, v1.GetOptions{})
 	if err != nil {
-		kc.logger.Error("Unable to find secret", zap.Error(err), zap.String("Secret name", utils.STORAGE_SECRET_STORE_SECRET))
-		return "", "", err
-	}
-
-	kc.logger.Info("Fetched secret data", zap.String("Secret", utils.STORAGE_SECRET_STORE_SECRET))
-	return data, utils.STORAGE_SECRET_STORE_SECRET, nil
-}
-
-// GetSecret ...
-func GetSecret(kc KubernetesClient, secretname, dataname string) (string, error) {
-
-	clientset := kc.GetClientSet()
-	namespace := kc.GetNameSpace()
-
-	secret, err := clientset.CoreV1().Secrets(namespace).Get(context.TODO(), secretname, v1.GetOptions{})
-	if err != nil {
-		return "", utils.Error{Description: utils.ErrFetchingSecrets, BackendError: err.Error()}
+		return "", err
 	}
 
 	if secret.Data == nil {
-		return "", utils.Error{Description: fmt.Sprintf(utils.ErrEmptyDataInSecret, secretname)}
+		return "", utils.Error{Description: fmt.Sprintf(utils.ErrEmptyDataInSecret, secretName)}
 	}
 
-	byteData, ok := secret.Data[dataname]
+	byteData, ok := secret.Data[secretKey]
 	if !ok {
-		return "", utils.Error{Description: fmt.Sprintf(utils.ErrExpectedDataNotFound, dataname, secretname)}
+		return "", utils.Error{Description: fmt.Sprintf(utils.ErrExpectedDataNotFound, secretKey, secretName)}
 	}
 
-	sEnc := b64.StdEncoding.EncodeToString(byteData)
-
-	sDec, err := b64.StdEncoding.DecodeString(sEnc)
-	if err != nil {
-		return "", utils.Error{Description: fmt.Sprintf(utils.ErrFetchingSecretData, secretname, dataname), BackendError: err.Error()}
-	}
-
-	return string(sDec), nil
+	return strings.TrimSuffix(string(byteData), "\n"), nil
 }

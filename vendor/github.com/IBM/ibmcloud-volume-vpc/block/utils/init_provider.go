@@ -27,19 +27,20 @@ import (
 	vpcconfig "github.com/IBM/ibmcloud-volume-vpc/block/vpcconfig"
 	"github.com/IBM/ibmcloud-volume-vpc/common/registry"
 	iks_vpc_provider "github.com/IBM/ibmcloud-volume-vpc/iks/provider"
+	"github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 )
 
 // InitProviders initialization for all providers as per configurations
-func InitProviders(conf *vpcconfig.VPCBlockConfig, logger *zap.Logger) (registry.Providers, error) {
+func InitProviders(conf *vpcconfig.VPCBlockConfig, k8sClient *k8s_utils.KubernetesClient, logger *zap.Logger) (registry.Providers, error) {
 	var haveProviders bool
 	providerRegistry := &registry.ProviderRegistry{}
 
 	// VPC provider registration
 	if conf.VPCConfig != nil && conf.VPCConfig.Enabled {
 		logger.Info("Configuring VPC Block Provider")
-		prov, err := vpc_provider.NewProvider(conf, logger)
+		prov, err := vpc_provider.NewProvider(conf, k8sClient, logger)
 		if err != nil {
 			logger.Info("VPC block provider error!")
 			return nil, err
@@ -51,7 +52,7 @@ func InitProviders(conf *vpcconfig.VPCBlockConfig, logger *zap.Logger) (registry
 	// IKS provider registration
 	if conf.IKSConfig != nil && conf.IKSConfig.Enabled {
 		logger.Info("Configuring IKS-VPC Block Provider")
-		prov, err := iks_vpc_provider.NewProvider(conf, logger)
+		prov, err := iks_vpc_provider.NewProvider(conf, k8sClient, logger)
 		if err != nil {
 			logger.Info("VPC block provider error!")
 			return nil, err
@@ -106,7 +107,7 @@ func GenerateContextCredentials(conf *vpcconfig.VPCBlockConfig, providerID strin
 	switch {
 	case (conf.VPCConfig != nil && providerID == conf.VPCConfig.VPCBlockProviderName):
 		ctxLogger.Info("Calling provider/init_provider.go ForIAMAccessToken")
-		return contextCredentialsFactory.ForIAMAccessToken(conf.VPCConfig.APIKey, ctxLogger)
+		return contextCredentialsFactory.ForIAMAccessToken(conf.VPCConfig.G2APIKey, ctxLogger)
 
 	case (conf.IKSConfig != nil && providerID == conf.IKSConfig.IKSBlockProviderName):
 		return provider.ContextCredentials{}, nil // Get credentials  in OpenSession method

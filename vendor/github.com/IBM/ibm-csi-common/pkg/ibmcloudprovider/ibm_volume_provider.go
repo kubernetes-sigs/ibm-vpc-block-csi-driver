@@ -18,7 +18,6 @@
 package ibmcloudprovider
 
 import (
-	"github.com/IBM/ibm-csi-common/pkg/utils"
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	"go.uber.org/zap"
@@ -29,5 +28,5 @@ import (
 type CloudProviderInterface interface {
 	GetProviderSession(ctx context.Context, logger *zap.Logger) (provider.Session, error)
 	GetConfig() *config.Config
-	GetClusterInfo() *utils.ClusterInfo
+	GetClusterID() string
 }

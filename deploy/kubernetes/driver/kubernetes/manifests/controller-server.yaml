@@ -2,6 +2,10 @@ kind: StatefulSet
 apiVersion: apps/v1
 metadata:
   name: ibm-vpc-block-csi-controller
+  namespace: kube-system
+  labels:
+    app: ibm-vpc-block-csi-driver
+    addonmanager.kubernetes.io/mode: Reconcile
 spec:
   serviceName: "ibm-vpc-block-service"
   replicas: 1
@@ -22,6 +26,27 @@ spec:
         runAsNonRoot: true
         runAsUser: 2121
       containers:
+        - name: csi-snapshotter
+          image: MUSTPATCHWITHKUSTOMIZE
+          imagePullPolicy: Always
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+          args:
+            - "--v=5"
+            - "--csi-address=/csi/csi.sock"
+            - "--timeout=900s"
+            - "--leader-election=false"
+          resources:
+            limits:
+              cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSISnapshotterCPULimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSISnapshotterCPULimit}}80m{{/kube-system.addon-vpc-block-csi-driver-configmap.CSISnapshotterCPULimit}}"
+              memory: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSISnapshotterMemoryLimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSISnapshotterMemoryLimit}}160Mi{{/kube-system.addon-vpc-block-csi-driver-configmap.CSISnapshotterMemoryLimit}}"
+            requests:
+              cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSISnapshotterCPURequest}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSISnapshotterCPURequest}}20m{{/kube-system.addon-vpc-block-csi-driver-configmap.CSISnapshotterCPURequest}}"
+              memory: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSISnapshotterMemoryRequest}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSISnapshotterMemoryRequest}}40Mi{{/kube-system.addon-vpc-block-csi-driver-configmap.CSISnapshotterMemoryRequest}}"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
         - name: csi-provisioner
           image: MUSTPATCHWITHKUSTOMIZE
           imagePullPolicy: Always
@@ -38,11 +63,11 @@ spec:
               value: /csi/csi.sock
           resources:
             limits:
-              cpu: 100m
-              memory: 100Mi
+              cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSIProvisionerCPULimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSIProvisionerCPULimit}}80m{{/kube-system.addon-vpc-block-csi-driver-configmap.CSIProvisionerCPULimit}}"
+              memory: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSIProvisionerMemoryLimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSIProvisionerMemoryLimit}}160Mi{{/kube-system.addon-vpc-block-csi-driver-configmap.CSIProvisionerMemoryLimit}}"
             requests:
-              cpu: 10m
-              memory: 20Mi
+              cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSIProvisionerCPURequest}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSIProvisionerCPURequest}}20m{{/kube-system.addon-vpc-block-csi-driver-configmap.CSIProvisionerCPURequest}}"
+              memory: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSIProvisionerMemoryRequest}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSIProvisionerMemoryRequest}}40Mi{{/kube-system.addon-vpc-block-csi-driver-configmap.CSIProvisionerMemoryRequest}}"
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
@@ -56,16 +81,17 @@ spec:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"
             - "--timeout=600s"
+            - "--handle-volume-inuse-error=false"
           env:
             - name: ADDRESS
               value: /csi/csi.sock
           resources:
             limits:
-              cpu: 100m
-              memory: 100Mi
+              cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSIResizerCPULimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSIResizerCPULimit}}80m{{/kube-system.addon-vpc-block-csi-driver-configmap.CSIResizerCPULimit}}"
+              memory: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSIResizerMemoryLimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSIResizerMemoryLimit}}160Mi{{/kube-system.addon-vpc-block-csi-driver-configmap.CSIResizerMemoryLimit}}"
             requests:
-              cpu: 10m
-              memory: 20Mi
+              cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSIResizerCPURequest}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSIResizerCPURequest}}20m{{/kube-system.addon-vpc-block-csi-driver-configmap.CSIResizerCPURequest}}"
+              memory: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSIResizerMemoryRequest}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSIResizerMemoryRequest}}40Mi{{/kube-system.addon-vpc-block-csi-driver-configmap.CSIResizerMemoryRequest}}"
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
@@ -78,13 +104,16 @@ spec:
             - "--v=5"
             - "--csi-address=/csi/csi.sock"
             - "--timeout=900s"
+            - "--worker-threads={{kube-system.addon-vpc-block-csi-driver-configmap.AttacherWorkerThreads}}{{^kube-system.addon-vpc-block-csi-driver-configmap.AttacherWorkerThreads}}15{{/kube-system.addon-vpc-block-csi-driver-configmap.AttacherWorkerThreads}}"
+            - "--kube-api-qps={{kube-system.addon-vpc-block-csi-driver-configmap.AttacherKubeAPIQPS}}{{^kube-system.addon-vpc-block-csi-driver-configmap.AttacherKubeAPIQPS}}5{{/kube-system.addon-vpc-block-csi-driver-configmap.AttacherKubeAPIQPS}}"
+            - "--kube-api-burst={{kube-system.addon-vpc-block-csi-driver-configmap.AttacherKubeAPIBurst}}{{^kube-system.addon-vpc-block-csi-driver-configmap.AttacherKubeAPIBurst}}10{{/kube-system.addon-vpc-block-csi-driver-configmap.AttacherKubeAPIBurst}}"
           resources:
             limits:
-              cpu: 100m
-              memory: 100Mi
+              cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSIAttacherCPULimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSIAttacherCPULimit}}60m{{/kube-system.addon-vpc-block-csi-driver-configmap.CSIAttacherCPULimit}}"
+              memory: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSIAttacherMemoryLimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSIAttacherMemoryLimit}}120Mi{{/kube-system.addon-vpc-block-csi-driver-configmap.CSIAttacherMemoryLimit}}"
             requests:
-              cpu: 10m
-              memory: 20Mi
+              cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSIAttacherCPURequest}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSIAttacherCPURequest}}15m{{/kube-system.addon-vpc-block-csi-driver-configmap.CSIAttacherCPURequest}}"
+              memory: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSIAttacherMemoryRequest}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSIAttacherMemoryRequest}}30Mi{{/kube-system.addon-vpc-block-csi-driver-configmap.CSIAttacherMemoryRequest}}"
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
@@ -98,6 +127,7 @@ spec:
             - "--v=5"
             - "--endpoint=$(CSI_ENDPOINT)"
             - "--lock_enabled=false"
+            - "--sidecarEndpoint=$(SIDECAREP)"
           envFrom:
           - configMapRef:
               name: ibm-vpc-block-csi-configmap
@@ -114,13 +144,19 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+            - name: MAX_VPC_RETRY_ATTEMPT
+              value: "{{kube-system.addon-vpc-block-csi-driver-configmap.AttachDetachMaxRetryAttempt}}{{^kube-system.addon-vpc-block-csi-driver-configmap.AttachDetachMaxRetryAttempt}}46{{/kube-system.addon-vpc-block-csi-driver-configmap.AttachDetachMaxRetryAttempt}}"
+            - name: MIN_VPC_RETRY_INTERVAL
+              value: "{{kube-system.addon-vpc-block-csi-driver-configmap.AttachDetachMinRetryGAP}}{{^kube-system.addon-vpc-block-csi-driver-configmap.AttachDetachMinRetryGAP}}3{{/kube-system.addon-vpc-block-csi-driver-configmap.AttachDetachMinRetryGAP}}"
+            - name: MIN_VPC_RETRY_INTERVAL_ATTEMPT
+              value: "{{kube-system.addon-vpc-block-csi-driver-configmap.AttachDetachMinRetryAttempt}}{{^kube-system.addon-vpc-block-csi-driver-configmap.AttachDetachMinRetryAttempt}}3{{/kube-system.addon-vpc-block-csi-driver-configmap.AttachDetachMinRetryAttempt}}"
           resources:
             limits:
-              cpu: 500m
-              memory: 500Mi
+              cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.BlockDriverCPULimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.BlockDriverCPULimit}}300m{{/kube-system.addon-vpc-block-csi-driver-configmap.BlockDriverCPULimit}}"
+              memory: "{{kube-system.addon-vpc-block-csi-driver-configmap.BlockDriverMemoryLimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.BlockDriverMemoryLimit}}600Mi{{/kube-system.addon-vpc-block-csi-driver-configmap.BlockDriverMemoryLimit}}"
             requests:
-              cpu: 50m
-              memory: 100Mi
+              cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.BlockDriverCPURequest}}{{^kube-system.addon-vpc-block-csi-driver-configmap.BlockDriverCPURequest}}75m{{/kube-system.addon-vpc-block-csi-driver-configmap.BlockDriverCPURequest}}"
+              memory: "{{kube-system.addon-vpc-block-csi-driver-configmap.BlockDriverMemoryRequest}}{{^kube-system.addon-vpc-block-csi-driver-configmap.BlockDriverMemoryRequest}}150Mi{{/kube-system.addon-vpc-block-csi-driver-configmap.BlockDriverMemoryRequest}}"
           ports:
             - name: healthz
               containerPort: 9808
@@ -150,11 +186,11 @@ spec:
             - --csi-address=/csi/csi.sock
           resources:
             limits:
-              cpu: 50m
-              memory: 50Mi
+              cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeCPULimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeCPULimit}}20m{{/kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeCPULimit}}"
+              memory: "{{kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeMemoryLimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeMemoryLimit}}40Mi{{/kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeMemoryLimit}}"
             requests:
-              cpu: 5m
-              memory: 10Mi
+              cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeCPURequest}}{{^kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeCPURequest}}5m{{/kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeCPURequest}}"
+              memory: "{{kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeMemoryRequest}}{{^kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeMemoryRequest}}10Mi{{/kube-system.addon-vpc-block-csi-driver-configmap.LivenessProbeMemoryRequest}}"
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
