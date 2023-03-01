@@ -1,2 +1,2 @@
-CVE-2021-3636 # not listed in go mod why golang/k8s.io/kubernetes@v1.25.4
-sonatype-2022-6522 # not listed in go mod why pkg:golang/k8s.io/apiserver@v0.25.4
+CVE-2021-3636
+sonatype-2022-6522
