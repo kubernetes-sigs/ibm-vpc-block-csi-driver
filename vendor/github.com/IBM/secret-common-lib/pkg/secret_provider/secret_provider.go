@@ -18,12 +18,15 @@ package secret_provider
 
 import (
 	"os"
+	"os/exec"
 	"strings"
+	"time"
 
 	localutils "github.com/IBM/secret-common-lib/pkg/utils"
 	"github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 	sp "github.com/IBM/secret-utils-lib/pkg/secret_provider"
 	"github.com/IBM/secret-utils-lib/pkg/utils"
+	"github.com/beevik/ntp"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -51,6 +54,10 @@ func NewSecretProvider(k8sClient *k8s_utils.KubernetesClient, optionalArgs ...ma
 	if err != nil {
 		logger.Error("Error seen while validating arguments", zap.Error(err), zap.Any("Provided arguments", optionalArgs))
 		return nil, err
+	}
+
+	if err := setNTPTime(logger); err != nil {
+		logger.Warn("Unable to set current time according to remote NTP server")
 	}
 
 	if managed { // If IKS_ENABLED is set to true
@@ -99,6 +106,37 @@ func validateArguments(optionalArgs ...map[string]string) error {
 // isProviderType ...
 func isProviderType(arg string) bool {
 	return (arg == VPC || arg == Bluemix || arg == Softlayer)
+}
+
+// setNTPTime queries the ntp server for the approriate current time.
+// if there is a difference between current time of the system and retrieved time from ntp, current time is reset to the retrieved time
+// this is avoid any clock skew errors which can possibly be observed while validating jwt tokens.
+func setNTPTime(logger *zap.Logger) error {
+	options := ntp.QueryOptions{Timeout: 30 * time.Second, TTL: 5}
+	response, err := ntp.QueryWithOptions("0.beevik-ntp.pool.ntp.org", options)
+	if err != nil {
+		return err
+	}
+
+	currentTime := time.Now().Unix()
+	if currentTime == response.Time.Unix() {
+		logger.Info("Current and ntp requested time is same")
+		return nil
+	}
+	logger.Info("Current time v/s ntp time", zap.Int64("current time", currentTime), zap.Int64("time received from ntp server", response.Time.Unix()))
+
+	currentDate, err := exec.LookPath("date")
+	if err != nil {
+		logger.Warn("Date binary not found, cannot set system date:", zap.Error(err))
+		return err
+	}
+	logger.Info("Current time and date", zap.String("date", currentDate))
+
+	dateString := response.Time.Format(currentDate)
+	logger.Info("Setting system date", zap.String("date", dateString))
+	args := []string{"--set", dateString}
+	return exec.Command("date", args...).Run()
+
 }
 
 // setUpLogger ...

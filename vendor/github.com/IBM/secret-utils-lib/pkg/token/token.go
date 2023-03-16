@@ -22,11 +22,12 @@ import (
 
 	"github.com/IBM/secret-utils-lib/pkg/utils"
 	"github.com/golang-jwt/jwt"
+	"go.uber.org/zap"
 )
 
 // CheckTokenLifeTime checks whether the lifetime of token is valid or not
 // and returns life time of the token
-func CheckTokenLifeTime(tokenString string) (uint64, error) {
+func CheckTokenLifeTime(tokenString string, logger *zap.Logger) (uint64, error) {
 	var tokenLifeTime uint64
 
 	token, err := parseToken(tokenString)
@@ -35,10 +36,11 @@ func CheckTokenLifeTime(tokenString string) (uint64, error) {
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		currentTime := time.Now().Unix()
 		if err := claims.Valid(); err != nil {
+			logger.Warn("Token validation failed", zap.Error(err), zap.Any("current time", currentTime), zap.Any("issued at time", claims["iat"]), zap.Any("expiry time", claims["exp"]))
 			return tokenLifeTime, err
 		}
-		currentTime := time.Now().Unix()
 		var expiryTime interface{}
 		if expiryTime, ok = claims["exp"]; !ok {
 			return tokenLifeTime, errors.New("unable to find expiry time of token")

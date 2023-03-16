@@ -8,7 +8,7 @@ github.com/IBM-Cloud/ibm-cloud-cli-sdk/common/rest
 # github.com/IBM/go-sdk-core/v5 v5.9.1
 ## explicit; go 1.14
 github.com/IBM/go-sdk-core/v5/core
-# github.com/IBM/ibm-csi-common v1.1.6
+# github.com/IBM/ibm-csi-common v1.1.7-0.20230316035254-a5798ad8b6f3
 ## explicit; go 1.18
 github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider
 github.com/IBM/ibm-csi-common/pkg/messages
@@ -18,7 +18,7 @@ github.com/IBM/ibm-csi-common/pkg/metrics
 github.com/IBM/ibm-csi-common/pkg/mountmanager
 github.com/IBM/ibm-csi-common/pkg/utils
 github.com/IBM/ibm-csi-common/pkg/watcher
-# github.com/IBM/ibmcloud-volume-interface v1.1.3
+# github.com/IBM/ibmcloud-volume-interface v1.1.4-0.20230316034856-647934493956
 ## explicit; go 1.18
 github.com/IBM/ibmcloud-volume-interface/config
 github.com/IBM/ibmcloud-volume-interface/lib/metrics
@@ -29,7 +29,7 @@ github.com/IBM/ibmcloud-volume-interface/lib/utils/reasoncode
 github.com/IBM/ibmcloud-volume-interface/provider/auth
 github.com/IBM/ibmcloud-volume-interface/provider/iam
 github.com/IBM/ibmcloud-volume-interface/provider/local
-# github.com/IBM/ibmcloud-volume-vpc v1.1.4
+# github.com/IBM/ibmcloud-volume-vpc v1.1.5-0.20230316035038-6beebe72c094
 ## explicit; go 1.18
 github.com/IBM/ibmcloud-volume-vpc/block/provider
 github.com/IBM/ibmcloud-volume-vpc/block/utils
@@ -45,11 +45,11 @@ github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/models
 github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/riaas
 github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/vpcvolume
 github.com/IBM/ibmcloud-volume-vpc/iks/provider
-# github.com/IBM/secret-common-lib v1.1.3
+# github.com/IBM/secret-common-lib v1.1.4-0.20230310001150-389956843c24
 ## explicit; go 1.18
 github.com/IBM/secret-common-lib/pkg/secret_provider
 github.com/IBM/secret-common-lib/pkg/utils
-# github.com/IBM/secret-utils-lib v1.1.3
+# github.com/IBM/secret-utils-lib v1.1.4-0.20230309233256-23670efab941
 ## explicit; go 1.18
 github.com/IBM/secret-utils-lib/pkg/authenticator
 github.com/IBM/secret-utils-lib/pkg/config
@@ -61,6 +61,9 @@ github.com/IBM/secret-utils-lib/secretprovider
 # github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
 ## explicit; go 1.13
 github.com/asaskevich/govalidator
+# github.com/beevik/ntp v0.3.0
+## explicit
+github.com/beevik/ntp
 # github.com/beorn7/perks v1.0.1
 ## explicit; go 1.11
 github.com/beorn7/perks/quantile
@@ -320,6 +323,7 @@ go.uber.org/zap/zapcore
 golang.org/x/crypto/sha3
 # golang.org/x/net v0.5.0 => golang.org/x/net v0.7.0
 ## explicit; go 1.17
+golang.org/x/net/bpf
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/html
@@ -329,7 +333,10 @@ golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
+golang.org/x/net/internal/iana
+golang.org/x/net/internal/socket
 golang.org/x/net/internal/timeseries
+golang.org/x/net/ipv4
 golang.org/x/net/trace
 # golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b
 ## explicit; go 1.11
