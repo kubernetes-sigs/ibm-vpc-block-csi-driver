@@ -125,6 +125,7 @@ replace (
 	k8s.io/controller-manager => k8s.io/controller-manager v0.25.4
 	k8s.io/cri-api => k8s.io/cri-api v0.25.4
 	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.25.4
+	k8s.io/dynamic-resource-allocation => k8s.io/dynamic-resource-allocation v0.25.4
 	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.25.4
 	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.25.4
 	k8s.io/kube-proxy => k8s.io/kube-proxy v0.25.4
@@ -135,6 +136,7 @@ replace (
 	k8s.io/metrics => k8s.io/metrics v0.25.4
 	k8s.io/mount-utils => k8s.io/mount-utils v0.25.0-beta.0
 	k8s.io/node-api => k8s.io/node-api v0.25.4
+	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.25.4
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.25.4
 	k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.25.4
 )
