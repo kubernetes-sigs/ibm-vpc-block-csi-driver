@@ -1,9 +1,9 @@
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.19-openshift-4.13 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.19-openshift-4.14 AS builder
 WORKDIR /go/src/github.com/openshift/ibm-vpc-block-csi-driver
 COPY . .
 RUN make build
 
-FROM registry.ci.openshift.org/ocp/4.13:base
+FROM registry.ci.openshift.org/ocp/4.14:base
 COPY --from=builder /go/bin/ibm-vpc-block-csi-driver /bin/ibm-vpc-block-csi-driver
 RUN yum install -y util-linux nfs-utils e2fsprogs xfsprogs ca-certificates udev && yum clean all && rm -rf /var/cache/yum
 
