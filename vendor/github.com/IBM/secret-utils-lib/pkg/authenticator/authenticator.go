@@ -215,7 +215,7 @@ func parseIBMCloudCredentials(logger *zap.Logger, data string) (map[string]strin
 // isTimeout ...
 func isTimeout(err error) bool {
 	// If the error message contains "Client.Timeout" substring, return true
-	if strings.Contains(err.Error(), "Client.Timeout") {
+	if strings.Contains(strings.ToLower(err.Error()), "timeout") {
 		return true
 	}
 	return false

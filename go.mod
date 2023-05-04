@@ -3,10 +3,10 @@ module github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
 go 1.18
 
 require (
-	github.com/IBM/ibm-csi-common v1.1.6
-	github.com/IBM/ibmcloud-volume-interface v1.1.3
-	github.com/IBM/ibmcloud-volume-vpc v1.1.4
-	github.com/IBM/secret-utils-lib v1.1.3
+	github.com/IBM/ibm-csi-common v1.1.7
+	github.com/IBM/ibmcloud-volume-interface v1.1.4
+	github.com/IBM/ibmcloud-volume-vpc v1.1.5
+	github.com/IBM/secret-utils-lib v1.1.4
 	github.com/container-storage-interface/spec v1.7.0
 	github.com/golang/glog v1.0.0
 	github.com/google/uuid v1.1.2
@@ -28,7 +28,7 @@ require (
 	github.com/BurntSushi/toml v1.0.0 // indirect
 	github.com/IBM-Cloud/ibm-cloud-cli-sdk v0.6.7 // indirect
 	github.com/IBM/go-sdk-core/v5 v5.9.1 // indirect
-	github.com/IBM/secret-common-lib v1.1.3 // indirect
+	github.com/IBM/secret-common-lib v1.1.4 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
