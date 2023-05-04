@@ -55,4 +55,6 @@ const (
 	Bluemix = "bluemix"
 	// Softlayer ...
 	Softlayer = "softlayer"
+	// SatelliteProvider ...
+	SatelliteProvider = "upi"
 )
