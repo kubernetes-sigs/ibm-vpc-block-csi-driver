@@ -1,4 +1,3 @@
-CVE-2022-32149 # not listed in go mod why pkg:golang/golang.org/x/text@v0.3.7
-CVE-2021-3636 # not listed in go mod why golang/k8s.io/kubernetes@v1.25.4
-CVE-2021-25743 # not listed in go mod why  golang/k8s.io/kubernetes@v1.25.4 
-sonatype-2022-6522 # not listed in go mod why pkg:golang/k8s.io/apiserver@v0.25.4
+CVE-2020-8561 ## CWE-610: Externally Controlled Reference to a Resource in Another Sphere 
+CVE-2021-25740 ## CWE-610: Externally Controlled Reference to a Resource in Another Sphere 
+sonatype-2022-6522 ## 1 non-CVE vuln [pkg:golang/k8s.io/apiserver@v0.26.3]

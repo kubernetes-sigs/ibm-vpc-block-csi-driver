@@ -84,11 +84,11 @@ func getEndpoint(endpointName, endpointValue string, k8sClient k8s_utils.Kuberne
 }
 
 // frameTokenExchangeURL ...
-func frameTokenExchangeURL(kc k8s_utils.KubernetesClient, logger *zap.Logger) (string, error) {
+func frameTokenExchangeURL(isSatellite bool, kc k8s_utils.KubernetesClient, logger *zap.Logger) (string, error) {
 	cc, err := config.GetClusterInfo(kc, logger)
 	if err != nil {
 		return "", err
 	}
 
-	return config.FrameTokenExchangeURLFromClusterInfo(cc, logger), nil
+	return config.FrameTokenExchangeURLFromClusterInfo(isSatellite, cc, logger), nil
 }

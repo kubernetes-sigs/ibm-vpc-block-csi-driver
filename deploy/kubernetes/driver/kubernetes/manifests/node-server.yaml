@@ -19,6 +19,7 @@ spec:
       labels:
         app: ibm-vpc-block-csi-driver
     spec:
+      priorityClassName: system-node-critical
       serviceAccountName: ibm-vpc-block-node-sa
       tolerations:
       - operator: Exists
@@ -34,10 +35,6 @@ spec:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"
             - "--kubelet-registration-path=$(DRIVER_REGISTRATION_SOCK)"
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/bin/sh", "-c", "rm -rf /registration/vpc.block.csi.ibm.io /registration/vpc.block.csi.ibm.io-reg.sock"]
           env:
             - name: ADDRESS
               value: /csi/csi.sock
