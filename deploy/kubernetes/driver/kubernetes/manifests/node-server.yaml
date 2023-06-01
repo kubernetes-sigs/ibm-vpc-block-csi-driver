@@ -6,10 +6,12 @@ metadata:
   labels:
     app: ibm-vpc-block-csi-driver
     addonmanager.kubernetes.io/mode: Reconcile
+    app.kubernetes.io/name: ibm-vpc-block-csi-driver
 spec:
   selector:
     matchLabels:
       app: ibm-vpc-block-csi-driver
+      app.kubernetes.io/name: ibm-vpc-block-csi-driver
   template:
     metadata:
       annotations:
@@ -18,6 +20,7 @@ spec:
         prometheus.io/path: "/metrics"
       labels:
         app: ibm-vpc-block-csi-driver
+        app.kubernetes.io/name: ibm-vpc-block-csi-driver
     spec:
       priorityClassName: system-node-critical
       serviceAccountName: ibm-vpc-block-node-sa
