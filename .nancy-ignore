@@ -1,3 +1,4 @@
 CVE-2020-8561 ## CWE-610: Externally Controlled Reference to a Resource in Another Sphere 
-CVE-2021-25740 ## CWE-610: Externally Controlled Reference to a Resource in Another Sphere 
+CVE-2021-25740 ## CWE-610: Externally Controlled Reference to a Resource in Another Sphere
+CVE-2021-25749 ## CWE-284: Applicable only for windows workloads
 sonatype-2022-6522 ## 1 non-CVE vuln [pkg:golang/k8s.io/apiserver@v0.26.3]
