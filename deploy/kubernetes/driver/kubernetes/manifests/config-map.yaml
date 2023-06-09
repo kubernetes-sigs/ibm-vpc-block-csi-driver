@@ -60,6 +60,7 @@ data:
   CSIDriverRegistrarMemoryLimit: "80Mi"     #container:csi-driver-registrar, resource-type: memory-limit
   NodeDriverCPULimit: "120m"                #container:iks-vpc-block-node-driver, resource-type: cpu-limit
   NodeDriverMemoryLimit: "300Mi"            #container:iks-vpc-block-node-driver, resource-type: memory-limit
+  NodeDriverVolumeAttachmentLimit: "4"      #container:iks-vpc-block-node-driver, resource-type: volume-attach-limit
   LivenessProbeCPULimit: "20m"              #container:liveness-probe, resource-type: cpu-limit
   LivenessProbeMemoryLimit: "40Mi"          #container:liveness-probe, resource-type: memory-limit
   SecretSidecarCPULimit: "40m"              #container:storage-secret-sidecar, resource-type: cpu-limit

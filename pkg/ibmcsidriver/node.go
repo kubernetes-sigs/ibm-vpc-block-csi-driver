@@ -19,15 +19,15 @@ package ibmcsidriver
 
 import (
 	"fmt"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"k8s.io/klog/v2"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"k8s.io/klog/v2"
 
 	"os/exec"
 	"time"
@@ -354,8 +354,6 @@ func (csiNS *CSINodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInf
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	ctxLogger.Info("CSINodeServer-NodeGetInfo... ", zap.Reflect("Request", *req))
 
-	// maxVolumesPerNode is the maximum number of volumes attachable to a node
-	var maxVolumesPerNode int64 = DefaultVolumesPerNode
 	nodeName := os.Getenv("KUBE_NODE_NAME")
 
 	nodeInfo := nodeMetadata.NodeInfoManager{
@@ -379,16 +377,8 @@ func (csiNS *CSINodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInf
 		},
 	}
 
-	// maxVolumesPerNode is the maximum number of volumes attachable to a node; default is 4
-	cores := runtime.NumCPU()
-	if cores >= MinimumCoresWithMaximumAttachableVolumes {
-		maxVolumesPerNode = MaxVolumesPerNode
-	}
-	ctxLogger.Info("Number of cores of the node and attachable volume limits.", zap.Reflect("Cores", cores), zap.Reflect("AttachableVolumeLimits", maxVolumesPerNode))
-
 	resp := &csi.NodeGetInfoResponse{
 		NodeId:             csiNS.Metadata.GetWorkerID(),
-		MaxVolumesPerNode:  maxVolumesPerNode,
 		AccessibleTopology: top,
 	}
 	ctxLogger.Info("NodeGetInfoResponse", zap.Reflect("NodeGetInfoResponse", resp))
