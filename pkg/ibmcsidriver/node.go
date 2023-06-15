@@ -380,6 +380,7 @@ func (csiNS *CSINodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInf
 	resp := &csi.NodeGetInfoResponse{
 		NodeId:             csiNS.Metadata.GetWorkerID(),
 		AccessibleTopology: top,
+		MaxVolumesPerNode:  csiNS.Driver.MaxVolumesPerNode,
 	}
 	ctxLogger.Info("NodeGetInfoResponse", zap.Reflect("NodeGetInfoResponse", resp))
 	return resp, nil

@@ -52,8 +52,10 @@ var (
 	endpoint             = flag.String("endpoint", "unix:/tmp/csi.sock", "CSI endpoint")
 	metricsAddress       = flag.String("metrics-address", "0.0.0.0:9080", "Metrics address")
 	extraVolumeLabelsStr = flag.String("extra-labels", "", "Extra labels to tag all volumes created by driver. It is a comma separated list of key value pairs like '<key1>:<value1>,<key2>:<value2>'.")
-	vendorVersion        string
-	logger               *zap.Logger
+	volumeAttachLimit    = *flag.Int64("volume-attach-limit", 4, "Used to configure Volume attachment limit")
+
+	vendorVersion string
+	logger        *zap.Logger
 )
 
 func main() {
@@ -111,7 +113,7 @@ func handle(logger *zap.Logger) {
 
 	statUtil := &(driver.VolumeStatUtils{})
 
-	err = ibmCSIDriver.SetupIBMCSIDriver(ibmcloudProvider, mounter, statUtil, nil, &nodeInfo, logger, csiConfig.CSIDriverName, vendorVersion)
+	err = ibmCSIDriver.SetupIBMCSIDriver(ibmcloudProvider, mounter, statUtil, nil, &nodeInfo, logger, csiConfig.CSIDriverName, vendorVersion, volumeAttachLimit)
 	if err != nil {
 		logger.Fatal("Failed to initialize driver...", zap.Error(err))
 	}

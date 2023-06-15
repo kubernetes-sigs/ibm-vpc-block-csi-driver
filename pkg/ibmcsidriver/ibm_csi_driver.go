@@ -31,14 +31,14 @@ import (
 
 // IBMCSIDriver ...
 type IBMCSIDriver struct {
-	name          string
-	vendorVersion string
-	logger        *zap.Logger
-	region        string
-
-	ids *CSIIdentityServer
-	ns  *CSINodeServer
-	cs  *CSIControllerServer
+	name              string
+	vendorVersion     string
+	logger            *zap.Logger
+	region            string
+	MaxVolumesPerNode int64
+	ids               *CSIIdentityServer
+	ns                *CSINodeServer
+	cs                *CSIControllerServer
 
 	vcap  []*csi.VolumeCapability_AccessMode
 	cscap []*csi.ControllerServiceCapability
@@ -51,7 +51,7 @@ func GetIBMCSIDriver() *IBMCSIDriver {
 }
 
 // SetupIBMCSIDriver ...
-func (icDriver *IBMCSIDriver) SetupIBMCSIDriver(provider cloudProvider.CloudProviderInterface, mounter mountManager.Mounter, statsUtil StatsUtils, metadata nodeMetadata.NodeMetadata, nodeInfo nodeMetadata.NodeInfo, lgr *zap.Logger, name, vendorVersion string) error {
+func (icDriver *IBMCSIDriver) SetupIBMCSIDriver(provider cloudProvider.CloudProviderInterface, mounter mountManager.Mounter, statsUtil StatsUtils, metadata nodeMetadata.NodeMetadata, nodeInfo nodeMetadata.NodeInfo, lgr *zap.Logger, name, vendorVersion string, volumeAttachLimit int64) error {
 	icDriver.logger = lgr
 	icDriver.logger.Info("IBMCSIDriver-SetupIBMCSIDriver setting up IBM CSI Driver...")
 
@@ -103,6 +103,7 @@ func (icDriver *IBMCSIDriver) SetupIBMCSIDriver(provider cloudProvider.CloudProv
 	icDriver.ids = NewIdentityServer(icDriver)
 	icDriver.ns = NewNodeServer(icDriver, mounter, statsUtil, metadata)
 	icDriver.cs = NewControllerServer(icDriver, provider)
+	icDriver.MaxVolumesPerNode = volumeAttachLimit
 
 	icDriver.logger.Info("Successfully setup IBM CSI driver")
 
