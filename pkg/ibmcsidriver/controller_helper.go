@@ -513,8 +513,8 @@ func getPrefedTopologyParams(topList []*csi.Topology) (map[string]string, error)
 func getMaxDelaySnapshotCreate(ctxLogger *zap.Logger) int {
 	maxDelaySnapshotCreate := MAX_DELAY_SNAPSHOT_CREATE // 300 seconds default
 	maxDelayEnv := os.Getenv("MAX_DELAY_SNAPSHOT_CREATE")
-	var err error
 	if maxDelayEnv != "" {
+		var err error
 		maxDelaySnapshotCreate, err = strconv.Atoi(maxDelayEnv)
 		if err != nil {
 			maxDelaySnapshotCreate = MAX_DELAY_SNAPSHOT_CREATE // 300 seconds default
