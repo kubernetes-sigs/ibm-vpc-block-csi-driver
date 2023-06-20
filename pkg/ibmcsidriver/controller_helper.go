@@ -517,7 +517,7 @@ func getMaxDelaySnapshotCreate(ctxLogger *zap.Logger, ) int {
 				maxDelaySnapshotCreate, err := strconv.Atoi(maxDelayEnv)
 				if err != nil {
 					maxDelaySnapshotCreate = MAX_DELAY_SNAPSHOT_CREATE // 300 seconds default
-					ctxLogger.Warn("Error while processing MAX_DELAY_SNAPSHOT_CREATE variable. Expected integer. So continuing with default values", zap.Any("MAX_DELAY_SNAPSHOT_CREATE", maxDelayEnv), zap.Any("Considered value", maxDelaySnapshotCreate))
+					ctxLogger.Warn("Error while processing MAX_DELAY_SNAPSHOT_CREATE variable. MAX_DELAY_SNAPSHOT_CREATE expects integer value in seconds, continuing with default value 300s", zap.Any("MAX_DELAY_SNAPSHOT_CREATE", maxDelayEnv), zap.Any("Considered value", maxDelaySnapshotCreate))
 				}
 			}
 	return maxDelaySnapshotCreate
