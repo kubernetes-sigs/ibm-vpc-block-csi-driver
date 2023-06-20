@@ -510,7 +510,7 @@ func getPrefedTopologyParams(topList []*csi.Topology) (map[string]string, error)
 	return nil, fmt.Errorf("preferred topologies specified but no segments")
 }
 
-func getMaxDelaySnapshotCreate(ctxLogger *zap.Logger, ) int {
+func getMaxDelaySnapshotCreate(ctxLogger *zap.Logger) int {
 	maxDelaySnapshotCreate := MAX_DELAY_SNAPSHOT_CREATE // 300 seconds default
 			maxDelayEnv := os.Getenv("MAX_DELAY_SNAPSHOT_CREATE")
 			if maxDelayEnv != "" {
