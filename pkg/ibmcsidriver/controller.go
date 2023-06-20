@@ -439,49 +439,58 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 	ctxLogger.Info("CSIControllerServer-CreateSnapshot... ", zap.Reflect("Request", *req))
 	defer metrics.UpdateDurationFromStart(ctxLogger, "CreateSnapshot", time.Now())
 
-	snapshotName := req.GetName()
-	if len(snapshotName) == 0 {
-		return nil, commonError.GetCSIError(ctxLogger, commonError.MissingSnapshotName, requestID, nil)
-	}
+	isSnapShotEnabled := os.Getenv("IS_SNAPSHOT_ENABLED")
+	if  isSnapShotEnabled == true {
 
-	sourceVolumeID := req.GetSourceVolumeId()
-	if len(sourceVolumeID) == 0 {
-		return nil, commonError.GetCSIError(ctxLogger, commonError.MissingSourceVolumeID, requestID, nil)
-	}
+		snapshotName := req.GetName()
+		if len(snapshotName) == 0 {
+			return nil, commonError.GetCSIError(ctxLogger, commonError.MissingSnapshotName, requestID, nil)
+		}
 
-	// Validate if volume Already Exists
-	session, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
-	if err != nil {
-		if userError.GetUserErrorCode(err) == string(utilReasonCode.EndpointNotReachable) {
-			return nil, commonError.GetCSIError(ctxLogger, commonError.EndpointNotReachable, requestID, err)
+		sourceVolumeID := req.GetSourceVolumeId()
+		if len(sourceVolumeID) == 0 {
+			return nil, commonError.GetCSIError(ctxLogger, commonError.MissingSourceVolumeID, requestID, nil)
 		}
-		if userError.GetUserErrorCode(err) == string(utilReasonCode.Timeout) {
-			return nil, commonError.GetCSIError(ctxLogger, commonError.Timeout, requestID, err)
-		}
-		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
-	}
 
-	snapshot, err := session.GetSnapshotByName(snapshotName)
-	if snapshot != nil {
-		if snapshot.VolumeID != sourceVolumeID {
-			return nil, commonError.GetCSIError(ctxLogger, commonError.SnapshotAlreadyExists, requestID, err, snapshotName, sourceVolumeID)
+		// Validate if volume Already Exists
+		session, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
+		if err != nil {
+			if userError.GetUserErrorCode(err) == string(utilReasonCode.EndpointNotReachable) {
+				return nil, commonError.GetCSIError(ctxLogger, commonError.EndpointNotReachable, requestID, err)
+			}
+			if userError.GetUserErrorCode(err) == string(utilReasonCode.Timeout) {
+				return nil, commonError.GetCSIError(ctxLogger, commonError.Timeout, requestID, err)
+			}
+			return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
 		}
-		ctxLogger.Info("Snapshot with name already exist for volume", zap.Reflect("SnapshotName", snapshotName), zap.Reflect("VolumeID", sourceVolumeID))
+
+		snapshot, err := session.GetSnapshotByName(snapshotName)
+		if snapshot != nil {
+			if snapshot.VolumeID != sourceVolumeID {
+				return nil, commonError.GetCSIError(ctxLogger, commonError.SnapshotAlreadyExists, requestID, err, snapshotName, sourceVolumeID)
+			}
+			ctxLogger.Info("Snapshot with name already exist for volume", zap.Reflect("SnapshotName", snapshotName), zap.Reflect("VolumeID", sourceVolumeID))
+			return createCSISnapshotResponse(*snapshot), nil
+		}
+		snapshotParameters := provider.SnapshotParameters{}
+		snapshotParameters.Name = snapshotName
+		snapshotTags := map[string]string{
+			"name": snapshotName,
+		}
+		snapshotParameters.SnapshotTags = snapshotTags
+
+		snapshot, err = session.CreateSnapshot(sourceVolumeID, snapshotParameters)
+
+		if err != nil {
+			return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err, "creation")
+		}
+
 		return createCSISnapshotResponse(*snapshot), nil
+		
+	} else {
+		time.Sleep(10 * time.Minute)
+		return nil, commonError.GetCSIError(ctxLogger, commonError.MethodUnimplemented, requestID, nil, "CreateSnapshot")
 	}
-	snapshotParameters := provider.SnapshotParameters{}
-	snapshotParameters.Name = snapshotName
-	snapshotTags := map[string]string{
-		"name": snapshotName,
-	}
-	snapshotParameters.SnapshotTags = snapshotTags
-
-	snapshot, err = session.CreateSnapshot(sourceVolumeID, snapshotParameters)
-
-	if err != nil {
-		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err, "creation")
-	}
-	return createCSISnapshotResponse(*snapshot), nil
 }
 
 // DeleteSnapshot ...
