@@ -438,6 +438,13 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 	ctx = context.WithValue(ctx, provider.RequestID, requestID)
 	ctxLogger.Info("CSIControllerServer-CreateSnapshot... ", zap.Reflect("Request", *req))
 	defer metrics.UpdateDurationFromStart(ctxLogger, "CreateSnapshot", time.Now())
+	
+	//Feature flag to avoid default enablement of CreateSnapshot feature.
+	if  strings.ToLower(os.Getenv("IS_SNAPSHOT_ENABLED")) != "true" {
+		ctxLogger.Warn("CreateSnapshot functionality is disabled.")
+		time.Sleep(10 * time.Second) //To avoid multiple retries from kubernetes to CSI Driver
+		return nil, commonError.GetCSIError(ctxLogger, commonError.MethodUnimplemented, requestID, nil, "CreateSnapshot functionality is disabled.")
+	}
 
 	maxDelaySnapshotCreate := MAX_DELAY_SNAPSHOT_CREATE // 300 seconds default
 	maxDelayEnv := os.Getenv("MAX_DELAY_SNAPSHOT_CREATE")
@@ -447,14 +454,6 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 			maxDelaySnapshotCreate = MAX_DELAY_SNAPSHOT_CREATE // 300 seconds default
 			ctxLogger.Warn("Error while processing MAX_DELAY_SNAPSHOT_CREATE variable. Expected interger. So continuing with default values", zap.Any("MAX_DELAY_SNAPSHOT_CREATE", maxDelayEnv), zap.Any("Default value", maxDelaySnapshotCreate))
 		}
-	}
-	
-	//Feature flag to avoid default enablement of CreateSnapshot feature.
-	if  strings.ToLower(os.Getenv("IS_SNAPSHOT_ENABLED")) != "true" {
-		ctxLogger.Info("CreateSnapshot functionality is disabled.")
-		ctxLogger.Info("CSIControllerServer-CreateSnapshot... is not enabled. Calls to VPC IAAS Snapshot Service are disabled")
-		time.Sleep(time.Duration(maxDelaySnapshotCreate) * time.Second) //To avoid multiple retries from kubernetes to CSI Driver
-		return nil, commonError.GetCSIError(ctxLogger, commonError.MethodUnimplemented, requestID, nil, "CreateSnapshot functionality is disabled.")
 	}
 
 	snapshotName := req.GetName()
