@@ -441,8 +441,7 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 
 	//Feature flag to avoid default enablement of CreateSnapshot feature.
 	if  strings.ToLower(os.Getenv("IS_SNAPSHOT_ENABLED")) != "true" {
-		ctxLogger.Info("CreateSnapshot functionality is disabled.")
-		ctxLogger.Info("CSIControllerServer-CreateSnapshot... is not enabled. Calls to VPC IAAS Snapshot Service are disabled")
+		ctxLogger.Warn("CreateSnapshot functionality is disabled.")
 		time.Sleep(10 * time.Second) //To avoid multiple retries from kubernetes to CSI Driver
 		return nil, commonError.GetCSIError(ctxLogger, commonError.MethodUnimplemented, requestID, nil, "CreateSnapshot functionality is disabled.")
 	}
