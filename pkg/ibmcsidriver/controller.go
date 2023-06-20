@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 	"os"
+	"strconv"
 
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	commonError "github.com/IBM/ibm-csi-common/pkg/messages"
@@ -438,11 +439,21 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 	ctxLogger.Info("CSIControllerServer-CreateSnapshot... ", zap.Reflect("Request", *req))
 	defer metrics.UpdateDurationFromStart(ctxLogger, "CreateSnapshot", time.Now())
 
+	maxDelaySnapshotCreate := MAX_DELAY_SNAPSHOT_CREATE // 300 seconds default
+	maxDelayEnv := os.Getenv("MAX_DELAY_SNAPSHOT_CREATE")
+	if maxDelayEnv != "" {
+		maxDelaySnapshotCreate, err := strconv.Atoi(maxDelayEnv)
+		if err != nil {
+			maxDelaySnapshotCreate = MAX_DELAY_SNAPSHOT_CREATE // 300 seconds default
+			ctxLogger.Warn("Error while processing MAX_DELAY_SNAPSHOT_CREATE variable. Expected interger. So continuing with default values", zap.Any("MAX_DELAY_SNAPSHOT_CREATE", maxDelayEnv), zap.Any("Default value", maxDelaySnapshotCreate))
+		}
+	}
+	
 	//Feature flag to avoid default enablement of CreateSnapshot feature.
 	if  strings.ToLower(os.Getenv("IS_SNAPSHOT_ENABLED")) != "true" {
 		ctxLogger.Info("CreateSnapshot functionality is disabled.")
 		ctxLogger.Info("CSIControllerServer-CreateSnapshot... is not enabled. Calls to VPC IAAS Snapshot Service are disabled")
-		time.Sleep(10 * time.Minute) //To avoid multiple retries from kubernetes to CSI Driver
+		time.Sleep(time.Duration(maxDelaySnapshotCreate) * time.Second) //To avoid multiple retries from kubernetes to CSI Driver
 		return nil, commonError.GetCSIError(ctxLogger, commonError.MethodUnimplemented, requestID, nil, "CreateSnapshot functionality is disabled.")
 	}
 
@@ -486,6 +497,7 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 	snapshot, err = session.CreateSnapshot(sourceVolumeID, snapshotParameters)
 
 	if err != nil {
+		time.Sleep(time.Duration(maxDelaySnapshotCreate) * time.Second) //To avoid multiple retries from kubernetes to CSI Driver
 		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err, "creation")
 	}
 	return createCSISnapshotResponse(*snapshot), nil
