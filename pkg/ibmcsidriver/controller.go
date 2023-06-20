@@ -439,10 +439,9 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 	ctxLogger.Info("CSIControllerServer-CreateSnapshot... ", zap.Reflect("Request", *req))
 	defer metrics.UpdateDurationFromStart(ctxLogger, "CreateSnapshot", time.Now())
 
-	isSnapShotEnabled := os.Getenv("IS_SNAPSHOT_ENABLED")
-	if  isSnapShotEnabled != "true" {
-		time.Sleep(10 * time.Minute)
-		return nil, commonError.GetCSIError(ctxLogger, commonError.MethodUnimplemented, requestID, nil, "CreateSnapshot")
+	if  strings.ToLower(os.Getenv("IS_SNAPSHOT_ENABLED")) != "true" {
+		time.Sleep(10 * time.Minute) //To avoid multiple retries from kubernetes to CSI Driver
+		return nil, commonError.GetCSIError(ctxLogger, commonError.MethodUnimplemented, requestID, nil, "CreateSnapshot functionality is disabled.")
 	}
 
 	snapshotName := req.GetName()
