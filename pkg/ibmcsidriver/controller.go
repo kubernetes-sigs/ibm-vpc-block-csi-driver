@@ -18,9 +18,9 @@ limitations under the License.
 package ibmcsidriver
 
 import (
+	"os"
 	"strings"
 	"time"
-	"os"
 
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	commonError "github.com/IBM/ibm-csi-common/pkg/messages"
@@ -439,7 +439,7 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 	defer metrics.UpdateDurationFromStart(ctxLogger, "CreateSnapshot", time.Now())
 
 	//Feature flag to configure enablement/disablement of CreateSnapshot feature.
-	if  strings.ToLower(os.Getenv("IS_SNAPSHOT_ENABLED")) == "false" {
+	if strings.ToLower(os.Getenv("IS_SNAPSHOT_ENABLED")) == "false" {
 		ctxLogger.Warn("CreateSnapshot functionality is disabled.")
 		time.Sleep(10 * time.Minute) //To avoid multiple retries from kubernetes to CSI Driver
 		return nil, commonError.GetCSIError(ctxLogger, commonError.MethodUnimplemented, requestID, nil, "CreateSnapshot functionality is disabled.")
