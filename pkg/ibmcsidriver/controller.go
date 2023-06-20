@@ -438,7 +438,7 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 	ctxLogger.Info("CSIControllerServer-CreateSnapshot... ", zap.Reflect("Request", *req))
 	defer metrics.UpdateDurationFromStart(ctxLogger, "CreateSnapshot", time.Now())
 
-	//Feature flag to configure enablement/disablement of CreateSnapshot feature.
+	//Feature flag to by default disable CreateSnapshot feature.
 	if strings.ToLower(os.Getenv("IS_SNAPSHOT_ENABLED")) != "true" {
 		ctxLogger.Warn("CreateSnapshot functionality is disabled.")
 		time.Sleep(10 * time.Minute) //To avoid multiple retries from kubernetes to CSI Driver
