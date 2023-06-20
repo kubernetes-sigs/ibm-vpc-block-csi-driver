@@ -20,6 +20,7 @@ package ibmcsidriver
 import (
 	"strings"
 	"time"
+	"os"
 
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	commonError "github.com/IBM/ibm-csi-common/pkg/messages"
@@ -437,6 +438,13 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 	ctxLogger.Info("CSIControllerServer-CreateSnapshot... ", zap.Reflect("Request", *req))
 	defer metrics.UpdateDurationFromStart(ctxLogger, "CreateSnapshot", time.Now())
 
+	//Feature flag to avoid default enablement of CreateSnapshot feature.
+	if  strings.ToLower(os.Getenv("IS_SNAPSHOT_ENABLED")) != "true" {
+		ctxLogger.Warn("CreateSnapshot functionality is disabled.")
+		time.Sleep(10 * time.Minute) //To avoid multiple retries from kubernetes to CSI Driver
+		return nil, commonError.GetCSIError(ctxLogger, commonError.MethodUnimplemented, requestID, nil, "CreateSnapshot functionality is disabled.")
+	}
+
 	snapshotName := req.GetName()
 	if len(snapshotName) == 0 {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.MissingSnapshotName, requestID, nil)
@@ -477,6 +485,7 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 	snapshot, err = session.CreateSnapshot(sourceVolumeID, snapshotParameters)
 
 	if err != nil {
+		time.Sleep(time.Duration(getMaxDelaySnapshotCreate(ctxLogger)) * time.Second) //To avoid multiple retries from kubernetes to CSI Driver
 		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err, "creation")
 	}
 	return createCSISnapshotResponse(*snapshot), nil
