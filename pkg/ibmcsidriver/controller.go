@@ -21,7 +21,6 @@ import (
 	"strings"
 	"time"
 	"os"
-	"strconv"
 
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	commonError "github.com/IBM/ibm-csi-common/pkg/messages"
@@ -446,16 +445,6 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 		return nil, commonError.GetCSIError(ctxLogger, commonError.MethodUnimplemented, requestID, nil, "CreateSnapshot functionality is disabled.")
 	}
 
-	maxDelaySnapshotCreate := MAX_DELAY_SNAPSHOT_CREATE // 300 seconds default
-	maxDelayEnv := os.Getenv("MAX_DELAY_SNAPSHOT_CREATE")
-	if maxDelayEnv != "" {
-		maxDelaySnapshotCreate, err := strconv.Atoi(maxDelayEnv)
-		if err != nil {
-			maxDelaySnapshotCreate = MAX_DELAY_SNAPSHOT_CREATE // 300 seconds default
-			ctxLogger.Warn("Error while processing MAX_DELAY_SNAPSHOT_CREATE variable. Expected interger. So continuing with default values", zap.Any("MAX_DELAY_SNAPSHOT_CREATE", maxDelayEnv), zap.Any("Default value", maxDelaySnapshotCreate))
-		}
-	}
-
 	snapshotName := req.GetName()
 	if len(snapshotName) == 0 {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.MissingSnapshotName, requestID, nil)
@@ -496,7 +485,7 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 	snapshot, err = session.CreateSnapshot(sourceVolumeID, snapshotParameters)
 
 	if err != nil {
-		time.Sleep(time.Duration(maxDelaySnapshotCreate) * time.Second) //To avoid multiple retries from kubernetes to CSI Driver
+		time.Sleep(time.Duration(getMaxDelaySnapshotCreate(ctxLogger)) * time.Second) //To avoid multiple retries from kubernetes to CSI Driver
 		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err, "creation")
 	}
 	return createCSISnapshotResponse(*snapshot), nil
