@@ -511,14 +511,19 @@ func getPrefedTopologyParams(topList []*csi.Topology) (map[string]string, error)
 }
 
 func getMaxDelaySnapshotCreate(ctxLogger *zap.Logger) int {
-	maxDelaySnapshotCreate := MAX_DELAY_SNAPSHOT_CREATE // 300 seconds default
+	maxDelaySnapshotCreate := MIN_DELAY_SNAPSHOT_CREATE // min 300 seconds default
 	maxDelayEnv := os.Getenv("MAX_DELAY_SNAPSHOT_CREATE")
 	if maxDelayEnv != "" {
 		var err error
 		maxDelaySnapshotCreate, err = strconv.Atoi(maxDelayEnv)
 		if err != nil {
-			maxDelaySnapshotCreate = MAX_DELAY_SNAPSHOT_CREATE // 300 seconds default
-			ctxLogger.Warn("Error while processing MAX_DELAY_SNAPSHOT_CREATE variable. MAX_DELAY_SNAPSHOT_CREATE expects integer value in seconds, continuing with default value 300s", zap.Any("MAX_DELAY_SNAPSHOT_CREATE", maxDelayEnv), zap.Any("Considered value", maxDelaySnapshotCreate), zap.Error(err))
+			maxDelaySnapshotCreate = MIN_DELAY_SNAPSHOT_CREATE // min 300 seconds default
+			ctxLogger.Warn("Error while processing MAX_DELAY_SNAPSHOT_CREATE variable. MAX_DELAY_SNAPSHOT_CREATE expects integer value in seconds, continuing with default minimum value 300", zap.Any("MAX_DELAY_SNAPSHOT_CREATE", maxDelayEnv), zap.Any("Considered value", maxDelaySnapshotCreate), zap.Error(err))
+		}
+		if maxDelaySnapshotCreate > MAX_DELAY_SNAPSHOT_CREATE {
+			maxDelaySnapshotCreate =  MAX_DELAY_SNAPSHOT_CREATE // max 900 seconds default
+			ctxLogger.Warn("MAX_DELAY_SNAPSHOT_CREATE variable expects integer value which can be maximum 900 seconds, continuing with default maximum value 900", zap.Any("MAX_DELAY_SNAPSHOT_CREATE", maxDelayEnv), zap.Any("Considered value", maxDelaySnapshotCreate), zap.Error(err))
+
 		}
 	}
 	return maxDelaySnapshotCreate

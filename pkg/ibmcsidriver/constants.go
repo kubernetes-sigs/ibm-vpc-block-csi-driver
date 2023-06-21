@@ -116,8 +116,11 @@ const (
 	// Generation ... just for backward compatibility
 	Generation = "generation"
 
+	// MIN_DELAY_SNAPSHOT_CREATE ...
+	MIN_DELAY_SNAPSHOT_CREATE = 300 //300 seconds
+
 	// MAX_DELAY_SNAPSHOT_CREATE ...
-	MAX_DELAY_SNAPSHOT_CREATE = 300 //300 seconds
+	MAX_DELAY_SNAPSHOT_CREATE = 900 //900 seconds
 )
 
 // SupportedFS the supported FS types
