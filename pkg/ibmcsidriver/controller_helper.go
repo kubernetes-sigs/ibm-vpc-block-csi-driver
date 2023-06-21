@@ -511,7 +511,7 @@ func getPrefedTopologyParams(topList []*csi.Topology) (map[string]string, error)
 }
 
 /*
-1.) IF user does not given the value DEFAULT_SNAPSHOT_CREATE_DELAY mins 
+1.) IF user does not given the value DEFAULT_SNAPSHOT_CREATE_DELAY mins
 2.) IF user has given more than MAX_SNAPSHOT_CREATE_DELAY default is MAX_SNAPSHOT_CREATE_DELAY
 3.) In case of any invalid value DEFAULT_SNAPSHOT_CREATE_DELAY mins
 */
