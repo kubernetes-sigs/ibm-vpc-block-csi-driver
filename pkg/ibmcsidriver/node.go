@@ -170,7 +170,7 @@ func (csiNS *CSINodeServer) NodePublishVolume(ctx context.Context, req *csi.Node
 	if readOnly {
 		options = append(options, "ro")
 	}
-	fsType := "" // Let the fsType be derived from global mount(NodeStageVolume)
+	fsType := "" //nolint Let the fsType be derived from global mount(NodeStageVolume)
 
 	var nodePublishResponse *csi.NodePublishVolumeResponse
 	var mountErr error

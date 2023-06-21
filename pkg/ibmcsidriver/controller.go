@@ -28,7 +28,7 @@ import (
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	providerError "github.com/IBM/ibmcloud-volume-interface/lib/utils"
-	utilReasonCode "github.com/IBM/ibmcloud-volume-interface/lib/utils/reasoncode"
+	utilReasonCode "github.com/IBM/ibmcloud-volume-interface/lib/utils/reasoncode" //nolint
 	userError "github.com/IBM/ibmcloud-volume-vpc/common/messages"
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 
