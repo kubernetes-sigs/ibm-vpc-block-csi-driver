@@ -215,7 +215,7 @@ func (csiCS *CSIControllerServer) ControllerPublishVolume(ctx context.Context, r
 	lockWaitStart := time.Now()
 	csiCS.mutex.Lock(nodeID)
 	defer csiCS.mutex.Unlock(nodeID)
-	metrics.UpdateDurationFromStart(ctxLogger, metrics.FunctionLabel("ControllerPublishVolume.Lock"), lockWaitStart)
+	defer metrics.UpdateDurationFromStart(ctxLogger, metrics.FunctionLabel("ControllerPublishVolume.Lock"), lockWaitStart)
 
 	volumeCapabilities := []*csi.VolumeCapability{volumeCapability}
 	// Validate volume capabilities, are all capabilities supported by driver or not
