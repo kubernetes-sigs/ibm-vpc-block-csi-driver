@@ -88,7 +88,7 @@ verify:
 
 .PHONY: test
 test:
-        go test -timeout 1800s -v -race ./cmd/... ./pkg/...
+	go test -timeout 1800s -v -race ./cmd/... ./pkg/...
 
 .PHONY: ut-coverage
 ut-coverage:
