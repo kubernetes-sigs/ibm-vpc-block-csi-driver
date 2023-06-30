@@ -116,10 +116,10 @@ const (
 	// Generation ... just for backward compatibility
 	Generation = "generation"
 
-        // DEFAULT_SNAPSHOT_CREATE_DELAY ...
+	// DEFAULT_SNAPSHOT_CREATE_DELAY ...
 	DEFAULT_SNAPSHOT_CREATE_DELAY = 300 //300 seconds
 
-        // MAX_SNAPSHOT_CREATE_DELAY ... This is max timeout value for csi-snapshotter
+	// MAX_SNAPSHOT_CREATE_DELAY ... This is max timeout value for csi-snapshotter
 	MAX_SNAPSHOT_CREATE_DELAY = 900 //900 seconds
 )
 

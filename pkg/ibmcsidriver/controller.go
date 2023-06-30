@@ -18,7 +18,7 @@ limitations under the License.
 package ibmcsidriver
 
 import (
-        "os"
+	"os"
 	"strings"
 	"time"
 
@@ -440,7 +440,7 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 	ctxLogger.Info("CSIControllerServer-CreateSnapshot... ", zap.Reflect("Request", *req))
 	defer metrics.UpdateDurationFromStart(ctxLogger, "CreateSnapshot", time.Now())
 
-        //Feature flag to enable/disable CreateSnapshot feature.
+	//Feature flag to enable/disable CreateSnapshot feature.
 	if strings.ToLower(os.Getenv("IS_SNAPSHOT_ENABLED")) == "false" {
 		ctxLogger.Warn("CreateSnapshot functionality is disabled.")
 		time.Sleep(10 * time.Minute) //To avoid multiple retries from kubernetes to CSI Driver
@@ -487,7 +487,7 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 	snapshot, err = session.CreateSnapshot(sourceVolumeID, snapshotParameters)
 
 	if err != nil {
-                time.Sleep(time.Duration(getMaxDelaySnapshotCreate(ctxLogger)) * time.Second) //To avoid multiple retries from kubernetes to CSI Driver
+		time.Sleep(time.Duration(getMaxDelaySnapshotCreate(ctxLogger)) * time.Second) //To avoid multiple retries from kubernetes to CSI Driver
 		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err, "creation")
 	}
 	return createCSISnapshotResponse(*snapshot), nil
