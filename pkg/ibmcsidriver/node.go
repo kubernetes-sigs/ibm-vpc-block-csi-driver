@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -82,6 +83,9 @@ const (
 
 	// MaxVolumesPerNode is the maximum number of volumes attachable to a node
 	MaxVolumesPerNode = 12
+
+	// MaxAllowedVolumesPerNode is the maximum allowed number of volumes attachable to a node. Env variable VOLUME_ATTACHMENT_LIMIT is compared against this value
+	MaxAllowedVolumesPerNode = 50
 
 	// MinimumCoresWithMaximumAttachableVolumes is the minimum cores required to have maximum number of attachable volumes, currently 4 as per the docs.
 	MinimumCoresWithMaximumAttachableVolumes = 4
@@ -354,6 +358,8 @@ func (csiNS *CSINodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInf
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	ctxLogger.Info("CSINodeServer-NodeGetInfo... ", zap.Reflect("Request", *req))
 
+	// maxVolumesPerNode is the maximum number of volumes attachable to a node
+	var maxVolumesPerNode int64 = DefaultVolumesPerNode
 	nodeName := os.Getenv("KUBE_NODE_NAME")
 
 	nodeInfo := nodeMetadata.NodeInfoManager{
@@ -377,10 +383,32 @@ func (csiNS *CSINodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInf
 		},
 	}
 
+	// maxVolumesPerNode is the maximum number of volumes attachable to a node; default is 4
+	cores := runtime.NumCPU()
+	if cores >= MinimumCoresWithMaximumAttachableVolumes {
+		maxVolumesPerNode = MaxVolumesPerNode
+
+		// If environment variable is set, use this value as maxVolumesPerNode
+		value, ok := os.LookupEnv("VOLUME_ATTACHMENT_LIMIT")
+		if ok {
+			volumeAttachmentLimit, err := strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				ctxLogger.Error("Invalid value for VOLUME_ATTACHMENT_LIMIT")
+			} else {
+				if volumeAttachmentLimit > MaxAllowedVolumesPerNode {
+					ctxLogger.Error("The VOLUME_ATTACHMENT_LIMIT is set higher than the allowed limit", zap.Reflect("volumeAttachmentLimit", volumeAttachmentLimit), zap.Reflect("MaxAllowedVolumesPerNode", MaxAllowedVolumesPerNode))
+				} else {
+					maxVolumesPerNode = volumeAttachmentLimit
+				}
+			}
+		}
+	}
+	ctxLogger.Info("Number of cores of the node and attachable volume limits.", zap.Reflect("Cores", cores), zap.Reflect("AttachableVolumeLimits", maxVolumesPerNode))
+
 	resp := &csi.NodeGetInfoResponse{
 		NodeId:             csiNS.Metadata.GetWorkerID(),
+		MaxVolumesPerNode:  maxVolumesPerNode,
 		AccessibleTopology: top,
-		MaxVolumesPerNode:  csiNS.Driver.MaxVolumesPerNode,
 	}
 	ctxLogger.Info("NodeGetInfoResponse", zap.Reflect("NodeGetInfoResponse", resp))
 	return resp, nil

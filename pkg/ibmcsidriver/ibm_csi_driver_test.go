@@ -32,7 +32,6 @@ import (
 func initIBMCSIDriver(t *testing.T, fakeActions ...testingexec.FakeCommandAction) *IBMCSIDriver {
 	vendorVersion := "test-vendor-version-1.1.2"
 	driver := "mydriver"
-	volumeAttachLimit := int64(4)
 	// Creating test logger
 	logger, teardown := cloudProvider.GetTestLogger(t)
 	defer teardown()
@@ -57,7 +56,7 @@ func initIBMCSIDriver(t *testing.T, fakeActions ...testingexec.FakeCommandAction
 	fakeNodeInfo.NewNodeMetadataReturns(&fakeNodeData, nil)
 
 	// Setup the IBM CSI driver
-	err := icDriver.SetupIBMCSIDriver(provider, mounter, statsUtil, &fakeNodeData, &fakeNodeInfo, logger, driver, vendorVersion, volumeAttachLimit)
+	err := icDriver.SetupIBMCSIDriver(provider, mounter, statsUtil, &fakeNodeData, &fakeNodeInfo, logger, driver, vendorVersion)
 	if err != nil {
 		t.Fatalf("Failed to setup IBM CSI Driver: %v", err)
 	}
@@ -74,7 +73,6 @@ func TestSetupIBMCSIDriver(t *testing.T) {
 	// Creating test logger
 	vendorVersion := "test-vendor-version-1.1.2"
 	name := "mydriver"
-	volumeAttachLimit := int64(4)
 	logger, teardown := cloudProvider.GetTestLogger(t)
 	defer teardown()
 	icDriver := GetIBMCSIDriver()
@@ -92,14 +90,14 @@ func TestSetupIBMCSIDriver(t *testing.T) {
 	fakeNodeInfo.NewNodeMetadataReturns(&fakeNodeData, nil)
 
 	// Failed setting up driver, provider nil
-	err := icDriver.SetupIBMCSIDriver(nil, mounter, statsUtil, &fakeNodeData, &fakeNodeInfo, logger, name, vendorVersion, volumeAttachLimit)
+	err := icDriver.SetupIBMCSIDriver(nil, mounter, statsUtil, &fakeNodeData, &fakeNodeInfo, logger, name, vendorVersion)
 	assert.NotNil(t, err)
 
 	// Failed setting up driver, mounter nil
-	err = icDriver.SetupIBMCSIDriver(provider, nil, statsUtil, &fakeNodeData, &fakeNodeInfo, logger, name, vendorVersion, volumeAttachLimit)
+	err = icDriver.SetupIBMCSIDriver(provider, nil, statsUtil, &fakeNodeData, &fakeNodeInfo, logger, name, vendorVersion)
 	assert.NotNil(t, err)
 
 	// Failed setting up driver, name empty
-	err = icDriver.SetupIBMCSIDriver(provider, mounter, statsUtil, &fakeNodeData, &fakeNodeInfo, logger, "", vendorVersion, volumeAttachLimit)
+	err = icDriver.SetupIBMCSIDriver(provider, mounter, statsUtil, &fakeNodeData, &fakeNodeInfo, logger, "", vendorVersion)
 	assert.NotNil(t, err)
 }
