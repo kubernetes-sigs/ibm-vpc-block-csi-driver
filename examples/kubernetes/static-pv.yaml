@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: static-pv
+spec:
+  accessModes:
+  - ReadWriteOnce # Should be matched as per PVC's requested accessMode
+  capacity:
+    storage: 10Gi # Should be matched as per PVC's request storage
+  csi:
+    driver: vpc.block.csi.ibm.io
+    fsType: ext4
+    volumeAttributes:
+      iops: "3000"
+      volumeId: r006-ab62267d-ad2f-43ec-a22e-23007a9d2618
+      zone: us-south-1
+      region: us-south
+    volumeHandle: r006-ab62267d-ad2f-43ec-a22e-23007a9d2618
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  volumeMode: Filesystem
