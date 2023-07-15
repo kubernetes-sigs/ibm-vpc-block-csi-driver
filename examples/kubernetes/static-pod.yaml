@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: static-pvc-pod
+  labels:
+    app: static-pvc-pod
+spec:
+  selector:
+    matchLabels:
+      app: static-pvc-pod
+  template:
+    metadata:
+      labels:
+        app: static-pvc-pod
+    spec:
+      containers:
+      - image: rabbitmq
+        name: rabbitmq-container
+        volumeMounts:
+        - name: my-static-vol
+          mountPath: /my-static-vol
+      volumes:
+      - name: my-static-vol
+        persistentVolumeClaim:
+          claimName: static-pvc # Update your pvc name here
+      nodeSelector:
+        kubernetes.io/hostname: "10.240.0.7" # Update hostname as node name which should match as per volume's zone
