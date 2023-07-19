@@ -4,13 +4,13 @@ metadata:
   name: ibm-vpc-block-csi-controller
   namespace: kube-system
   labels:
-    app: ibm-vpc-block-csi-driver
+    app: ibm-vpc-block-csi-controller
     addonmanager.kubernetes.io/mode: Reconcile
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ibm-vpc-block-csi-driver
+      app: ibm-vpc-block-csi-controller
   template:
     metadata:
       annotations:
@@ -18,7 +18,7 @@ spec:
         prometheus.io/port: "9080"
         prometheus.io/path: "/metrics"
       labels:
-        app: ibm-vpc-block-csi-driver
+        app: ibm-vpc-block-csi-controller
     spec:
       priorityClassName: system-cluster-critical
       serviceAccountName: ibm-vpc-block-controller-sa
