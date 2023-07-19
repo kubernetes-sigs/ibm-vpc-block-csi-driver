@@ -19,15 +19,16 @@ package ibmcsidriver
 
 import (
 	"fmt"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"k8s.io/klog/v2"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
 	"sync"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"k8s.io/klog/v2"
 
 	"os/exec"
 	"time"
@@ -110,7 +111,7 @@ func (csiNS *CSINodeServer) NodePublishVolume(ctx context.Context, req *csi.Node
 	controlleRequestID := publishContext[PublishInfoRequestID]
 	ctxLogger, requestID := utils.GetContextLoggerWithRequestID(ctx, false, &controlleRequestID)
 	ctxLogger.Info("CSINodeServer-NodePublishVolume...", zap.Reflect("Request", *req))
-	metrics.UpdateDurationFromStart(ctxLogger, "NodePublishVolume", time.Now())
+	defer metrics.UpdateDurationFromStart(ctxLogger, "NodePublishVolume", time.Now())
 	csiNS.mux.Lock()
 	defer csiNS.mux.Unlock()
 
@@ -184,7 +185,7 @@ func (csiNS *CSINodeServer) NodePublishVolume(ctx context.Context, req *csi.Node
 func (csiNS *CSINodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	ctxLogger.Info("CSINodeServer-NodeUnpublishVolume...", zap.Reflect("Request", *req))
-	metrics.UpdateDurationFromStart(ctxLogger, "NodeUnpublishVolume", time.Now())
+	defer metrics.UpdateDurationFromStart(ctxLogger, "NodeUnpublishVolume", time.Now())
 	csiNS.mux.Lock()
 	defer csiNS.mux.Unlock()
 	// Validate Arguments
@@ -214,7 +215,7 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 	controlleRequestID := publishContext[PublishInfoRequestID]
 	ctxLogger, requestID := utils.GetContextLoggerWithRequestID(ctx, false, &controlleRequestID)
 	ctxLogger.Info("CSINodeServer-NodeStageVolume...", zap.Reflect("Request", *req))
-	metrics.UpdateDurationFromStart(ctxLogger, "NodeStageVolume", time.Now())
+	defer metrics.UpdateDurationFromStart(ctxLogger, "NodeStageVolume", time.Now())
 
 	csiNS.mux.Lock()
 	defer csiNS.mux.Unlock()
@@ -314,7 +315,7 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 func (csiNS *CSINodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.NodeUnstageVolumeResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	ctxLogger.Info("CSINodeServer-NodeUnstageVolume ... ", zap.Reflect("Request", *req))
-	metrics.UpdateDurationFromStart(ctxLogger, "NodeUnstageVolume", time.Now())
+	defer metrics.UpdateDurationFromStart(ctxLogger, "NodeUnstageVolume", time.Now())
 	csiNS.mux.Lock()
 	defer csiNS.mux.Unlock()
 
@@ -400,7 +401,7 @@ func (csiNS *CSINodeServer) NodeGetVolumeStats(ctx context.Context, req *csi.Nod
 	var resp *csi.NodeGetVolumeStatsResponse
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	ctxLogger.Info("CSINodeServer-NodeGetVolumeStats... ", zap.Reflect("Request", *req)) //nolint:staticcheck
-	metrics.UpdateDurationFromStart(ctxLogger, "NodeGetVolumeStats", time.Now())
+	defer metrics.UpdateDurationFromStart(ctxLogger, "NodeGetVolumeStats", time.Now())
 	if req == nil || req.VolumeId == "" { //nolint:staticcheck
 		return nil, commonError.GetCSIError(ctxLogger, commonError.EmptyVolumeID, requestID, nil)
 	}

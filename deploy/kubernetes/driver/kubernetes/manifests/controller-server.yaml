@@ -6,11 +6,13 @@ metadata:
   labels:
     app: ibm-vpc-block-csi-controller
     addonmanager.kubernetes.io/mode: Reconcile
+    app.kubernetes.io/name: ibm-vpc-block-csi-driver
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: ibm-vpc-block-csi-controller
+      app.kubernetes.io/name: ibm-vpc-block-csi-driver
   template:
     metadata:
       annotations:
@@ -19,6 +21,7 @@ spec:
         prometheus.io/path: "/metrics"
       labels:
         app: ibm-vpc-block-csi-controller
+        app.kubernetes.io/name: ibm-vpc-block-csi-driver
     spec:
       priorityClassName: system-cluster-critical
       serviceAccountName: ibm-vpc-block-controller-sa
@@ -206,4 +209,3 @@ spec:
         - name: customer-auth
           secret:
             secretName: storage-secret-store
-  volumeClaimTemplates: []
