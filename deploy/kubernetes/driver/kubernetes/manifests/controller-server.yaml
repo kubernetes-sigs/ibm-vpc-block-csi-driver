@@ -209,3 +209,4 @@ spec:
         - name: customer-auth
           secret:
             secretName: storage-secret-store
+
