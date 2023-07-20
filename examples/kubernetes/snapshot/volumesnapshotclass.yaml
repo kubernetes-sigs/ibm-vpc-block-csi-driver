@@ -1,0 +1,8 @@
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: ibmc-vpcblock-snapshot-delete
+  labels:
+    app: ibm-vpc-block-csi-driver
+driver: vpc.block.csi.ibm.io
+deletionPolicy: Delete

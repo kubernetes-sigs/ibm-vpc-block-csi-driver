@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: restore-pvc1
+spec:
+  storageClassName: ibmc-vpc-block-5iops-tier
+  dataSource:
+    name: snapshot-csi-block # name of volumeSnapshot resource
+    kind: VolumeSnapshot
+    apiGroup: snapshot.storage.k8s.io
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi # size must be >= source PVC
