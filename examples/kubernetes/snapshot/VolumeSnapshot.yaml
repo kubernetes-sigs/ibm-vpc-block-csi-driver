@@ -1,0 +1,8 @@
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshot
+metadata:
+  name: snapshot-csi-block
+spec:
+  volumeSnapshotClassName: ibmc-vpcblock-snapshot
+  source:
+    persistentVolumeClaimName: csi-block-pvc-good 
