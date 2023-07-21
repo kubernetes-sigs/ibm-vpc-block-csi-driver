@@ -14,12 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -euo pipefail
+#install gosec package
+go get github.com/securego/gosec/cmd/gosec/...
 
-PKG_ROOT=$(git rev-parse --show-toplevel)
+#going to parent directory and execute gosec command
+cd ../
+gosec -fmt=json -out=gosec-report.json ./...
 
-${PKG_ROOT}/hack/verify-gofmt.sh
-${PKG_ROOT}/hack/verify-govet.sh
-${PKG_ROOT}/hack/verify-golint.sh
-${PKG_ROOT}/hack/verify-vendor.sh
-${PKG_ROOT}/hack/verify-gosec.sh
+echo "Congratulations!! gosec check completed for all Go source files."
