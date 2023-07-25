@@ -379,7 +379,7 @@ func (csiNS *CSINodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInf
 	// If environment variable is set, use this value as maxVolumesPerNode
 	value, ok := os.LookupEnv("VOLUME_ATTACHMENT_LIMIT")
 	if !ok {
-		ctxLogger.Warn("Invalid value for VOLUME_ATTACHMENT_LIMIT. Setting the default value:", zap.Reflect("MaxVolumesPerNode", maxVolumesPerNode))
+		ctxLogger.Warn("VOLUME_ATTACHMENT_LIMIT is not provided. Setting the default value:", zap.Reflect("MaxVolumesPerNode", maxVolumesPerNode))
 	} else {
 		volumeAttachmentLimit, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
@@ -389,7 +389,7 @@ func (csiNS *CSINodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInf
 		}
 	}
 
-	ctxLogger.Info("Number of cores of the node and attachable volume limits.", zap.Reflect("AttachableVolumeLimits", maxVolumesPerNode))
+	ctxLogger.Info("Attachable volume limits", zap.Reflect("AttachableVolumeLimits", maxVolumesPerNode))
 
 	resp := &csi.NodeGetInfoResponse{
 		NodeId:             csiNS.Metadata.GetWorkerID(),
