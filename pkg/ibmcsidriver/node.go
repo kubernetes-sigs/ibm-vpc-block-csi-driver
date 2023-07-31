@@ -289,12 +289,12 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 	}
 
 	mnt := volumeCapability.GetMount()
-	options := mnt.MountFlags
 	// find  FS type
 	fsType := defaultFsType
 	if mnt.FsType != "" {
 		fsType = mnt.FsType
 	}
+	options := collectMountOptions(fsType, mnt.MountFlags)
 
 	// FormatAndMount will format only if needed
 	ctxLogger.Info("Formating and mounting ", zap.String("source", source), zap.String("stagingTargetPath", stagingTargetPath), zap.String("fsType", fsType), zap.Reflect("options", options))
@@ -568,4 +568,16 @@ func (su *VolumeStatUtils) IsDevicePathNotExist(devicePath string) bool {
 		}
 	}
 	return false
+}
+
+func collectMountOptions(fsType string, mntFlags []string) []string {
+	var options []string
+	options = append(options, mntFlags...)
+
+	// By default, xfs does not allow mounting of two volumes with the same filesystem uuid.
+	// Force ignore this uuid to be able to mount volume + its clone / restored snapshot on the same node.
+	if fsType == "xfs" {
+		options = append(options, "nouuid")
+	}
+	return options
 }
