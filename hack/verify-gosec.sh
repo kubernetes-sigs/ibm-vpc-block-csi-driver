@@ -17,6 +17,8 @@
 #install gosec package
 go get github.com/securego/gosec/cmd/gosec/...
 
+export PATH=$PATH:/usr/local/go/bin
+export PATH=$PATH:$GOPATH/bin
 #going to parent directory and execute gosec command
 cd ../
 gosec -fmt=json -out=gosec-report.json ./...
