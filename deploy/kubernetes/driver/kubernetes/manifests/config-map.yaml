@@ -74,3 +74,4 @@ data:
   BlockDriverMemoryLimit: "600Mi"           #container:iks-vpc-block-driver, resource-type: memory-limit
   CSISnapshotterCPULimit: "80m"             #container:csi-snapshotter, resource-type: cpu-limit
   CSISnapshotterMemoryLimit: "160Mi"        #container:csi-snapshotter, resource-type: memory-limit
+  VolumeAttachmentLimit: "12"               #Volume Attachment Limit per node

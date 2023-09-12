@@ -18,8 +18,9 @@ limitations under the License.
 package ibmcsidriver
 
 import (
-	testingexec "k8s.io/utils/exec/testing"
 	"testing"
+
+	testingexec "k8s.io/utils/exec/testing"
 
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	nodeMetadata "github.com/IBM/ibm-csi-common/pkg/metadata"

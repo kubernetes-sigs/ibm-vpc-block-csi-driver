@@ -24,7 +24,6 @@ import (
 	"k8s.io/klog/v2"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -78,10 +77,7 @@ func (su *VolumeStatUtils) FSInfo(path string) (int64, int64, int64, int64, int6
 
 const (
 	// DefaultVolumesPerNode is the default number of volumes attachable to a node
-	DefaultVolumesPerNode = 4
-
-	// MaxVolumesPerNode is the maximum number of volumes attachable to a node
-	MaxVolumesPerNode = 12
+	DefaultVolumesPerNode = 12
 
 	// MinimumCoresWithMaximumAttachableVolumes is the minimum cores required to have maximum number of attachable volumes, currently 4 as per the docs.
 	MinimumCoresWithMaximumAttachableVolumes = 4
@@ -379,12 +375,20 @@ func (csiNS *CSINodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInf
 		},
 	}
 
-	// maxVolumesPerNode is the maximum number of volumes attachable to a node; default is 4
-	cores := runtime.NumCPU()
-	if cores >= MinimumCoresWithMaximumAttachableVolumes {
-		maxVolumesPerNode = MaxVolumesPerNode
+	// If environment variable is set, use this value as maxVolumesPerNode
+	value, ok := os.LookupEnv("VOLUME_ATTACHMENT_LIMIT")
+	if !ok {
+		ctxLogger.Warn("VOLUME_ATTACHMENT_LIMIT is not provided. Setting the default value:", zap.Reflect("MaxVolumesPerNode", maxVolumesPerNode))
+	} else {
+		volumeAttachmentLimit, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			ctxLogger.Warn("Invalid value for VOLUME_ATTACHMENT_LIMIT. Setting the default value:", zap.Reflect("MaxVolumesPerNode", maxVolumesPerNode))
+		} else {
+			maxVolumesPerNode = volumeAttachmentLimit
+		}
 	}
-	ctxLogger.Info("Number of cores of the node and attachable volume limits.", zap.Reflect("Cores", cores), zap.Reflect("AttachableVolumeLimits", maxVolumesPerNode))
+
+	ctxLogger.Info("Attachable volume limits", zap.Reflect("AttachableVolumeLimits", maxVolumesPerNode))
 
 	resp := &csi.NodeGetInfoResponse{
 		NodeId:             csiNS.Metadata.GetWorkerID(),
