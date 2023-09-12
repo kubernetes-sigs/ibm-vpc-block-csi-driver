@@ -47,6 +47,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+            - name: VOLUME_ATTACHMENT_LIMIT
+              value: "{{kube-system.addon-vpc-block-csi-driver-configmap.VolumeAttachmentLimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.VolumeAttachmentLimit}}12{{/kube-system.addon-vpc-block-csi-driver-configmap.VolumeAttachmentLimit}}"
           resources:
             limits:
               cpu: "{{kube-system.addon-vpc-block-csi-driver-configmap.CSIDriverRegistrarCPULimit}}{{^kube-system.addon-vpc-block-csi-driver-configmap.CSIDriverRegistrarCPULimit}}40m{{/kube-system.addon-vpc-block-csi-driver-configmap.CSIDriverRegistrarCPULimit}}"
