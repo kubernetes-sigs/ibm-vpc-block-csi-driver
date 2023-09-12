@@ -15,12 +15,13 @@
 # limitations under the License.
 
 #install gosec package
-go get github.com/securego/gosec/cmd/gosec/...
+GOSEC_VERSION="2.17.0"
+curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v${GOSEC_VERSION}
 
-export PATH=$PATH:/usr/local/go/bin
-export PATH=$PATH:$GOPATH/bin
+which gosec
+
 #going to parent directory and execute gosec command
 cd ../
-gosec -fmt=json -out=gosec-report.json ./...
+$(go env GOPATH)/bin/gosec -fmt=json -out=gosec-report.json ./...
 
 echo "Congratulations!! gosec check completed for all Go source files."
