@@ -35,10 +35,9 @@ type IBMCSIDriver struct {
 	vendorVersion string
 	logger        *zap.Logger
 	region        string
-
-	ids *CSIIdentityServer
-	ns  *CSINodeServer
-	cs  *CSIControllerServer
+	ids           *CSIIdentityServer
+	ns            *CSINodeServer
+	cs            *CSIControllerServer
 
 	vcap  []*csi.VolumeCapability_AccessMode
 	cscap []*csi.ControllerServiceCapability
