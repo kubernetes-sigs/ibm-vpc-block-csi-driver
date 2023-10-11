@@ -17,7 +17,7 @@
 // Package provider ...
 package provider
 
-//RequestIDType ... Context won't allow keys as "string" type
+// RequestIDType ... Context won't allow keys as "string" type
 type RequestIDType string
 
 const (

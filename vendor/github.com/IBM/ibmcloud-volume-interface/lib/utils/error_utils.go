@@ -132,14 +132,14 @@ func ZapError(err error) zapcore.Field {
 	return zap.Error(err)
 }
 
-//ErrorRetrier retry the function
+// ErrorRetrier retry the function
 type ErrorRetrier struct {
 	MaxAttempts   int
 	RetryInterval time.Duration
 	Logger        *zap.Logger
 }
 
-//NewErrorRetrier return new ErrorRetrier
+// NewErrorRetrier return new ErrorRetrier
 func NewErrorRetrier(maxAttempt int, retryInterval time.Duration, logger *zap.Logger) *ErrorRetrier {
 	return &ErrorRetrier{
 		MaxAttempts:   maxAttempt,
@@ -148,7 +148,7 @@ func NewErrorRetrier(maxAttempt int, retryInterval time.Duration, logger *zap.Lo
 	}
 }
 
-//ErrorRetry path for retry logic with logger passed in
+// ErrorRetry path for retry logic with logger passed in
 func (er *ErrorRetrier) ErrorRetry(funcToRetry func() (error, bool)) error {
 	var err error
 	var shouldStop bool
