@@ -23,7 +23,6 @@ import (
 
 	"net/http"
 	"os"
-	"time"
 
 	libMetrics "github.com/IBM/ibmcloud-volume-interface/lib/metrics"
 	k8sUtils "github.com/IBM/secret-utils-lib/pkg/k8s_utils"
