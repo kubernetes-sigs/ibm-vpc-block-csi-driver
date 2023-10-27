@@ -21,7 +21,6 @@ import (
 	"flag"
 	"strings"
 
-	"math/rand"
 	"net/http"
 	"os"
 	"time"
@@ -58,7 +57,6 @@ var (
 
 func main() {
 	flag.Parse()
-	rand.Seed(time.Now().UnixNano())
 	handle(logger)
 	os.Exit(0)
 }
