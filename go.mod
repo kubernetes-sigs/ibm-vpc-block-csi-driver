@@ -1,6 +1,6 @@
 module github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
 
-go 1.18
+go 1.20
 
 require (
 	github.com/IBM/ibm-csi-common v1.0.0-beta23
@@ -13,8 +13,8 @@ require (
 	github.com/prometheus/client_golang v1.11.1
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/zap v1.20.0
-	golang.org/x/net v0.0.0-20211209124913-491a49abca63
-	golang.org/x/sys v0.0.0-20210831042530-f4d43177bf5e
+	golang.org/x/net v0.17.0
+	golang.org/x/sys v0.13.0
 	google.golang.org/grpc v1.47.0
 	google.golang.org/protobuf v1.28.1
 	k8s.io/kubernetes v1.21.0
@@ -74,8 +74,8 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
-	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/term v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20210402141018-6c239bbf2bb1 // indirect
