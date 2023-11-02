@@ -21,10 +21,8 @@ import (
 	"flag"
 	"strings"
 
-	"math/rand"
 	"net/http"
 	"os"
-	"time"
 
 	libMetrics "github.com/IBM/ibmcloud-volume-interface/lib/metrics"
 	k8sUtils "github.com/IBM/secret-utils-lib/pkg/k8s_utils"
@@ -58,7 +56,6 @@ var (
 
 func main() {
 	flag.Parse()
-	rand.Seed(time.Now().UnixNano())
 	handle(logger)
 	os.Exit(0)
 }
