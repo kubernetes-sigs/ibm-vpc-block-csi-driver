@@ -17,6 +17,8 @@
 package authenticator
 
 import (
+	"os"
+
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/secret-utils-lib/pkg/token"
 	"github.com/IBM/secret-utils-lib/pkg/utils"
@@ -25,9 +27,10 @@ import (
 
 // ComputeIdentityAuthenticator ...
 type ComputeIdentityAuthenticator struct {
-	authenticator *core.ContainerAuthenticator
-	logger        *zap.Logger
-	token         string
+	authenticator   *core.ContainerAuthenticator
+	logger          *zap.Logger
+	token           string
+	userProvidedURL bool
 }
 
 // NewComputeIdentityAuthenticator ...
@@ -35,6 +38,9 @@ func NewComputeIdentityAuthenticator(profileID string, logger *zap.Logger) *Comp
 	ca := new(ComputeIdentityAuthenticator)
 	ca.authenticator = new(core.ContainerAuthenticator)
 	ca.authenticator.IAMProfileID = profileID
+	if vaultPath := os.Getenv("IBMC_VAULT_TOKEN_PATH"); vaultPath != "" {
+		ca.authenticator.CRTokenFilename = vaultPath
+	}
 	ca.logger = logger
 	return ca
 }
@@ -53,19 +59,33 @@ func (ca *ComputeIdentityAuthenticator) GetToken(freshTokenRequired bool) (strin
 		}
 	}
 
-	tokenResponse, err := ca.authenticator.RequestToken()
+	var tokenResponse *core.IamTokenServerResponse
+	err = retry(ca.logger, func() error {
+		tokenResponse, err = ca.authenticator.RequestToken()
+		return err
+	})
+
 	if err != nil {
-		ca.logger.Error("Error fetching fresh token", zap.Error(err))
-		// If the cluster cannot access private iam endpoint, hence returns timeout error, switch to public IAM endpoint.
-		if !isTimeout(err) {
-			return "", tokenlifetime, utils.Error{Description: "Error fetching iam token using compute identity", BackendError: err.Error()}
+		// If the error is not related to timeout or if the token exchange URL is provided by user, return error.
+		if !isTimeout(err) || ca.userProvidedURL {
+			return "", tokenlifetime, utils.Error{Description: "Error fetching iam token using trusted profile", BackendError: err.Error()}
 		}
 
-		ca.logger.Info("Updating iam URL to public, if it is private and retrying to fetch token")
-		if !resetIAMURL(ca) {
-			return "", tokenlifetime, utils.Error{Description: "Error fetching iam token using compute identity", BackendError: err.Error()}
+		// By default authenticator uses private IAM URL, setting it to public
+		setPublicIAMURL(ca)
+
+		// Retry fetching IAM token after switching from private to public IAM URL.
+		ca.logger.Info("Updated IAM URL from private to public, retrying to fetch IAM token")
+		err = retry(ca.logger, func() error {
+			tokenResponse, err = ca.authenticator.RequestToken()
+			return err
+		})
+
+		// Resetting to private IAM URL.
+		setPrivateIAMURL(ca)
+		if err != nil {
+			return "", tokenlifetime, utils.Error{Description: "Error fetching iam token using trusted profile", BackendError: err.Error()}
 		}
-		return ca.GetToken(freshTokenRequired)
 	}
 
 	if tokenResponse == nil {
@@ -95,8 +115,9 @@ func (ca *ComputeIdentityAuthenticator) SetSecret(secret string) {
 }
 
 // SetURL ...
-func (ca *ComputeIdentityAuthenticator) SetURL(url string) {
+func (ca *ComputeIdentityAuthenticator) SetURL(url string, userProvided bool) {
 	ca.authenticator.URL = url
+	ca.userProvidedURL = userProvided
 }
 
 // IsSecretEncrypted ...

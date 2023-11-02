@@ -45,10 +45,10 @@ github.com/IBM/ibmcloud-volume-interface v1.1.4 h1:rEKAs0rASZTpKWjGPh19GDozpD7Ag
 github.com/IBM/ibmcloud-volume-interface v1.1.4/go.mod h1:I1ZVCvnk+NSNhncg2G06mw5X+jf5XyUP87sT6x1aLVo=
 github.com/IBM/ibmcloud-volume-vpc v1.1.6 h1:HU76slo59S6vPANtQxTDdco+Lu7EToQw7Ow28n5eZR0=
 github.com/IBM/ibmcloud-volume-vpc v1.1.6/go.mod h1:+UTHGrGzjyA2VjaozhB1xOjAcJ1lsi9mFqfGsqmuCOQ=
-github.com/IBM/secret-common-lib v1.1.4 h1:gKpKnaP45Y6u7VpSlFfXjjTAHpu4bz9Ofy+aR0t2RcI=
-github.com/IBM/secret-common-lib v1.1.4/go.mod h1:0L/lLfwi5jwTTmNYE2246HzBIdGz0m6wu/5tXoRp/Lc=
-github.com/IBM/secret-utils-lib v1.1.4 h1:8WPG9KBrLLRhGbQn34NWzrFKlyfIIaUfLeDg+iRJkes=
-github.com/IBM/secret-utils-lib v1.1.4/go.mod h1:RuD7z7GrfI/RS5UmQTfY51qWTgscMy06zbQi7i433TY=
+github.com/IBM/secret-common-lib v1.1.7-0.20231101101837-d38c1e3191b5 h1:tpWfyO9Zv6Yu74uLb3+yDIbzznOCiR7EHtnEXTFKdiY=
+github.com/IBM/secret-common-lib v1.1.7-0.20231101101837-d38c1e3191b5/go.mod h1:mYYg7bW551SmKgofuRnhNzx/PEnIO2K25F+XRWe2J7Q=
+github.com/IBM/secret-utils-lib v1.1.7-0.20231101101113-0c2a4ecc4f45 h1:YSls/SGZCVAUY+AZQTq4/2UH7Q/H1SA5+F/TvHxp850=
+github.com/IBM/secret-utils-lib v1.1.7-0.20231101101113-0c2a4ecc4f45/go.mod h1:Gq0ZtLZDUaGaeO4Im8RT1IGJaKaHwAzcMNjvCoPAklw=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
