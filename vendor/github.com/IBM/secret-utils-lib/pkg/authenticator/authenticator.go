@@ -20,6 +20,7 @@ package authenticator
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/IBM/secret-utils-lib/pkg/config"
 	"github.com/IBM/secret-utils-lib/pkg/k8s_utils"
@@ -28,8 +29,17 @@ import (
 )
 
 const (
+	// ProviderType can be VPC/Bluemix
 	ProviderType string = "ProviderType"
-	SecretKey    string = "SecretKey"
+
+	// SecretKey ...
+	SecretKey string = "SecretKey"
+
+	// maxRetryAttempt ...
+	maxRetryAttempt = 9
+
+	// maxRetryGap ...
+	maxRetryGap = 60
 )
 
 // Authenticator ...
@@ -37,7 +47,7 @@ type Authenticator interface {
 	GetToken(freshTokenRequired bool) (string, uint64, error)
 	GetSecret() string
 	SetSecret(secret string)
-	SetURL(url string)
+	SetURL(url string, userProvided bool)
 	SetEncryption(bool)
 	IsSecretEncrypted() bool
 	getURL() string
@@ -221,15 +231,61 @@ func isTimeout(err error) bool {
 	return false
 }
 
-// resetURL resets URL from private IAM url to public IAM url ...
-func resetIAMURL(auth Authenticator) bool {
+// setPublicIAMURL sets private IAM url to public IAM url ...
+func setPublicIAMURL(auth Authenticator) {
 	if strings.Contains(auth.getURL(), utils.ProdPrivateIAMURL) {
-		auth.SetURL(utils.ProdPublicIAMURL + "/identity/token")
-		return true
+		auth.SetURL(utils.ProdPublicIAMURL+"/identity/token", false)
 	}
 	if strings.Contains(auth.getURL(), utils.StagePrivateIAMURL) {
-		auth.SetURL(utils.StagePublicIAMURL + "/identity/token")
-		return true
+		auth.SetURL(utils.StagePublicIAMURL+"/identity/token", false)
 	}
-	return false
+}
+
+// setPrivateIAMURL sets public IAM url to private IAM url ...
+func setPrivateIAMURL(auth Authenticator) {
+	if strings.Contains(auth.getURL(), utils.ProdPublicIAMURL) {
+		auth.SetURL(utils.ProdPrivateIAMURL+"/identity/token", false)
+	}
+	if strings.Contains(auth.getURL(), utils.StagePublicIAMURL) {
+		auth.SetURL(utils.StagePrivateIAMURL+"/identity/token", false)
+	}
+}
+
+// retry ...
+func retry(logger *zap.Logger, retryfunc func() error) error {
+
+	// total retry duration amounts to:
+	// 2 + 4 + 8 + 16 + 32 + (60*4) = 302 seconds (5 minutes approximately)
+	// 1st retry - 2 seconds
+	// 2nd retry - 4 seconds
+	// 3rd retry - 8 seconds
+	// 4th retry - 16 seconds
+	// 5th retry - 32 seconds
+	// 6th ... 9th retry - 60 seconds
+
+	// TODO: maxRetryAttempt and maxRetryGap needs to be made configurable.
+	retryGap := 2
+	var err error
+
+	for retryAttempt := 0; retryAttempt < maxRetryAttempt; retryAttempt++ {
+		err := retryfunc()
+		if err == nil {
+			return err
+		}
+
+		logger.Error("Error fetching fresh token", zap.Error(err), zap.Int("AttemptNo", retryAttempt+1))
+		// isTimeout checks whether the error is due to timeout.
+		// If the error is anything else other than timeout, do not retry (hence returning from the retry function)
+		if !isTimeout(err) {
+			return err
+		}
+
+		time.Sleep(time.Second * time.Duration(retryGap))
+		retryGap = retryGap * 2
+		if retryGap > maxRetryGap {
+			retryGap = maxRetryGap
+		}
+	}
+
+	return err
 }

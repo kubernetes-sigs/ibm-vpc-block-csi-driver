@@ -7,11 +7,6 @@ metadata:
   labels:
     app: ibm-vpc-block-csi-driver
     addonmanager.kubernetes.io/mode: Reconcile
-imagePullSecrets:
-  - name: bluemix-default-secret
-  - name: bluemix-default-secret-regional
-  - name: bluemix-default-secret-international
-  - name: icr-io-secret
 ---
 
 kind: ClusterRole
@@ -65,11 +60,6 @@ kind: ServiceAccount
 metadata:
   name: ibm-vpc-block-controller-sa
   namespace: kube-system
-imagePullSecrets:
-  - name: bluemix-default-secret
-  - name: bluemix-default-secret-regional
-  - name: bluemix-default-secret-international
-  - name: icr-io-secret
 ---
 # xref: https://github.com/kubernetes-csi/external-provisioner/blob/master/deploy/kubernetes/rbac.yaml
 kind: ClusterRole

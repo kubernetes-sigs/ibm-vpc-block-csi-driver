@@ -117,7 +117,7 @@ type VPCProviderConfig struct {
 	IsIKS bool `toml:"is_iks,omitempty"`
 }
 
-//IKSConfig config
+// IKSConfig config
 type IKSConfig struct {
 	Enabled              bool   `toml:"iks_enabled" envconfig:"IKS_ENABLED"`
 	IKSBlockProviderName string `toml:"iks_block_provider_name" envconfig:"IKS_BLOCK_PROVIDER_NAME"`

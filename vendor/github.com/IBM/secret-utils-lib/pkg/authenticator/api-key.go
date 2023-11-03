@@ -29,6 +29,7 @@ type APIKeyAuthenticator struct {
 	logger            *zap.Logger
 	isSecretEncrypted bool
 	token             string
+	userProvidedURL   bool
 }
 
 // NewIamAuthenticator ...
@@ -54,20 +55,33 @@ func (aa *APIKeyAuthenticator) GetToken(freshTokenRequired bool) (string, uint64
 		}
 	}
 
-	aa.logger.Info("Fetching fresh token")
-	tokenResponse, err := aa.authenticator.RequestToken()
+	var tokenResponse *core.IamTokenServerResponse
+	err = retry(aa.logger, func() error {
+		tokenResponse, err = aa.authenticator.RequestToken()
+		return err
+	})
+
 	if err != nil {
-		aa.logger.Error("Error fetching fresh token", zap.Error(err))
-		// If the cluster cannot access private iam endpoint, hence returns timeout error, switch to public IAM endpoint.
-		if !isTimeout(err) {
+		// If the error is not related to timeout or if the token exchange URL is provided by user, return error.
+		if !isTimeout(err) || aa.userProvidedURL {
 			return "", tokenlifetime, utils.Error{Description: "Error fetching iam token using api key", BackendError: err.Error()}
 		}
 
-		aa.logger.Info("Updating iam URL to public, if it is private and retrying to fetch token")
-		if !resetIAMURL(aa) {
+		// By default authenticator uses private IAM URL, setting it to public
+		setPublicIAMURL(aa)
+
+		// Retry fetching IAM token after switching from private to public IAM URL.
+		aa.logger.Info("Updated IAM URL from private to public, retrying to fetch IAM token")
+		err = retry(aa.logger, func() error {
+			tokenResponse, err = aa.authenticator.RequestToken()
+			return err
+		})
+
+		// Resetting to private IAM URL.
+		setPrivateIAMURL(aa)
+		if err != nil {
 			return "", tokenlifetime, utils.Error{Description: "Error fetching iam token using api key", BackendError: err.Error()}
 		}
-		return aa.GetToken(freshTokenRequired)
 	}
 
 	if tokenResponse == nil {
@@ -97,8 +111,9 @@ func (aa *APIKeyAuthenticator) SetSecret(secret string) {
 }
 
 // SetURL ...
-func (aa *APIKeyAuthenticator) SetURL(url string) {
+func (aa *APIKeyAuthenticator) SetURL(url string, userProvided bool) {
 	aa.authenticator.URL = url
+	aa.userProvidedURL = userProvided
 }
 
 // IsSecretEncrypted ...

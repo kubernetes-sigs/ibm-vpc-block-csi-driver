@@ -129,7 +129,7 @@ func serveMetrics() {
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
 		//http.Handle("/health-check", healthCheck)
-		err := http.ListenAndServe(*metricsAddress, nil)
+		err := http.ListenAndServe(*metricsAddress, nil) // #nosec G114: use default timeout.
 		logger.Error("Failed to start metrics service:", zap.Error(err))
 	}()
 	metrics.RegisterAll(csiConfig.CSIDriverGithubName)
