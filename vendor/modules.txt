@@ -45,11 +45,11 @@ github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/models
 github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/riaas
 github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/vpcvolume
 github.com/IBM/ibmcloud-volume-vpc/iks/provider
-# github.com/IBM/secret-common-lib v1.1.7-0.20231101101837-d38c1e3191b5
+# github.com/IBM/secret-common-lib v1.1.7
 ## explicit; go 1.18
 github.com/IBM/secret-common-lib/pkg/secret_provider
 github.com/IBM/secret-common-lib/pkg/utils
-# github.com/IBM/secret-utils-lib v1.1.7-0.20231101101113-0c2a4ecc4f45
+# github.com/IBM/secret-utils-lib v1.1.7
 ## explicit; go 1.18
 github.com/IBM/secret-utils-lib/pkg/authenticator
 github.com/IBM/secret-utils-lib/pkg/config
