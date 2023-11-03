@@ -21,10 +21,8 @@ import (
 	"flag"
 	"strings"
 
-	"math/rand"
 	"net/http"
 	"os"
-	"time"
 
 	libMetrics "github.com/IBM/ibmcloud-volume-interface/lib/metrics"
 	k8sUtils "github.com/IBM/secret-utils-lib/pkg/k8s_utils"
@@ -58,7 +56,6 @@ var (
 
 func main() {
 	flag.Parse()
-	rand.Seed(time.Now().UnixNano())
 	handle(logger)
 	os.Exit(0)
 }
@@ -132,7 +129,7 @@ func serveMetrics() {
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
 		//http.Handle("/health-check", healthCheck)
-		err := http.ListenAndServe(*metricsAddress, nil)
+		err := http.ListenAndServe(*metricsAddress, nil) // #nosec G114: use default timeout.
 		logger.Error("Failed to start metrics service:", zap.Error(err))
 	}()
 	metrics.RegisterAll(csiConfig.CSIDriverGithubName)
