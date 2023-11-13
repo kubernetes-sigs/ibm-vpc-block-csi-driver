@@ -19,10 +19,10 @@ package ibmcsidriver
 
 import (
 	"flag"
-	"testing"
-
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	"github.com/stretchr/testify/assert"
+	"os"
+	"testing"
 )
 
 func TestSetup(t *testing.T) {
@@ -86,4 +86,16 @@ func TestSetup(t *testing.T) {
 
 func TestLogGRPC(t *testing.T) {
 	t.Logf("TODO:~ TestLogGRPC")
+}
+
+func TestRemoveCSISocket(t *testing.T) {
+	// Prepare test data
+	endPoint := "localhost:8080"
+
+	removeCSISocket(endPoint)
+	var err error
+	err = os.Remove(endPoint)
+	expectedRemovalSuccess := true
+	actualRemovalSuccess := err == nil || (err != nil && !os.IsNotExist(err))
+	assert.Equal(t, expectedRemovalSuccess, actualRemovalSuccess)
 }
