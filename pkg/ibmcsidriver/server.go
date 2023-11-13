@@ -172,22 +172,22 @@ func removeCSISocket(endPoint string) {
 		os.Exit(1)
 	}
 	/*
-		This is a temporary code to cleanup sockets created under csi-plugins directory.
+		This is a temporary code to cleanup csi-socket created under csi-plugins directory.
 		This code must be removed once current supported versions are deprecated and
 		new major release is done.
 	*/
-	kubeletLibPath := "/lib-kubelet/csi-plugins/vpc.block.csi.ibm.io/"
-	if directoryExists(kubeletLibPath) {
-		err := deleteDirectory(kubeletLibPath)
+	csiPluginSocketPath := "/lib-kubelet/csi-plugins/vpc.block.csi.ibm.io/"
+	if directoryExists(csiPluginSocketPath) {
+		err := deleteDirectory(csiPluginSocketPath)
 		if err != nil {
 			glog.Errorf("Error deleting directory: %v", err)
 			os.Exit(1)
 		} else {
-			glog.Errorf("Directory %s deleted successfully:", kubeletLibPath)
+			glog.Errorf("Directory %s deleted successfully:", csiPluginSocketPath)
 			os.Exit(0)
 		}
 	} else {
-		glog.V(5).Infof("Directory %s does not exist:", kubeletLibPath)
+		glog.V(5).Infof("Directory %s does not exist:", csiPluginSocketPath)
 		os.Exit(0)
 	}
 }
