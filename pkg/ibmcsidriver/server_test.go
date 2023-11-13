@@ -88,14 +88,56 @@ func TestLogGRPC(t *testing.T) {
 	t.Logf("TODO:~ TestLogGRPC")
 }
 
-func TestRemoveCSISocket(t *testing.T) {
-	// Prepare test data
-	endPoint := "localhost:8080"
 
-	removeCSISocket(endPoint)
-	var err error
-	err = os.Remove(endPoint)
-	expectedRemovalSuccess := true
-	actualRemovalSuccess := err == nil || (err != nil && !os.IsNotExist(err))
-	assert.Equal(t, expectedRemovalSuccess, actualRemovalSuccess)
+func TestDirectoryExists(t *testing.T) {
+	// Create a temporary directory for testing
+	tempDir := "./temp_test_directory"
+	err := os.Mkdir(tempDir, 0755)
+	if err != nil {
+		t.Fatalf("Error creating temporary directory: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Test an existing directory
+	exists := directoryExists(tempDir)
+	if !exists {
+		t.Errorf("Expected directory to exist, but it does not")
+	}
+
+	// Test a non-existing directory
+	nonExistentDir := "./non_existent_directory"
+	exists = directoryExists(nonExistentDir)
+	if exists {
+		t.Errorf("Expected directory not to exist, but it does")
+	}
 }
+
+func TestDeleteDirectory(t *testing.T) {
+	// Create a temporary directory for testing
+	tempDir := "./temp_test_directory"
+	err := os.Mkdir(tempDir, 0755)
+	if err != nil {
+		t.Fatalf("Error creating temporary directory: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Test deleting an existing directory
+	err = deleteDirectory(tempDir)
+	if err != nil {
+		t.Errorf("Error deleting directory: %v", err)
+	}
+
+	// Verify that the directory does not exist after deletion
+	_, err = os.Stat(tempDir)
+	if !os.IsNotExist(err) {
+		t.Errorf("Expected directory to be deleted, but it still exists")
+	}
+
+	// Test deleting a non-existing directory
+	nonExistentDir := "./non_existent_directory"
+	err = deleteDirectory(nonExistentDir)
+	if err != nil {
+		t.Errorf("Error deleting non-existing directory: %v", err)
+	}
+}
+
