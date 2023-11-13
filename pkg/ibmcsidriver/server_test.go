@@ -88,7 +88,6 @@ func TestLogGRPC(t *testing.T) {
 	t.Logf("TODO:~ TestLogGRPC")
 }
 
-
 func TestDirectoryExists(t *testing.T) {
 	// Create a temporary directory for testing
 	tempDir := "./temp_test_directory"
@@ -140,4 +139,3 @@ func TestDeleteDirectory(t *testing.T) {
 		t.Errorf("Error deleting non-existing directory: %v", err)
 	}
 }
-
