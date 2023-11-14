@@ -178,25 +178,21 @@ func removeCSISocket(endPoint string) {
 	*/
 	csiPluginSocketPath := "/lib-kubelet/csi-plugins/vpc.block.csi.ibm.io/"
 	if directoryExists(csiPluginSocketPath) {
-		err := deleteDirectory(csiPluginSocketPath)
+		err := os.RemoveAll(csiPluginSocketPath)
 		if err != nil {
 			glog.Errorf("Error deleting directory: %v", err)
 			os.Exit(1)
-		} else {
-			glog.Errorf("Directory %s deleted successfully:", csiPluginSocketPath)
-			os.Exit(0)
 		}
-	} else {
-		glog.V(5).Infof("Directory %s does not exist:", csiPluginSocketPath)
+		glog.Errorf("Directory %s deleted successfully:", csiPluginSocketPath)
 		os.Exit(0)
+
 	}
+	glog.V(5).Infof("Directory %s does not exist:", csiPluginSocketPath)
+	os.Exit(0)
+
 }
 
 func directoryExists(path string) bool {
 	_, err := os.Stat(path)
 	return !os.IsNotExist(err)
-}
-
-func deleteDirectory(path string) error {
-	return os.RemoveAll(path)
 }
