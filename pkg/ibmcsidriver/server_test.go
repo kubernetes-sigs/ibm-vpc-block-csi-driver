@@ -21,8 +21,6 @@ import (
 	"flag"
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"testing"
 )
 
 func TestSetup(t *testing.T) {
