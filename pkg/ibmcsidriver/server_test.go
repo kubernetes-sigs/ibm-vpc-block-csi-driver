@@ -19,9 +19,10 @@ package ibmcsidriver
 
 import (
 	"flag"
+	"testing"
+
 	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestSetup(t *testing.T) {
