@@ -19,16 +19,17 @@ package ibmcsidriver
 
 import (
 	"errors"
-	"net"
-	"net/url"
-	"os"
-	"sync"
-
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/glog"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"net"
+	"net/url"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 )
 
 // NonBlockingGRPCServer Defines Non blocking GRPC server interfaces
@@ -129,6 +130,7 @@ func (s *nonBlockingGRPCServer) Setup(endpoint string, ids csi.IdentityServer, c
 	if ns != nil {
 		csi.RegisterNodeServer(s.server, ns)
 	}
+	go removeCSISocket(addr)
 	return listener, nil
 }
 
@@ -157,4 +159,36 @@ func logGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, h
 		glog.V(5).Infof("GRPC response: %+v", resp)
 	}
 	return resp, err
+}
+
+func removeCSISocket(endPoint string) {
+	// Reference: https://github.com/kubernetes-csi/node-driver-registrar/blob/master/cmd/csi-node-driver-registrar/node_register.go#L168
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc, syscall.SIGTERM)
+	<-sigc
+	err := os.Remove(endPoint)
+	if err != nil && !os.IsNotExist(err) {
+		glog.Errorf("failed to remove socket: %s with error: %+v", endPoint, err)
+	}
+	/*
+		This is a temporary code to cleanup csi-socket created under csi-plugins directory.
+		This code must be removed once current supported versions are deprecated and
+		new major release is done.
+	*/
+	csiPluginDataPath := "/var/lib/kubelet/csi-plugins/vpc.block.csi.ibm.io/"
+	csiPluginLibPath := "/var/data/kubelet/csi-plugins/vpc.block.csi.ibm.io/"
+	directoryDelete(csiPluginDataPath)
+	directoryDelete(csiPluginLibPath)
+	os.Exit(0)
+
+}
+
+func directoryDelete(csiPluginSocketPath string) {
+	err := os.RemoveAll(csiPluginSocketPath)
+	if err != nil {
+		glog.Errorf("Error deleting path %s: %v", csiPluginSocketPath, err)
+		return
+	}
+	glog.Infof("Path %s deleted successfully:", csiPluginSocketPath)
+
 }
