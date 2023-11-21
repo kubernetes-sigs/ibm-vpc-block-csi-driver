@@ -175,8 +175,8 @@ func removeCSISocket(endPoint string) {
 		This code must be removed once current supported versions are deprecated and
 		new major release is done.
 	*/
-	csiPluginDataPath := "/kubelet-data-dir/csi-plugins/vpc.block.csi.ibm.io/"
-	csiPluginLibPath := "/kubelet-lib-dir/csi-plugins/vpc.block.csi.ibm.io/"
+	csiPluginDataPath := "/var/lib/kubelet/csi-plugins/vpc.block.csi.ibm.io/"
+	csiPluginLibPath := "/var/data/kubelet/csi-plugins/vpc.block.csi.ibm.io/"
 	directoryDelete(csiPluginDataPath)
 	directoryDelete(csiPluginLibPath)
 	os.Exit(0)
@@ -184,18 +184,11 @@ func removeCSISocket(endPoint string) {
 }
 
 func directoryDelete(csiPluginSocketPath string) {
-	if directoryExists(csiPluginSocketPath) {
-		err := os.RemoveAll(csiPluginSocketPath)
-		if err != nil {
-			glog.Errorf("Error deleting path %s: %v", csiPluginSocketPath, err)
-			return
-		}
-		glog.Infof("Path %s deleted successfully:", csiPluginSocketPath)
-
+	err := os.RemoveAll(csiPluginSocketPath)
+	if err != nil {
+		glog.Errorf("Error deleting path %s: %v", csiPluginSocketPath, err)
+		return
 	}
-}
+	glog.Infof("Path %s deleted successfully:", csiPluginSocketPath)
 
-func directoryExists(path string) bool {
-	_, err := os.Stat(path)
-	return !os.IsNotExist(err)
 }
