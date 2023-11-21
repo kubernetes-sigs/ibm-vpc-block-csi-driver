@@ -99,8 +99,6 @@ spec:
             periodSeconds: 10
             failureThreshold: 5
           volumeMounts:
-            - mountPath: /lib-kubelet
-              name: kubelet-lib-dir
             - name: kubelet-data-dir
               mountPath: /var/lib/kubelet
               mountPropagation: "Bidirectional"
@@ -173,7 +171,3 @@ spec:
         - name: customer-auth # altough its not required, This is just to finish lib configuration which is a common code in the driver
           secret:
             secretName: storage-secret-store
-        - hostPath:
-            path: /var/lib/kubelet/
-            type: Directory
-          name: kubelet-lib-dir
