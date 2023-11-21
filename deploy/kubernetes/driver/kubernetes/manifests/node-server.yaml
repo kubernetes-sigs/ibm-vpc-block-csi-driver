@@ -42,7 +42,7 @@ spec:
             - name: ADDRESS
               value: /csi/csi.sock
             - name: DRIVER_REGISTRATION_SOCK
-              value: /var/lib/kubelet/csi-plugins/vpc.block.csi.ibm.io/csi.sock
+              value: /var/lib/kubelet/plugins/vpc.block.csi.ibm.io/csi.sock
             - name: KUBE_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -146,7 +146,7 @@ spec:
             type: Directory
         - name: plugin-dir
           hostPath:
-            path: /var/lib/kubelet/csi-plugins/vpc.block.csi.ibm.io/
+            path: /var/lib/kubelet/plugins/vpc.block.csi.ibm.io/
             type: DirectoryOrCreate
         - name: device-dir
           hostPath:
