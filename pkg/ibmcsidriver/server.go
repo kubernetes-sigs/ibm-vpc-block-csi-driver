@@ -19,17 +19,17 @@ package ibmcsidriver
 
 import (
 	"errors"
+	csi "github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/golang/glog"
+	"go.uber.org/zap"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 	"net"
 	"net/url"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
-	csi "github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/golang/glog"
-	"go.uber.org/zap"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 )
 
 // NonBlockingGRPCServer Defines Non blocking GRPC server interfaces
