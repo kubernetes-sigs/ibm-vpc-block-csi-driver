@@ -187,13 +187,12 @@ func directoryDelete(csiPluginSocketPath string) {
 	if directoryExists(csiPluginSocketPath) {
 		err := os.RemoveAll(csiPluginSocketPath)
 		if err != nil {
-			glog.Errorf("Error deleting directory: %v", err)
+			glog.Errorf("Error deleting path %s: %v", csiPluginSocketPath, err)
 			return
 		}
-		glog.Infof("Directory %s deleted successfully:", csiPluginSocketPath)
+		glog.Infof("Path %s deleted successfully:", csiPluginSocketPath)
 
 	}
-	return
 }
 
 func directoryExists(path string) bool {
