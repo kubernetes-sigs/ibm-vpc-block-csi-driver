@@ -498,7 +498,7 @@ func (csiNS *CSINodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeE
 		var err error
 		isBlock, err = csiNS.Stats.IsBlockDevice(volumePath)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to determine if volumePath [%v] is a block device: %v", volumePath, err)
+			return nil, status.Errorf(codes.NotFound, "failed to determine if volumePath [%v] is a block device: %v", volumePath, err)
 		}
 	}
 	// Noop for block NodeExpandVolume.
