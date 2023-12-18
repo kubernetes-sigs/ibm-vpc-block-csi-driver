@@ -179,12 +179,3 @@ func (f *FakeNodeMounter) Mount(source, target, _ string, _ []string) error {
 
 	return nil
 }
-
-// Unmount
-func (f *FakeNodeMounter) Unmount(target string) error {
-	if strings.Contains(target, "error_umount") {
-		return fmt.Errorf("Unmount Failed")
-	}
-
-	return nil
-}

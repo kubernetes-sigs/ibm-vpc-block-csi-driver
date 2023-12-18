@@ -8,7 +8,7 @@ github.com/IBM-Cloud/ibm-cloud-cli-sdk/common/rest
 # github.com/IBM/go-sdk-core/v5 v5.9.1
 ## explicit; go 1.14
 github.com/IBM/go-sdk-core/v5/core
-# github.com/IBM/ibm-csi-common v1.1.11-0.20231211135647-bd8143ee63ef
+# github.com/IBM/ibm-csi-common v1.1.11-0.20231218090859-86284961977e
 ## explicit; go 1.18
 github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider
 github.com/IBM/ibm-csi-common/pkg/messages
