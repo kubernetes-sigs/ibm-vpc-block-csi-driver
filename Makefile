@@ -61,12 +61,13 @@ driver: deps buildimage
 deps:
 	echo "Installing dependencies ..."
 	@if ! which golangci-lint >/dev/null || [[ "$$(golangci-lint --version)" != *${LINT_VERSION}* ]]; then \
-		go install github.com/golangci/golangci-lint/cmd/golangci-lint@v${LINT_VERSION}; \
+		curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v${LINT_VERSION}; \
 	fi
 
 .PHONY: fmt
 fmt: lint
-	gofmt -l ${GOFILES}
+	$(GOPATH)/bin/golangci-lint run --disable-all --enable=gofmt --timeout 600s
+	@if [ -n "$$($(GOPATH)/bin/golangci-lint run)" ]; then echo 'Please run ${COLOR_YELLOW}make dofmt${COLOR_RESET} on your code.' && exit 1; fi
 
 .PHONY: dofmt
 dofmt:
@@ -74,7 +75,7 @@ dofmt:
 
 .PHONY: lint
 lint:
-	hack/verify-golint.sh
+	$(GOPATH)/bin/golangci-lint run --timeout 600s
 
 .PHONY: build
 build:

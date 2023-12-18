@@ -22,6 +22,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/fs"
 	"math/rand"
 	"net/http"
 	"os"
@@ -197,7 +198,7 @@ func (su *MockStatSanity) DeviceInfo(path string) (int64, error) {
 // IsBlockDevice ..
 func (su *MockStatSanity) IsBlockDevice(devicePath string) (bool, error) {
 	if !strings.Contains(devicePath, TargetPath) {
-		return false, errors.New("not a valid path")
+		return false, fs.ErrNotExist
 	}
 	return true, nil
 }
