@@ -311,6 +311,18 @@ var messagesEn = map[string]Message{
 		Type:        codes.FailedPrecondition,
 		Action:      "Please check if there is any error in POD describe related with volume attach",
 	},
+	SubnetIDListNotFound: {
+		Code:        SubnetIDListNotFound,
+		Description: "Cluster subnet list 'vpc_subnet_ids' is not defined",
+		Type:        codes.FailedPrecondition,
+		Action:      "Please check if this configmap 'ibm-cloud-provider-data' really exists and if the property 'vpc_subnet_ids' contains any subnet entries. Run the command 'kubectl get configmap ibm-cloud-provider-data -n kube-system -o yaml'",
+	},
+	SubnetFindFailed: {
+		Code:        SubnetFindFailed,
+		Description: "A subnet with the specified zone '%s' and available cluster subnet list '%s' could not be found.",
+		Type:        codes.FailedPrecondition,
+		Action:      "Please check if the property 'vpc_subnet_ids' contains valid subnetIds. Please check 'kubectl get configmap ibm-cloud-provider-data -n kube-system -o yaml'.Please check 'BackendError' tag for more details",
+	},
 }
 
 // InitMessages ...

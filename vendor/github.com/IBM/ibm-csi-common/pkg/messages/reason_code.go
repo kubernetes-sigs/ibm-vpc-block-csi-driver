@@ -161,4 +161,10 @@ const (
 
 	// VolumePathNotMounted ...
 	VolumePathNotMounted = "VolumePathNotMounted"
+
+	// SubnetIDListNotFound ...
+	SubnetIDListNotFound = "SubnetIDListNotFound"
+
+	// SubnetFindFailed ...
+	SubnetFindFailed = "SubnetFindFailed"
 )
