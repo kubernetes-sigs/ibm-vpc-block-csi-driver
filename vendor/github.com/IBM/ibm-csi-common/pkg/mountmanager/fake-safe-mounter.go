@@ -18,6 +18,10 @@
 package mountmanager
 
 import (
+	"errors"
+	"fmt"
+	"strings"
+
 	mount "k8s.io/mount-utils"
 	exec "k8s.io/utils/exec"
 	testExec "k8s.io/utils/exec/testing"
@@ -39,8 +43,8 @@ func NewFakeNodeMounter() Mounter {
 // NewFakeSafeMounter ...
 func NewFakeSafeMounter() *mount.SafeFormatAndMount {
 	fakeMounter := &mount.FakeMounter{MountPoints: []mount.MountPoint{{
-		Device: "valid-devicePath",
-		Path:   "valid-vol-path",
+		Device: "some/target",
+		Path:   "some/staging",
 		Type:   "ext4",
 		Opts:   []string{"defaults"},
 		Freq:   1,
@@ -60,6 +64,9 @@ func NewFakeSafeMounter() *mount.SafeFormatAndMount {
 
 // MakeDir ...
 func (f *FakeNodeMounter) MakeDir(pathname string) error {
+	if pathname == "invalid-volPath-dir" {
+		return errors.New("Path Creation failed")
+	}
 	return nil
 }
 
@@ -160,4 +167,50 @@ func (f *FakeNodeMounter) Resize(devicePath string, deviceMountPath string) (boo
 		return true, nil
 	}
 	return false, nil
+}
+
+// IsLikelyNotMountPoint ...
+func (f *FakeNodeMounter) IsLikelyNotMountPoint(file string) (bool, error) {
+	if file == "/invalid-volPath" || file == "fake-volPath" {
+		return true, errors.New("Path doesn't exist")
+	}
+	if file == "fake-volPath-1" {
+		return true, nil
+	}
+	return false, nil
+}
+
+// Mount
+func (f *FakeNodeMounter) Mount(source, target, _ string, _ []string) error {
+	if strings.Contains(source, "error_mount") {
+		return fmt.Errorf("fake Mount: source error")
+	} else if strings.Contains(target, "error_mount") {
+		return fmt.Errorf("fake Mount: target error")
+	}
+
+	return nil
+}
+
+// Unmount
+func (f *FakeNodeMounter) Unmount(target string) error {
+	if strings.Contains(target, "error_umount") {
+		return fmt.Errorf("Unmount Failed")
+	}
+
+	return nil
+}
+
+// List() ...
+func (f *FakeNodeMounter) List() ([]mount.MountPoint, error) {
+	mountpoint := []mount.MountPoint{
+		{
+			Device: "some/target",
+			Path:   "some/target",
+		},
+		{
+			Device: "some/path",
+			Path:   "some/path",
+		},
+	}
+	return mountpoint, nil
 }

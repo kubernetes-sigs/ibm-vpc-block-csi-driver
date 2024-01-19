@@ -50,14 +50,14 @@ var customCapacityIopsRanges = []classRange{
 	{1000, 1999, 100, 20000},
 }
 
-// normalize the requested capacity(in GiB) to what is supported by the driver
+// normalize the requested capacity(in GB) to what is supported by the driver
 func getRequestedCapacity(capRange *csi.CapacityRange) (int64, error) {
 	// Input is in bytes from csi
 	var capBytes int64
 	// Default case where nothing is set
 	if capRange == nil {
 		capBytes = utils.MinimumVolumeSizeInBytes
-		// returns in GiB
+		// returns in GB
 		return capBytes, nil
 	}
 
@@ -205,11 +205,11 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 	}
 	logger.Info("Volume size in bytes", zap.Any("capacity", capBytes))
 
-	// Convert size/capacity in GiB, as this is needed by RIaaS
-	fsSize := utils.BytesToGiB(capBytes)
+	// Convert size/capacity in GB, as this is needed by RIaaS
+	fsSize := utils.BytesToGB(capBytes)
 	// Assign the size to volume object
 	volume.Capacity = &fsSize
-	logger.Info("Volume size in GiB", zap.Any("capacity", fsSize))
+	logger.Info("Volume size in GB", zap.Any("capacity", fsSize))
 
 	// volume.Capacity should be set before calling overrideParams
 	err = overrideParams(logger, req, config, volume)
@@ -277,12 +277,12 @@ func isValidCapacityIOPS4CustomClass(size int, iops int) (bool, error) {
 	}
 
 	if ind < 0 {
-		return false, fmt.Errorf("invalid PVC size for custom class: <%v>. Should be in range [%d - %d]GiB",
+		return false, fmt.Errorf("invalid PVC size for custom class: <%v>. Should be in range [%d - %d]GB",
 			size, utils.MinimumVolumeDiskSizeInGb, utils.MaximumVolumeDiskSizeInGb)
 	}
 
 	if iops < customCapacityIopsRanges[ind].minIops || iops > customCapacityIopsRanges[ind].maxIops {
-		return false, fmt.Errorf("invalid IOPS: <%v> for capacity: <%vGiB>. Should be in range [%d - %d]",
+		return false, fmt.Errorf("invalid IOPS: <%v> for capacity: <%vGB>. Should be in range [%d - %d]",
 			iops, size, customCapacityIopsRanges[ind].minIops, customCapacityIopsRanges[ind].maxIops)
 	}
 	return true, nil
