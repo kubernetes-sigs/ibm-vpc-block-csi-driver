@@ -41,6 +41,7 @@ type VPCFileVolume struct {
 	VolumeAccessPoints *[]VolumeAccessPoint `json:"volume_access_points,omitempty"`
 	InitialOwner       *InitialOwner        `json:"initial_owner,omitempty"`
 	AccessControlMode  string               `json:"access_control_mode,omitempty"`
+	VPCID              string               `json:"vpc_id,omitempty"`
 	SecurityGroups     *[]SecurityGroup     `json:"security_groups,omitempty"`
 	PrimaryIP          *PrimaryIP           `json:"primary_ip,omitempty"`
 	SubnetID           string               `json:"subnet_id,omitempty"`
