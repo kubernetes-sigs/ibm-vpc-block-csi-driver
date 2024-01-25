@@ -48,6 +48,7 @@ type nodeMetadataManager struct {
 }
 
 // NodeInfo ...
+//
 //go:generate counterfeiter -o fake/fake_node_info.go --fake-name FakeNodeInfo . NodeInfo
 type NodeInfo interface {
 	NewNodeMetadata(logger *zap.Logger) (NodeMetadata, error)

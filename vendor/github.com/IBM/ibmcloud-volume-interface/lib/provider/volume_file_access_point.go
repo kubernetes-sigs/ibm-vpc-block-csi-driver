@@ -22,7 +22,7 @@ import (
 	"time"
 )
 
-//VolumeFileAccessPointManager ...
+// VolumeFileAccessPointManager ...
 type VolumeFileAccessPointManager interface {
 	//CreateVolumeAccessPoint to create a access point
 	CreateVolumeAccessPoint(accessPointRequest VolumeAccessPointRequest) (*VolumeAccessPointResponse, error)
@@ -40,9 +40,15 @@ type VolumeFileAccessPointManager interface {
 
 	//GetVolumeAccessPoint retrieves the current status of given volume AccessPoint request
 	GetVolumeAccessPoint(accessPointRequest VolumeAccessPointRequest) (*VolumeAccessPointResponse, error)
+
+	//GetSubnetForVolumeAccessPoint retrieves the subnet for volume AccessPoint
+	GetSubnetForVolumeAccessPoint(subnetRequest SubnetRequest) (string, error)
+
+	//GetSecurityGroupForVolumeAccessPoint retrieves the securityGroup for volume AccessPoint
+	GetSecurityGroupForVolumeAccessPoint(securityGroupRequest SecurityGroupRequest) (string, error)
 }
 
-//VolumeAccessPointRequest used for both create and delete access point
+// VolumeAccessPointRequest used for both create and delete access point
 type VolumeAccessPointRequest struct {
 
 	//AccessPoint name is optional.
@@ -59,13 +65,57 @@ type VolumeAccessPointRequest struct {
 
 	//VPC to create AccessPoint for
 	VPCID string `json:"vpc_id,omitempty"`
+
+	//AccessControlMode to enable/disable Elastic Network Interface
+	AccessControlMode string `json:"access_control_mode,omitempty"`
+
+	//PrimaryIP
+	PrimaryIP *PrimaryIP `json:"primary_ip,omitempty"`
+
+	//SecurityGroups to be used for ENI
+	SecurityGroups *[]SecurityGroup `json:"security_groups,omitempty"`
+
+	//ResourceGroup for ENI
+	ResourceGroup *ResourceGroup `json:"resource_group,omitempty"`
+
+	//EncryptionInTransit
+	EncryptionInTransit string `json:"transit_encryption,omitempty"`
 }
 
-//VolumeAccessPointResponse used for both delete and create access point
+// VolumeAccessPointResponse used for both delete and create access point
 type VolumeAccessPointResponse struct {
 	VolumeID      string     `json:"volumeID"`
 	AccessPointID string     `json:"AccessPointID"`
 	Status        string     `json:"status"`
 	MountPath     string     `json:"mount_path"`
 	CreatedAt     *time.Time `json:"created_at,omitempty"`
+}
+
+// SubnetRequest used for fetching the subnet for volume access point
+type SubnetRequest struct {
+
+	//SubnetIDList to match the subnetID from available list of subnets.
+	SubnetIDList string `json:"subnet_id_list,omitempty"`
+
+	//Zone to find out the subnet-id for ENI
+	ZoneName string `json:"zone_name,omitempty"`
+
+	//ResourceGroup to find out the subnet-id for ENI
+	ResourceGroup *ResourceGroup `json:"resource_group,omitempty"`
+
+	//VPCID to find out the subnet-id for ENI
+	VPCID string `json:"vpc_id,omitempty"`
+}
+
+// SecurityGroupRequest used for fetching the securityGroup for volume access point
+type SecurityGroupRequest struct {
+
+	//Name to find out the cluster SG for ENI
+	Name string `json:"name,omitempty"`
+
+	//ResourceGroup to find out the cluster SG for ENI
+	ResourceGroup *ResourceGroup `json:"resource_group,omitempty"`
+
+	//VPCID to find out the cluster SG for ENI
+	VPCID string `json:"vpc_id,omitempty"`
 }

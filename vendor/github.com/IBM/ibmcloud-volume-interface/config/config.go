@@ -50,7 +50,7 @@ type Config struct {
 	API       *APIConfig
 }
 
-//ReadConfig loads the config from k8s secret ...
+// ReadConfig loads the config from k8s secret ...
 func ReadConfig(k8sClient k8s_utils.KubernetesClient, logger *zap.Logger) (*Config, error) {
 	data, err := k8s_utils.GetSecretData(k8sClient, utils.STORAGE_SECRET_STORE_SECRET, utils.SECRET_STORE_FILE)
 	if err != nil {
@@ -153,7 +153,7 @@ type VPCProviderConfig struct {
 	ClusterVolumeLabel string
 }
 
-//IKSConfig config
+// IKSConfig config
 type IKSConfig struct {
 	Enabled              bool   `toml:"iks_enabled" envconfig:"IKS_ENABLED"`
 	IKSBlockProviderName string `toml:"iks_block_provider_name" envconfig:"IKS_BLOCK_PROVIDER_NAME"`

@@ -162,6 +162,19 @@ type FakeSession struct {
 	getProviderDisplayNameReturnsOnCall map[int]struct {
 		result1 provider.VolumeProvider
 	}
+	GetSecurityGroupForVolumeAccessPointStub        func(provider.SecurityGroupRequest) (string, error)
+	getSecurityGroupForVolumeAccessPointMutex       sync.RWMutex
+	getSecurityGroupForVolumeAccessPointArgsForCall []struct {
+		arg1 provider.SecurityGroupRequest
+	}
+	getSecurityGroupForVolumeAccessPointReturns struct {
+		result1 string
+		result2 error
+	}
+	getSecurityGroupForVolumeAccessPointReturnsOnCall map[int]struct {
+		result1 string
+		result2 error
+	}
 	GetSnapshotStub        func(string) (*provider.Snapshot, error)
 	getSnapshotMutex       sync.RWMutex
 	getSnapshotArgsForCall []struct {
@@ -186,6 +199,19 @@ type FakeSession struct {
 	}
 	getSnapshotByNameReturnsOnCall map[int]struct {
 		result1 *provider.Snapshot
+		result2 error
+	}
+	GetSubnetForVolumeAccessPointStub        func(provider.SubnetRequest) (string, error)
+	getSubnetForVolumeAccessPointMutex       sync.RWMutex
+	getSubnetForVolumeAccessPointArgsForCall []struct {
+		arg1 provider.SubnetRequest
+	}
+	getSubnetForVolumeAccessPointReturns struct {
+		result1 string
+		result2 error
+	}
+	getSubnetForVolumeAccessPointReturnsOnCall map[int]struct {
+		result1 string
 		result2 error
 	}
 	GetVolumeStub        func(string) (*provider.Volume, error)
@@ -1140,6 +1166,70 @@ func (fake *FakeSession) GetProviderDisplayNameReturnsOnCall(i int, result1 prov
 	}{result1}
 }
 
+func (fake *FakeSession) GetSecurityGroupForVolumeAccessPoint(arg1 provider.SecurityGroupRequest) (string, error) {
+	fake.getSecurityGroupForVolumeAccessPointMutex.Lock()
+	ret, specificReturn := fake.getSecurityGroupForVolumeAccessPointReturnsOnCall[len(fake.getSecurityGroupForVolumeAccessPointArgsForCall)]
+	fake.getSecurityGroupForVolumeAccessPointArgsForCall = append(fake.getSecurityGroupForVolumeAccessPointArgsForCall, struct {
+		arg1 provider.SecurityGroupRequest
+	}{arg1})
+	stub := fake.GetSecurityGroupForVolumeAccessPointStub
+	fakeReturns := fake.getSecurityGroupForVolumeAccessPointReturns
+	fake.recordInvocation("GetSecurityGroupForVolumeAccessPoint", []interface{}{arg1})
+	fake.getSecurityGroupForVolumeAccessPointMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeSession) GetSecurityGroupForVolumeAccessPointCallCount() int {
+	fake.getSecurityGroupForVolumeAccessPointMutex.RLock()
+	defer fake.getSecurityGroupForVolumeAccessPointMutex.RUnlock()
+	return len(fake.getSecurityGroupForVolumeAccessPointArgsForCall)
+}
+
+func (fake *FakeSession) GetSecurityGroupForVolumeAccessPointCalls(stub func(provider.SecurityGroupRequest) (string, error)) {
+	fake.getSecurityGroupForVolumeAccessPointMutex.Lock()
+	defer fake.getSecurityGroupForVolumeAccessPointMutex.Unlock()
+	fake.GetSecurityGroupForVolumeAccessPointStub = stub
+}
+
+func (fake *FakeSession) GetSecurityGroupForVolumeAccessPointArgsForCall(i int) provider.SecurityGroupRequest {
+	fake.getSecurityGroupForVolumeAccessPointMutex.RLock()
+	defer fake.getSecurityGroupForVolumeAccessPointMutex.RUnlock()
+	argsForCall := fake.getSecurityGroupForVolumeAccessPointArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeSession) GetSecurityGroupForVolumeAccessPointReturns(result1 string, result2 error) {
+	fake.getSecurityGroupForVolumeAccessPointMutex.Lock()
+	defer fake.getSecurityGroupForVolumeAccessPointMutex.Unlock()
+	fake.GetSecurityGroupForVolumeAccessPointStub = nil
+	fake.getSecurityGroupForVolumeAccessPointReturns = struct {
+		result1 string
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeSession) GetSecurityGroupForVolumeAccessPointReturnsOnCall(i int, result1 string, result2 error) {
+	fake.getSecurityGroupForVolumeAccessPointMutex.Lock()
+	defer fake.getSecurityGroupForVolumeAccessPointMutex.Unlock()
+	fake.GetSecurityGroupForVolumeAccessPointStub = nil
+	if fake.getSecurityGroupForVolumeAccessPointReturnsOnCall == nil {
+		fake.getSecurityGroupForVolumeAccessPointReturnsOnCall = make(map[int]struct {
+			result1 string
+			result2 error
+		})
+	}
+	fake.getSecurityGroupForVolumeAccessPointReturnsOnCall[i] = struct {
+		result1 string
+		result2 error
+	}{result1, result2}
+}
+
 func (fake *FakeSession) GetSnapshot(arg1 string) (*provider.Snapshot, error) {
 	fake.getSnapshotMutex.Lock()
 	ret, specificReturn := fake.getSnapshotReturnsOnCall[len(fake.getSnapshotArgsForCall)]
@@ -1264,6 +1354,70 @@ func (fake *FakeSession) GetSnapshotByNameReturnsOnCall(i int, result1 *provider
 	}
 	fake.getSnapshotByNameReturnsOnCall[i] = struct {
 		result1 *provider.Snapshot
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeSession) GetSubnetForVolumeAccessPoint(arg1 provider.SubnetRequest) (string, error) {
+	fake.getSubnetForVolumeAccessPointMutex.Lock()
+	ret, specificReturn := fake.getSubnetForVolumeAccessPointReturnsOnCall[len(fake.getSubnetForVolumeAccessPointArgsForCall)]
+	fake.getSubnetForVolumeAccessPointArgsForCall = append(fake.getSubnetForVolumeAccessPointArgsForCall, struct {
+		arg1 provider.SubnetRequest
+	}{arg1})
+	stub := fake.GetSubnetForVolumeAccessPointStub
+	fakeReturns := fake.getSubnetForVolumeAccessPointReturns
+	fake.recordInvocation("GetSubnetForVolumeAccessPoint", []interface{}{arg1})
+	fake.getSubnetForVolumeAccessPointMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeSession) GetSubnetForVolumeAccessPointCallCount() int {
+	fake.getSubnetForVolumeAccessPointMutex.RLock()
+	defer fake.getSubnetForVolumeAccessPointMutex.RUnlock()
+	return len(fake.getSubnetForVolumeAccessPointArgsForCall)
+}
+
+func (fake *FakeSession) GetSubnetForVolumeAccessPointCalls(stub func(provider.SubnetRequest) (string, error)) {
+	fake.getSubnetForVolumeAccessPointMutex.Lock()
+	defer fake.getSubnetForVolumeAccessPointMutex.Unlock()
+	fake.GetSubnetForVolumeAccessPointStub = stub
+}
+
+func (fake *FakeSession) GetSubnetForVolumeAccessPointArgsForCall(i int) provider.SubnetRequest {
+	fake.getSubnetForVolumeAccessPointMutex.RLock()
+	defer fake.getSubnetForVolumeAccessPointMutex.RUnlock()
+	argsForCall := fake.getSubnetForVolumeAccessPointArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeSession) GetSubnetForVolumeAccessPointReturns(result1 string, result2 error) {
+	fake.getSubnetForVolumeAccessPointMutex.Lock()
+	defer fake.getSubnetForVolumeAccessPointMutex.Unlock()
+	fake.GetSubnetForVolumeAccessPointStub = nil
+	fake.getSubnetForVolumeAccessPointReturns = struct {
+		result1 string
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeSession) GetSubnetForVolumeAccessPointReturnsOnCall(i int, result1 string, result2 error) {
+	fake.getSubnetForVolumeAccessPointMutex.Lock()
+	defer fake.getSubnetForVolumeAccessPointMutex.Unlock()
+	fake.GetSubnetForVolumeAccessPointStub = nil
+	if fake.getSubnetForVolumeAccessPointReturnsOnCall == nil {
+		fake.getSubnetForVolumeAccessPointReturnsOnCall = make(map[int]struct {
+			result1 string
+			result2 error
+		})
+	}
+	fake.getSubnetForVolumeAccessPointReturnsOnCall[i] = struct {
+		result1 string
 		result2 error
 	}{result1, result2}
 }
@@ -2166,10 +2320,14 @@ func (fake *FakeSession) Invocations() map[string][][]interface{} {
 	defer fake.expandVolumeMutex.RUnlock()
 	fake.getProviderDisplayNameMutex.RLock()
 	defer fake.getProviderDisplayNameMutex.RUnlock()
+	fake.getSecurityGroupForVolumeAccessPointMutex.RLock()
+	defer fake.getSecurityGroupForVolumeAccessPointMutex.RUnlock()
 	fake.getSnapshotMutex.RLock()
 	defer fake.getSnapshotMutex.RUnlock()
 	fake.getSnapshotByNameMutex.RLock()
 	defer fake.getSnapshotByNameMutex.RUnlock()
+	fake.getSubnetForVolumeAccessPointMutex.RLock()
+	defer fake.getSubnetForVolumeAccessPointMutex.RUnlock()
 	fake.getVolumeMutex.RLock()
 	defer fake.getVolumeMutex.RUnlock()
 	fake.getVolumeAccessPointMutex.RLock()
