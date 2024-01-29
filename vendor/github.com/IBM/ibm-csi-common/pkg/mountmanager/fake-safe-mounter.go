@@ -18,6 +18,8 @@
 package mountmanager
 
 import (
+	"errors"
+
 	mount "k8s.io/mount-utils"
 	exec "k8s.io/utils/exec"
 	testExec "k8s.io/utils/exec/testing"
@@ -60,6 +62,9 @@ func NewFakeSafeMounter() *mount.SafeFormatAndMount {
 
 // MakeDir ...
 func (f *FakeNodeMounter) MakeDir(pathname string) error {
+	if pathname == "invalid-volPath-dir" {
+		return errors.New("Path Creation failed")
+	}
 	return nil
 }
 

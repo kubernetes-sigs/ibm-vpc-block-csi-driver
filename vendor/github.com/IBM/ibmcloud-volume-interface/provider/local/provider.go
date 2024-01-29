@@ -25,6 +25,7 @@ import (
 )
 
 // Provider describes the contract that is implemented by an internal provider implementation
+//
 //go:generate counterfeiter -o fakes/provider.go  --fake-name Provider . Provider
 type Provider interface {
 	// OpenSession begins and initialises a new provider session.
@@ -38,6 +39,7 @@ type Provider interface {
 }
 
 // ContextCredentialsFactory is a factory which can generate ContextCredentials instances
+//
 //go:generate counterfeiter -o fakes/context_credentials_factory.go --fake-name ContextCredentialsFactory . ContextCredentialsFactory
 type ContextCredentialsFactory interface {
 	// ForIaaSAPIKey returns a config using an explicit API key for an IaaS user account

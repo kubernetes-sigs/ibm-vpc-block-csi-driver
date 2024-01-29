@@ -25,21 +25,11 @@ import (
 
 // GeneralCAHttpClient returns an http.Client configured for general use
 func GeneralCAHttpClient() (*http.Client, error) {
-	httpClient := &http.Client{
-
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				MinVersion: tls.VersionTLS12, // Require TLS 1.2 or higher
-			},
-		},
-
-		// softlayer.go has been overriding http.DefaultClient and forcing 120s
-		// timeout on us, so we'll continue to force it on ourselves in case
-		// we've accidentally become acustomed to it.
-		Timeout: time.Second * 120,
-	}
-
-	return httpClient, nil
+	// softlayer.go has been overriding http.DefaultClient and forcing 120s
+	// timeout on us, so we'll continue to force it on ourselves in case
+	// we've accidentally become acustomed to it.
+	timeout := time.Second * 120
+	return GeneralCAHttpClientWithTimeout(timeout)
 }
 
 // GeneralCAHttpClientWithTimeout returns an http.Client configured for general use
@@ -47,6 +37,7 @@ func GeneralCAHttpClientWithTimeout(timeout time.Duration) (*http.Client, error)
 	httpClient := &http.Client{
 
 		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
 			TLSClientConfig: &tls.Config{
 				MinVersion: tls.VersionTLS12, // Require TLS 1.2 or higher
 			},

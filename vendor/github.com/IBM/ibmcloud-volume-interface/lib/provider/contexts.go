@@ -18,6 +18,7 @@
 package provider
 
 // Context represents the volume provider management API for individual account, user ID, etc.
+//
 //go:generate counterfeiter -o fakes/context.go --fake-name Context . Context
 type Context interface {
 	VolumeManager
@@ -27,6 +28,7 @@ type Context interface {
 }
 
 // Session is an Context that is notified when it is no longer required
+//
 //go:generate counterfeiter -o fake/fake_session.go --fake-name FakeSession . Session
 type Session interface {
 	Context

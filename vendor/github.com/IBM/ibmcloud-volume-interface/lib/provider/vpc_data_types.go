@@ -40,6 +40,11 @@ type VPCBlockVolume struct {
 type VPCFileVolume struct {
 	VolumeAccessPoints *[]VolumeAccessPoint `json:"volume_access_points,omitempty"`
 	InitialOwner       *InitialOwner        `json:"initial_owner,omitempty"`
+	AccessControlMode  string               `json:"access_control_mode,omitempty"`
+	VPCID              string               `json:"vpc_id,omitempty"`
+	SecurityGroups     *[]SecurityGroup     `json:"security_groups,omitempty"`
+	PrimaryIP          *PrimaryIP           `json:"primary_ip,omitempty"`
+	SubnetID           string               `json:"subnet_id,omitempty"`
 }
 
 // VPC ...
@@ -48,6 +53,32 @@ type VPC struct {
 	CRN  string `json:"crn,omitempty"`
 	Href string `json:"href,omitempty"`
 	Name string `json:"name,omitempty"`
+}
+
+// SecurityGroup ...
+type SecurityGroup struct {
+	ID   string `json:"id"`
+	CRN  string `json:"crn,omitempty"`
+	Href string `json:"href,omitempty"`
+}
+
+// PrimaryIPID ...
+type PrimaryIPID struct {
+	ID   string `json:"id,omitempty"`
+	Href string `json:"href,omitempty"`
+}
+
+// PrimaryIPAddress ...
+type PrimaryIPAddress struct {
+	Address    string `json:"address,omitempty"`
+	AutoDelete bool   `json:"auto_delete,omitempty"`
+	Name       string `json:"name,omitempty"`
+}
+
+// PrimaryIP ...
+type PrimaryIP struct {
+	PrimaryIPID
+	PrimaryIPAddress
 }
 
 // VolumeAccessPoint ...
@@ -115,7 +146,7 @@ type VolumeEncryptionKey struct {
 	CRN string `json:"crn,omitempty"`
 }
 
-//IKSVolumeAttachment  encapulates IKS related attachment parameters
+// IKSVolumeAttachment  encapulates IKS related attachment parameters
 type IKSVolumeAttachment struct {
 	ClusterID *string `json:"clusterID,omitempty"`
 }
