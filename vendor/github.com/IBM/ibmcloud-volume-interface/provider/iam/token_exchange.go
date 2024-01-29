@@ -239,7 +239,7 @@ func (r *tokenExchangeRequest) sendTokenExchangeRequest() (*tokenExchangeRespons
 		return &successV, nil
 	}
 
-	defer resp.Body.Close()
+	defer resp.Body.Close() // #nosec G307
 
 	// TODO Check other status code values? (but be careful not to mask the reason codes, below)
 
