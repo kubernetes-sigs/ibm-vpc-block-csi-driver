@@ -71,10 +71,6 @@ func BytesToGB(volumeSizeBytes int64) int {
 	return int(volumeSizeBytes / GB)
 }
 
-func GBToBytes(volumeSizeBytes int64) int64 {
-	return int64(volumeSizeBytes / GB)
-}
-
 // ListContainsSubstr Checks if subStr is there in mainStr
 func ListContainsSubstr(mainStr []string, subStr string) bool {
 	if len(subStr) < 1 {
