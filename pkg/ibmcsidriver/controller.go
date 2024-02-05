@@ -397,7 +397,7 @@ func (csiCS *CSIControllerServer) ListVolumes(ctx context.Context, req *csi.List
 			entries = append(entries, &csi.ListVolumesResponse_Entry{
 				Volume: &csi.Volume{
 					VolumeId:      vol.VolumeID,
-					CapacityBytes: int64(*vol.Capacity * utils.GiB),
+					CapacityBytes: int64(*vol.Capacity * utils.GB),
 				},
 			})
 		}

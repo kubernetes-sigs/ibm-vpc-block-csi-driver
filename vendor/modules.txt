@@ -8,7 +8,7 @@ github.com/IBM-Cloud/ibm-cloud-cli-sdk/common/rest
 # github.com/IBM/go-sdk-core/v5 v5.9.1
 ## explicit; go 1.14
 github.com/IBM/go-sdk-core/v5/core
-# github.com/IBM/ibm-csi-common v1.1.11
+# github.com/IBM/ibm-csi-common v1.1.12-0.20240205090649-afa3ef81893a
 ## explicit; go 1.20
 github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider
 github.com/IBM/ibm-csi-common/pkg/messages
@@ -18,7 +18,7 @@ github.com/IBM/ibm-csi-common/pkg/metrics
 github.com/IBM/ibm-csi-common/pkg/mountmanager
 github.com/IBM/ibm-csi-common/pkg/utils
 github.com/IBM/ibm-csi-common/pkg/watcher
-# github.com/IBM/ibmcloud-volume-interface v1.2.2
+# github.com/IBM/ibmcloud-volume-interface v1.2.3-0.20240205071025-bb0527465eab
 ## explicit; go 1.20
 github.com/IBM/ibmcloud-volume-interface/config
 github.com/IBM/ibmcloud-volume-interface/lib/metrics
@@ -29,7 +29,7 @@ github.com/IBM/ibmcloud-volume-interface/lib/utils/reasoncode
 github.com/IBM/ibmcloud-volume-interface/provider/auth
 github.com/IBM/ibmcloud-volume-interface/provider/iam
 github.com/IBM/ibmcloud-volume-interface/provider/local
-# github.com/IBM/ibmcloud-volume-vpc v1.1.7
+# github.com/IBM/ibmcloud-volume-vpc v1.1.8-0.20240205083111-6e7686b1f7da
 ## explicit; go 1.20
 github.com/IBM/ibmcloud-volume-vpc/block/provider
 github.com/IBM/ibmcloud-volume-vpc/block/utils
