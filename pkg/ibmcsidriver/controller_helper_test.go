@@ -81,7 +81,7 @@ func TestGetRequestedCapacity(t *testing.T) {
 			capRange: &csi.CapacityRange{RequiredBytes: utils.MinimumVolumeSizeInBytes - 100,
 				LimitBytes: 9999999990}, // MinimumVolumeSizeInBytes-> 10 GB -> 10000000000
 			expectedValue: 0,
-			expectedError: fmt.Errorf("limit bytes %v is less than minimum volume size: %v", 999999990, utils.MinimumVolumeSizeInBytes),
+			expectedError: fmt.Errorf("limit bytes %v is less than minimum volume size: %v", 9999999990, utils.MinimumVolumeSizeInBytes),
 		},
 	}
 
