@@ -78,6 +78,9 @@ func getRequestedCapacity(capRange *csi.CapacityRange) (int64, error) {
 		capBytes = rBytes
 	}
 
+	// Roundup the volume size to the next integer value
+	capBytes = utils.RoundUpBytes(capBytes)
+
 	// Limit is more than Required, but larger than Minimum. So we just set capcity to Minimum
 	// Too small, default
 	if capBytes < utils.MinimumVolumeSizeInBytes {
