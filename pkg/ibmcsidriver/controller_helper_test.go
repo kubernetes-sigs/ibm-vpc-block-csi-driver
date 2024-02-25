@@ -64,9 +64,15 @@ func TestGetRequestedCapacity(t *testing.T) {
 		},
 		{
 			testCaseName: "Check size passed as actual value",
-			capRange: &csi.CapacityRange{RequiredBytes: 11811160064,
+			capRange: &csi.CapacityRange{RequiredBytes: 19000000000,
 				LimitBytes: utils.MinimumVolumeSizeInBytes + utils.MinimumVolumeSizeInBytes}, // MinimumVolumeSizeInBytes->10737418240
-			expectedValue: 11811160064,
+			expectedValue: 19000000000,
+			expectedError: nil,
+		},
+		{
+			testCaseName:  "Round up to nearest GB value when input is in GiB",
+			capRange:      &csi.CapacityRange{RequiredBytes: 21474836480},
+			expectedValue: 22000000000,
 			expectedError: nil,
 		},
 		{
@@ -150,7 +156,7 @@ func isVolumeSame(expected *provider.Volume, actual *provider.Volume) bool {
 
 func TestGetVolumeParameters(t *testing.T) {
 	volumeName := "volName"
-	volumeSize := 11
+	volumeSize := 12
 	noIops := ""
 	testCases := []struct {
 		testCaseName   string

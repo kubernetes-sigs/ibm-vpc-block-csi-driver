@@ -74,7 +74,7 @@ var (
 		},
 	}
 	stdCapRange = &csi.CapacityRange{
-		RequiredBytes: 20 * 1024 * 1024 * 1024,
+		RequiredBytes: 20 * 1000 * 1000 * 1000,
 	}
 	stdParams = map[string]string{
 		//"type": "ext2",
@@ -111,7 +111,7 @@ func TestCreateVolumeArguments(t *testing.T) {
 				Parameters:         stdParams,
 			},
 			expVol: &csi.Volume{
-				CapacityBytes:      20 * 1024 * 1024 * 1024, // In byte
+				CapacityBytes:      20 * 1000 * 1000 * 1000, // In byte
 				VolumeId:           "testVolumeId",
 				VolumeContext:      map[string]string{utils.NodeRegionLabel: "myregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: "fake-clusterID"},
 				AccessibleTopology: stdTopology,
@@ -218,7 +218,7 @@ func TestCreateVolumeArguments(t *testing.T) {
 				},
 			},
 			expVol: &csi.Volume{
-				CapacityBytes: 20 * 1024 * 1024 * 1024, // In byte
+				CapacityBytes: 20 * 1000 * 1000 * 1000, // In byte
 				VolumeId:      "testVolumeId",
 				VolumeContext: map[string]string{utils.NodeRegionLabel: "testregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: "fake-clusterID"},
 				AccessibleTopology: []*csi.Topology{
@@ -251,7 +251,7 @@ func TestCreateVolumeArguments(t *testing.T) {
 				},
 			},
 			expVol: &csi.Volume{
-				CapacityBytes: 20 * 1024 * 1024 * 1024, // In byte
+				CapacityBytes: 20 * 1000 * 1000 * 1000, // In byte
 				VolumeId:      "testVolumeId",
 				VolumeContext: map[string]string{utils.NodeRegionLabel: "testregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: "fake-clusterID"},
 				AccessibleTopology: []*csi.Topology{
@@ -308,7 +308,7 @@ func TestCreateVolumeArguments(t *testing.T) {
 				},
 			},
 			expVol: &csi.Volume{
-				CapacityBytes:      20 * 1024 * 1024 * 1024, // In byte
+				CapacityBytes:      20 * 1000 * 1000 * 1000, // In byte
 				VolumeId:           "testVolumeId",
 				VolumeContext:      map[string]string{utils.NodeRegionLabel: "myregion", utils.NodeZoneLabel: "myzone", VolumeIDLabel: "testVolumeId", Tag: "", VolumeCRNLabel: "", ClusterIDLabel: "fake-clusterID"},
 				AccessibleTopology: stdTopology,
