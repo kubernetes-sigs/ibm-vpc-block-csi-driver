@@ -44,7 +44,7 @@ func (vpcs *VPCSession) ExpandVolume(expandVolumeRequest provider.ExpandVolumeRe
 	}
 	vpcs.Logger.Info("Successfully validated inputs for ExpandVolume request... ")
 
-	newSize := BytesToGB(expandVolumeRequest.Capacity)
+	newSize := roundUpSize(expandVolumeRequest.Capacity, GB)
 
 	// Build the template to send to backend
 	volumeTemplate := &models.Volume{
