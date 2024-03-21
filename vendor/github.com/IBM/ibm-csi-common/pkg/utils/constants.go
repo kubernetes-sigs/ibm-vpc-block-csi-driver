@@ -18,34 +18,25 @@
 package utils
 
 const (
-	// GiB in bytes
-	GiB = 1024 * 1024 * 1024
+	// KB in bytes
+	KB = 1000
+	// MB in bytes
+	MB = 1000 * KB
+	// GB in bytes
+	GB = 1000 * MB
+	// TB in bytes
+	TB = 1000 * GB
 
 	// MinimumVolumeSizeInBytes minimum size of the volume in bytes
-	MinimumVolumeSizeInBytes int64 = 10 * GiB
-	// MaximumVolumeSizeInBytes the max allowed capacity
-	MaximumVolumeSizeInBytes int64 = 2 * 1024 * GiB //2000GB = 2TB
-
+	MinimumVolumeSizeInBytes int64 = 10 * GB
 	// MinimumVolumeDiskSizeInGb minimum size of the volume in GB
 	MinimumVolumeDiskSizeInGb = 10
 	// MaximumVolumeDiskSizeInGb ...
-	MaximumVolumeDiskSizeInGb = 2048
+	MaximumVolumeDiskSizeInGb = 2000
 	// DefaultVolumeDiskSizeinGb default size of the volume in GB
 	DefaultVolumeDiskSizeinGb = 10
 	// MaxRetryAttemptForSessions ...
 	MaxRetryAttemptForSessions = 2
-)
-
-const (
-	_ = iota
-	// KB ...
-	KB = 1 << (10 * iota)
-	// MB ...
-	MB
-	// GB ...
-	GB
-	// TB ...
-	TB
 )
 
 const (

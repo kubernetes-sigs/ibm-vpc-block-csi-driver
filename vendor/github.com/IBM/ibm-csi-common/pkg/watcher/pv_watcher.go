@@ -215,10 +215,10 @@ func (pvw *PVWatcher) getVolume(pv *v1.PersistentVolume, ctxLogger *zap.Logger) 
 		volume.Attributes[VolumeStatus] = VolumeStatusDeleted
 	} else {
 		volume.Tags = tags
-		//Get Capacity and convert to GiB
+		//Get Capacity and convert to GB
 		capacity := pv.Spec.Capacity[v1.ResourceStorage]
-		capacityGiB := utils.BytesToGiB(capacity.Value())
-		volume.Capacity = &capacityGiB
+		capacityGB := utils.BytesToGB(capacity.Value())
+		volume.Capacity = &capacityGB
 		iops := pv.Spec.CSI.VolumeAttributes[utils.IOPSLabel]
 		volume.Iops = &iops
 		volume.Attributes[VolumeStatus] = VolumeStatusCreated

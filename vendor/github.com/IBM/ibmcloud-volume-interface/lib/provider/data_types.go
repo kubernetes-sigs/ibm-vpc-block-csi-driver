@@ -47,7 +47,7 @@ type Volume struct {
 	// Volume provider type i.e  Endurance or Performance or any other name
 	ProviderType VolumeProviderType `json:"providerType,omitempty"`
 
-	// The Capacity of the volume, in GiB
+	// The Capacity of the volume, in GB
 	Capacity *int `json:"capacity"`
 
 	// Volume IOPS for performance storage type only
@@ -154,7 +154,7 @@ type ExpandVolumeRequest struct {
 	// changed Volume name
 	Name *string `json:"name,omitempty"`
 
-	// The new Capacity of the volume, in GiB
+	// The new Capacity of the volume, in GB
 	Capacity int64 `json:"capacity"`
 }
 

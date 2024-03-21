@@ -43,8 +43,10 @@ var minVPCRetryGapAttempt = 3
 // maxRetryAttempt ...
 var maxVPCRetryAttempt = 46
 
-//ConstantRetryGap ...
+// ConstantRetryGap ...
 const (
+	// Capacity in GB ...
+	GB                      = 1000 * 1000 * 1000
 	ConstantRetryGap        = 10 // seconds
 	ConstMaxVPCRetryAttempt = 46
 	ConstMinVPCRetryGap     = 3 //seconds
@@ -373,7 +375,7 @@ func FromProviderToLibSnapshot(vpcSnapshot *models.Snapshot, logger *zap.Logger)
 		VolumeID:             vpcSnapshot.SourceVolume.ID,
 		SnapshotID:           vpcSnapshot.ID,
 		SnapshotCreationTime: createdTime,
-		SnapshotSize:         GiBToBytes(vpcSnapshot.MinimumCapacity),
+		SnapshotSize:         GBToBytes(vpcSnapshot.MinimumCapacity),
 		VPC:                  provider.VPC{Href: vpcSnapshot.Href},
 	}
 	if vpcSnapshot.LifecycleState == snapshotReadyState {
@@ -405,9 +407,14 @@ func roundUpSize(volumeSizeBytes int64, allocationUnitBytes int64) int64 {
 	return (volumeSizeBytes + allocationUnitBytes - 1) / allocationUnitBytes
 }
 
-// GiBToBytes converts GiB to Bytes
-func GiBToBytes(volumeSizeGiB int64) int64 {
-	return volumeSizeGiB * GiB
+// BytesToGB converts bytes to GB
+func BytesToGB(volumeSizeBytes int64) int64 {
+	return int64(volumeSizeBytes / GB)
+}
+
+// GBToBytes converts GB to Bytes
+func GBToBytes(volumeSizeGB int64) int64 {
+	return volumeSizeGB * GB
 }
 
 // isValidServiceSession check if Service Session is valid

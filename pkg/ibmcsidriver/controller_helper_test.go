@@ -64,9 +64,15 @@ func TestGetRequestedCapacity(t *testing.T) {
 		},
 		{
 			testCaseName: "Check size passed as actual value",
-			capRange: &csi.CapacityRange{RequiredBytes: 11811160064,
+			capRange: &csi.CapacityRange{RequiredBytes: 19000000000,
 				LimitBytes: utils.MinimumVolumeSizeInBytes + utils.MinimumVolumeSizeInBytes}, // MinimumVolumeSizeInBytes->10737418240
-			expectedValue: 11811160064,
+			expectedValue: 19000000000,
+			expectedError: nil,
+		},
+		{
+			testCaseName:  "Round up to nearest GB value when input is in GiB",
+			capRange:      &csi.CapacityRange{RequiredBytes: 21474836480},
+			expectedValue: 22000000000,
 			expectedError: nil,
 		},
 		{
@@ -79,9 +85,9 @@ func TestGetRequestedCapacity(t *testing.T) {
 		{
 			testCaseName: "Expected error check against limit byte-success",
 			capRange: &csi.CapacityRange{RequiredBytes: utils.MinimumVolumeSizeInBytes - 100,
-				LimitBytes: 10737418230}, // MinimumVolumeSizeInBytes->10737418240
+				LimitBytes: 9999999990}, // MinimumVolumeSizeInBytes-> 10 GB -> 10000000000
 			expectedValue: 0,
-			expectedError: fmt.Errorf("limit bytes %v is less than minimum volume size: %v", 10737418230, utils.MinimumVolumeSizeInBytes),
+			expectedError: fmt.Errorf("limit bytes %v is less than minimum volume size: %v", 9999999990, utils.MinimumVolumeSizeInBytes),
 		},
 	}
 
@@ -150,7 +156,7 @@ func isVolumeSame(expected *provider.Volume, actual *provider.Volume) bool {
 
 func TestGetVolumeParameters(t *testing.T) {
 	volumeName := "volName"
-	volumeSize := 11
+	volumeSize := 12
 	noIops := ""
 	testCases := []struct {
 		testCaseName   string
@@ -383,14 +389,14 @@ func TestIsValidCapacityIOPS4CustomClass(t *testing.T) {
 			requestSize:    5,
 			requestIops:    110,
 			expectedStatus: false,
-			expectedError:  fmt.Errorf("invalid PVC size for custom class: <%v>. Should be in range [%d - %d]GiB", 5, utils.MinimumVolumeDiskSizeInGb, utils.MaximumVolumeDiskSizeInGb),
+			expectedError:  fmt.Errorf("invalid PVC size for custom class: <%v>. Should be in range [%d - %d]GB", 5, utils.MinimumVolumeDiskSizeInGb, utils.MaximumVolumeDiskSizeInGb),
 		},
 		{
 			testCaseName:   "Invalid IOPS",
 			requestSize:    20,
 			requestIops:    5,
 			expectedStatus: false,
-			expectedError:  fmt.Errorf("invalid IOPS: <%v> for capacity: <%vGiB>. Should be in range [%d - %d]", 5, 20, customCapacityIopsRanges[0].minIops, customCapacityIopsRanges[0].maxIops),
+			expectedError:  fmt.Errorf("invalid IOPS: <%v> for capacity: <%vGB>. Should be in range [%d - %d]", 5, 20, customCapacityIopsRanges[0].minIops, customCapacityIopsRanges[0].maxIops),
 		},
 	}
 
