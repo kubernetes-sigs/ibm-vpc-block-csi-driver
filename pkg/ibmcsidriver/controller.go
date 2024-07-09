@@ -126,7 +126,14 @@ func (csiCS *CSIControllerServer) CreateVolume(ctx context.Context, req *csi.Cre
 		if sourceSnapshot == nil {
 			return nil, commonError.GetCSIError(ctxLogger, commonError.VolumeInvalidArguments, requestID, nil)
 		}
-		requestedVolume.SnapshotID = sourceSnapshot.GetSnapshotId()
+		snapshotIdentifier := sourceSnapshot.GetSnapshotId()
+		// Remove all whitespaces and search crn: string at 0th position
+		// to finalise that user provided crn or not
+		if strings.Index(strings.ReplaceAll(snapshotIdentifier, " ", ""), "crn:") == 0 {
+			requestedVolume.SnapshotCRN = snapshotIdentifier
+		} else {
+			requestedVolume.SnapshotID = snapshotIdentifier
+		}
 	}
 
 	existingVol, err := checkIfVolumeExists(session, *requestedVolume, ctxLogger)

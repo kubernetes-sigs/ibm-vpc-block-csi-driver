@@ -157,6 +157,7 @@ type VPCProviderConfig struct {
 type IKSConfig struct {
 	Enabled              bool   `toml:"iks_enabled" envconfig:"IKS_ENABLED"`
 	IKSBlockProviderName string `toml:"iks_block_provider_name" envconfig:"IKS_BLOCK_PROVIDER_NAME"`
+	IKSFileProviderName  string `toml:"iks_file_provider_name" envconfig:"IKS_FILE_PROVIDER_NAME"`
 }
 
 // APIConfig config

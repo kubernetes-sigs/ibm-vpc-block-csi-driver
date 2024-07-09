@@ -45,6 +45,7 @@ type VPCFileVolume struct {
 	SecurityGroups     *[]SecurityGroup     `json:"security_groups,omitempty"`
 	PrimaryIP          *PrimaryIP           `json:"primary_ip,omitempty"`
 	SubnetID           string               `json:"subnet_id,omitempty"`
+	TransitEncryption  string               `json:"transit_encryption,omitempty"`
 }
 
 // VPC ...
