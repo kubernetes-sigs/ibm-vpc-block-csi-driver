@@ -368,7 +368,7 @@ func TestCreateVolumeArguments(t *testing.T) {
 			for i := 0; i < len(vol.GetAccessibleTopology()); i++ {
 				errStr = errStr + fmt.Sprintf("Actual topology-> %#v\nExpected toplogy-> %#v\n\n", vol.GetAccessibleTopology()[i], tc.expVol.GetAccessibleTopology()[i])
 			}
-			t.Errorf(errStr)
+			t.Error(errStr)
 		}
 	}
 }
