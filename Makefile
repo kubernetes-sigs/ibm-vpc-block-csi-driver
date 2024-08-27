@@ -44,7 +44,7 @@ BUILD_NUMBER?=unknown
 GO111MODULE_FLAG?=on
 export GO111MODULE=$(GO111MODULE_FLAG)
 
-export LINT_VERSION="1.51.2"
+export LINT_VERSION="1.60.1"
 
 GOFILES=$(shell find . -type f -name '*.go' -not -path "./vendor/*")
 
