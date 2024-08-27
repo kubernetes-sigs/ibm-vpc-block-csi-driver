@@ -19,18 +19,6 @@ package models
 
 import "time"
 
-// Snapshot ...
-// type Snapshot struct {
-// 	Href          string         `json:"href,omitempty"`
-// 	ID            string         `json:"id,omitempty"`
-// 	Name          string         `json:"name,omitempty"`
-// 	ResourceGroup *ResourceGroup `json:"resource_group,omitempty"`
-// 	CRN           string         `json:"crn,omitempty"`
-// 	CreatedAt     *time.Time     `json:"created_at,omitempty"`
-// 	Status        StatusType     `json:"status,omitempty"`
-// 	Tags          []string       `json:"tags,omitempty"`
-// }
-
 // SnapshotList ...
 type SnapshotList struct {
 	First      *HReference `json:"first,omitempty"`
@@ -52,6 +40,7 @@ type Snapshot struct {
 	Href            string           `json:"href,omitempty"`
 	ID              string           `json:"id,omitempty"`
 	Name            string           `json:"name,omitempty"`
+	CRN             string           `json:"crn,omitempty"`
 	MinimumCapacity int64            `json:"minimum_capacity,omitempty"`
 	ResourceGroup   *ResourceGroup   `json:"resource_group,omitempty"`
 	OperatingSystem *OperatingSystem `json:"operating_system,omitempty"`
@@ -68,7 +57,6 @@ type Snapshot struct {
 	CapturedAt      *time.Time       `json:"captured_at,omitempty"`
 
 	SourceImage      *SourceImage         `json:"source_image,omitempty"`
-	CRN              string               `json:"crn,omitempty"`
 	Clones           *[]Clone             `json:"clones,omitempty"`
 	BackupPolicyPlan *BackupPolicyPlan    `json:"backup_policy_plan,omitempty"`
 	EncryptionKey    *VolumeEncryptionKey `json:"encryption_key,omitempty"`

@@ -52,3 +52,8 @@ func (m *NodeMounter) GetSafeFormatAndMount() *mount.SafeFormatAndMount {
 func (m *NodeMounter) Resize(devicePath string, deviceMountPath string) (bool, error) {
 	return true, errors.New("not implemented")
 }
+
+// MountEITBasedFileShare ...
+func (m *NodeMounter) MountEITBasedFileShare(mountPath string, targetPath string, fsType string, requestID string) (string, error) {
+	return "", nil
+}

@@ -19,17 +19,11 @@ package ibmcloudprovider
 
 import (
 	"bytes"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider/fake"
-	"github.com/IBM/ibmcloud-volume-interface/provider/local"
-	provider_util "github.com/IBM/ibmcloud-volume-vpc/block/utils"
-	vpcconfig "github.com/IBM/ibmcloud-volume-vpc/block/vpcconfig"
-	"github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/net/context"
@@ -97,87 +91,6 @@ func GetTestLogger(t *testing.T) (logger *zap.Logger, teardown func()) {
 		}
 	}
 	return
-}
-
-// GetTestProvider ...
-func GetTestProvider(t *testing.T, logger *zap.Logger) (*IBMCloudStorageProvider, error) {
-	logger.Info("GetTestProvider-Getting New test Provider")
-	// vpcBlockConfig struct
-	vpcBlockConfig := &vpcconfig.VPCBlockConfig{
-		VPCConfig: &config.VPCProviderConfig{
-			Enabled:              true,
-			VPCBlockProviderName: "vpc-classic",
-			EndpointURL:          TestEndpointURL,
-			VPCTimeout:           "30s",
-			MaxRetryAttempt:      5,
-			MaxRetryGap:          10,
-			APIVersion:           TestAPIVersion,
-			IamClientID:          IAMClientID,
-			IamClientSecret:      IAMClientSecret,
-		},
-		IKSConfig: &config.IKSConfig{
-			Enabled:              true,
-			IKSBlockProviderName: "iks-block",
-		},
-		APIConfig: &config.APIConfig{
-			PassthroughSecret: "",
-		},
-		ServerConfig: &config.ServerConfig{
-			DebugTrace: true,
-		},
-	}
-	// full config struct
-	conf := &config.Config{
-		Server: &config.ServerConfig{
-			DebugTrace: true,
-		},
-		Bluemix: &config.BluemixConfig{
-			IamURL:          IAMURL,
-			IamClientID:     IAMClientID,
-			IamClientSecret: IAMClientSecret,
-			IamAPIKey:       IAMClientSecret,
-			RefreshToken:    RefreshToken,
-		},
-		VPC: &config.VPCProviderConfig{
-			Enabled:              true,
-			VPCBlockProviderName: "vpc-classic",
-			EndpointURL:          TestEndpointURL,
-			VPCTimeout:           "30s",
-			MaxRetryAttempt:      5,
-			MaxRetryGap:          10,
-			APIVersion:           TestAPIVersion,
-		},
-		IKS: &config.IKSConfig{
-			Enabled:              true,
-			IKSBlockProviderName: "iks-block",
-		},
-	}
-
-	// Prepare provider registry
-	k8sClient, _ := k8s_utils.FakeGetk8sClientSet()
-	pwd, err := os.Getwd()
-	if err != nil {
-		logger.Fatal("Failed to get current working directory, test related to read config will fail, error: %v", local.ZapError(err))
-	}
-
-	clusterConfPath := filepath.Join(pwd, "..", "..", "test-fixtures", "valid", "cluster_info", "cluster-config.json")
-	_ = k8s_utils.FakeCreateCM(k8sClient, clusterConfPath)
-
-	secretConfPath := filepath.Join(pwd, "..", "..", "test-fixtures", "slconfig.toml")
-	_ = k8s_utils.FakeCreateSecret(k8sClient, "DEFAULT", secretConfPath)
-	registry, err := provider_util.InitProviders(vpcBlockConfig, &k8sClient, logger)
-	if err != nil {
-		logger.Fatal("Error configuring providers", local.ZapError(err))
-	}
-
-	cloudProvider := &IBMCloudStorageProvider{
-		ProviderName:   "vpc-classic",
-		ProviderConfig: conf,
-		Registry:       registry,
-		ClusterID:      "",
-	}
-	logger.Info("Successfully read provider configuration...")
-	return cloudProvider, nil
 }
 
 // FakeIBMCloudStorageProvider Provider

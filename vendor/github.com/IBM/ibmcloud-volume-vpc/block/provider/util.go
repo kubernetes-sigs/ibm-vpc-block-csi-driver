@@ -43,7 +43,7 @@ var minVPCRetryGapAttempt = 3
 // maxRetryAttempt ...
 var maxVPCRetryAttempt = 46
 
-//ConstantRetryGap ...
+// ConstantRetryGap ...
 const (
 	ConstantRetryGap        = 10 // seconds
 	ConstMaxVPCRetryAttempt = 46
@@ -372,6 +372,7 @@ func FromProviderToLibSnapshot(vpcSnapshot *models.Snapshot, logger *zap.Logger)
 	libSnapshot = &provider.Snapshot{
 		VolumeID:             vpcSnapshot.SourceVolume.ID,
 		SnapshotID:           vpcSnapshot.ID,
+		SnapshotCRN:          vpcSnapshot.CRN,
 		SnapshotCreationTime: createdTime,
 		SnapshotSize:         GiBToBytes(vpcSnapshot.MinimumCapacity),
 		VPC:                  provider.VPC{Href: vpcSnapshot.Href},

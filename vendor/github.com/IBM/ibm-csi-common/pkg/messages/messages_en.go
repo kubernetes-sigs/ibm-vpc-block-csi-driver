@@ -275,6 +275,24 @@ var messagesEn = map[string]Message{
 		Type:        codes.Internal,
 		Action:      "Please check if volume is used by POD properly",
 	},
+	MountingTargetFailed: {
+		Code:        MountingTargetFailed,
+		Description: "Failed to mount target.",
+		Type:        codes.Internal,
+		Action:      "Check node server logs for more details on mount failure.",
+	},
+	UnresponsiveMountHelperContainerUtility: {
+		Code:        UnresponsiveMountHelperContainerUtility,
+		Description: "Failed to mount target because unable to make connection to mount helper container service.",
+		Type:        codes.Unavailable,
+		Action:      "Check if EIT is enabled from storage operator. Run command 'kubectl edit configmap addon-vpc-file-csi-driver-configmap -n kube-system' and set 'ENABLE_EIT' flag to 'true'.",
+	},
+	MetadataServiceNotEnabled: {
+		Code:        MetadataServiceNotEnabled,
+		Description: "Failed to mount target.",
+		Type:        codes.Internal,
+		Action:      "Metadata service might not be enabled for worker node. Make sure to use IKS>=1.30 or ROKS>=4.16 cluster.",
+	},
 	ListVolumesFailed: {
 		Code:        ListVolumesFailed,
 		Description: "Failed to list volumes",
