@@ -28,12 +28,12 @@ import (
 	k8sUtils "github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	nodeInfoManager "github.com/IBM/ibm-csi-common/pkg/metadata"
 	"github.com/IBM/ibm-csi-common/pkg/metrics"
 	mountManager "github.com/IBM/ibm-csi-common/pkg/mountmanager"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 	"github.com/IBM/ibm-csi-common/pkg/watcher"
+	cloudProvider "github.com/IBM/ibmcloud-volume-vpc/pkg/ibmcloudprovider"
 	csiConfig "github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/config"
 	driver "github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/pkg/ibmcsidriver"
 	"go.uber.org/zap"
