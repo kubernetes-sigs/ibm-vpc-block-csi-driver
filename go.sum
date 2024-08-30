@@ -6,12 +6,12 @@ github.com/IBM-Cloud/ibm-cloud-cli-sdk v0.6.7 h1:eHgfQl6IeSmzWUyiSi13CvoFYsovoyq
 github.com/IBM-Cloud/ibm-cloud-cli-sdk v0.6.7/go.mod h1:RiUvKuHKTBmBApDMUQzBL14pQUGKcx/IioKQPIcRQjs=
 github.com/IBM/go-sdk-core/v5 v5.9.1 h1:06pXbD9Rgmqqe2HA5YAeQbB4eYRRFgIoOT+Kh3cp1zo=
 github.com/IBM/go-sdk-core/v5 v5.9.1/go.mod h1:axE2JrRq79gIJTjKPBwV6gWHswvVptBjbcvvCPIxARM=
-github.com/IBM/ibm-csi-common v1.1.11 h1:aFiJj8CQ4XwtDx754lXPXb09JNBnCn6hWrquH9J4orU=
-github.com/IBM/ibm-csi-common v1.1.11/go.mod h1:VwwTbi8obZ8zVX8zmPbbdyox3pvlHBXr7N4P/4nHY2I=
+github.com/IBM/ibm-csi-common v1.1.13 h1:Rkr7CNS9JIfxCUcdtVwvBKjjeqMoJCWgw2jk35wOd/4=
+github.com/IBM/ibm-csi-common v1.1.13/go.mod h1:I9fF6E92ihLP0qcw/Dqid5Zkf137VDP/tPfxGl652Cc=
 github.com/IBM/ibmcloud-volume-interface v1.2.5 h1:k/H9Xgpb5nYULjjs+hIqqfo6W+/3aFK4ljl7nHxBl3Y=
 github.com/IBM/ibmcloud-volume-interface v1.2.5/go.mod h1:PMe4wOp+EEkVNwlo/iJahh+6/aIvjWo+nAdHB1oGBFE=
-github.com/IBM/ibmcloud-volume-vpc v1.1.7 h1:j8X2swP5mDMiLPFZDge3zZwPTHqNQS6apvWaCX0oXas=
-github.com/IBM/ibmcloud-volume-vpc v1.1.7/go.mod h1:BLszLIqjzttg15YEw2JcbdnMUReYm7t+lagmGsUEikQ=
+github.com/IBM/ibmcloud-volume-vpc v1.1.9 h1:IlwJsKVHk5itAKJHXnpRqFP0zjOBTjmdmVHk7AjEOB4=
+github.com/IBM/ibmcloud-volume-vpc v1.1.9/go.mod h1:/bkpz8iasrXqX+9Xcbi0RjzozAsVArFeei46hoSwJUE=
 github.com/IBM/secret-common-lib v1.1.8 h1:FX/fSN108phDwlMF9YhFdVCULTWCcHneeuT+dBH6wnk=
 github.com/IBM/secret-common-lib v1.1.8/go.mod h1:byLkbt2IGQVsomvjrtVazqXrxYgprzu7s3idcr6hCsk=
 github.com/IBM/secret-utils-lib v1.1.8 h1:lepjOeYFFhUvihVIO4oVcL+RQ/vyv866NoUdt3j5Q80=

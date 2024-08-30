@@ -527,7 +527,8 @@ func (csiCS *CSIControllerServer) DeleteSnapshot(ctx context.Context, req *csi.D
 	}
 
 	snapshot := &provider.Snapshot{}
-	snapshot.SnapshotID = snapshotID
+	snapshot.SnapshotID = getSnapshotIDFromCRN(snapshotID)
+
 	err = session.DeleteSnapshot(snapshot)
 	if err != nil {
 		if providerError.RetrivalFailed == providerError.GetErrorType(err) {

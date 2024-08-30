@@ -28,7 +28,9 @@ import (
 	k8sUtils "github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
+	//cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
+	cloudProvider "github.com/IBM/ibmcloud-volume-vpc/pkg/ibmcloudprovider"
+
 	nodeInfoManager "github.com/IBM/ibm-csi-common/pkg/metadata"
 	"github.com/IBM/ibm-csi-common/pkg/metrics"
 	mountManager "github.com/IBM/ibm-csi-common/pkg/mountmanager"
