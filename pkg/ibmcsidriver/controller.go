@@ -527,7 +527,8 @@ func (csiCS *CSIControllerServer) DeleteSnapshot(ctx context.Context, req *csi.D
 	}
 
 	snapshot := &provider.Snapshot{}
-	snapshot.SnapshotID = snapshotID
+	snapshot.SnapshotID = getSnapshotIDFromCRN(snapshotID)
+
 	err = session.DeleteSnapshot(snapshot)
 	if err != nil {
 		if providerError.RetrivalFailed == providerError.GetErrorType(err) {
@@ -670,4 +671,10 @@ func (csiCS *CSIControllerServer) ControllerExpandVolume(ctx context.Context, re
 func (csiCS *CSIControllerServer) ControllerGetVolume(ctx context.Context, req *csi.ControllerGetVolumeRequest) (*csi.ControllerGetVolumeResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	return nil, commonError.GetCSIError(ctxLogger, commonError.MethodUnimplemented, requestID, nil, "ControllerGetVolume")
+}
+
+// ControllerModifyVolume ...
+func (csiCS *CSIControllerServer) ControllerModifyVolume(ctx context.Context, req *csi.ControllerModifyVolumeRequest) (*csi.ControllerModifyVolumeResponse, error) {
+	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
+	return nil, commonError.GetCSIError(ctxLogger, commonError.MethodUnimplemented, requestID, nil, "ControllerModifyVolume")
 }

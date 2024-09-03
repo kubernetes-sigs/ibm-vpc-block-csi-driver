@@ -17,6 +17,7 @@
 // Package models ...
 package models
 
+// VolumeHealthReason...
 type VolumeHealthReason struct {
 	Code     string `json:"code,omitempty"`
 	Message  string `json:"message,omitempty"`

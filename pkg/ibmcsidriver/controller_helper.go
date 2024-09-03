@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The Kubernetes Authors.
+Copyright 2024 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -461,12 +461,21 @@ func createCSIVolumeResponse(vol provider.Volume, capBytes int64, zones []string
 	return volResp
 }
 
+// getSnapshotIDFromCRN ...
+func getSnapshotIDFromCRN(crn string) string {
+	// This method will be able to handle either crn is actual crn or caller passed snapshot ID also
+	// expected CRN -> crn:v1:service:public:is:us-south:a/c468d8642937fecd8a0860fe0f379bf9::snapshot:r006-1234fe0c-3d9b-4c95-a6d1-8e0d4bcb6ecb
+	// or crn passed as sanpshotID like r006-1234fe0c-3d9b-4c95-a6d1-8e0d4bcb6ecb
+	crnParts := strings.Split(crn, ":")
+	return crnParts[len(crnParts)-1]
+}
+
 // createCSISnapshotResponse ...
 func createCSISnapshotResponse(snapshot provider.Snapshot) *csi.CreateSnapshotResponse {
 	ts := timestamppb.New(snapshot.SnapshotCreationTime)
 	return &csi.CreateSnapshotResponse{
 		Snapshot: &csi.Snapshot{
-			SnapshotId:     snapshot.SnapshotID,
+			SnapshotId:     snapshot.SnapshotCRN,
 			SourceVolumeId: snapshot.VolumeID,
 			SizeBytes:      snapshot.SnapshotSize,
 			CreationTime:   ts,

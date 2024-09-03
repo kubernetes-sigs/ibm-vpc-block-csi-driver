@@ -1000,7 +1000,7 @@ func TestCreateSnapshot(t *testing.T) {
 			},
 			expResponse: &csi.CreateSnapshotResponse{
 				Snapshot: &csi.Snapshot{
-					SnapshotId:     "snap-id",
+					SnapshotId:     "crn://accountid:vpc snapshot service/snapshotid", //"snap-id",
 					SourceVolumeId: "testVolumeId",
 					SizeBytes:      stdCapRange.RequiredBytes,
 					ReadyToUse:     false,
@@ -1009,7 +1009,7 @@ func TestCreateSnapshot(t *testing.T) {
 			},
 			expErrCode: codes.OK,
 			libSnapshotResponse: &provider.Snapshot{
-				SnapshotID:           "snap-id",
+				SnapshotCRN:          "crn://accountid:vpc snapshot service/snapshotid",
 				VolumeID:             "testVolumeId",
 				SnapshotSize:         stdCapRange.RequiredBytes,
 				ReadyToUse:           false,
@@ -1060,7 +1060,7 @@ func TestCreateSnapshot(t *testing.T) {
 			},
 			expResponse: &csi.CreateSnapshotResponse{
 				Snapshot: &csi.Snapshot{
-					SnapshotId:     "snap-id",
+					SnapshotId:     "crn://accountid:vpc snapshot service/snapshotid",
 					SourceVolumeId: "testVolumeId",
 					SizeBytes:      stdCapRange.RequiredBytes,
 					ReadyToUse:     false,
@@ -1069,7 +1069,7 @@ func TestCreateSnapshot(t *testing.T) {
 			},
 			expErrCode: codes.OK,
 			libSnapshotByNameResponse: &provider.Snapshot{
-				SnapshotID:           "snap-id",
+				SnapshotCRN:          "crn://accountid:vpc snapshot service/snapshotid",
 				VolumeID:             "testVolumeId",
 				SnapshotSize:         stdCapRange.RequiredBytes,
 				ReadyToUse:           false,
