@@ -22,13 +22,17 @@ import (
 
 	mount "k8s.io/mount-utils"
 	exec "k8s.io/utils/exec"
-	testExec "k8s.io/utils/exec/testing"
 	testingexec "k8s.io/utils/exec/testing"
 )
 
 // FakeNodeMounter ...
 type FakeNodeMounter struct {
 	*mount.SafeFormatAndMount
+}
+
+// MountEITBasedFileShare implements Mounter.
+func (*FakeNodeMounter) MountEITBasedFileShare(mountPath string, targetPath string, fsType string, requestID string) (string, error) {
+	return "", nil
 }
 
 // NewFakeNodeMounter ...
@@ -50,7 +54,7 @@ func NewFakeSafeMounter() *mount.SafeFormatAndMount {
 	}},
 	}
 
-	var fakeExec exec.Interface = &testExec.FakeExec{
+	var fakeExec exec.Interface = &testingexec.FakeExec{
 		DisableScripts: true,
 	}
 
@@ -90,6 +94,11 @@ func (f *FakeNodeMounter) GetSafeFormatAndMount() *mount.SafeFormatAndMount {
 type FakeNodeMounterWithCustomActions struct {
 	*mount.SafeFormatAndMount
 	actionList []testingexec.FakeCommandAction
+}
+
+// MountEITBasedFileShare implements Mounter.
+func (*FakeNodeMounterWithCustomActions) MountEITBasedFileShare(mountPath string, targetPath string, fsType string, requestID string) (string, error) {
+	return "", nil
 }
 
 // NewFakeNodeMounterWithCustomActions ...

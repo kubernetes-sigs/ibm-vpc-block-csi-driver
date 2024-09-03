@@ -32,7 +32,8 @@ type handler interface {
 }
 
 // SessionClient provides an interface for a REST API client
-// go:generate counterfeiter -o fakes/client.go --fake-name SessionClient . SessionClient
+//
+//go:generate counterfeiter -o fakes/client.go --fake-name SessionClient . SessionClient
 type SessionClient interface {
 	NewRequest(operation *Operation) *Request
 	WithDebug(writer io.Writer) SessionClient
