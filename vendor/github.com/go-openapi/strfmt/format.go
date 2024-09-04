@@ -16,6 +16,7 @@ package strfmt
 
 import (
 	"encoding"
+	stderrors "errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -76,6 +77,7 @@ type defaultFormats struct {
 
 // NewFormats creates a new formats registry seeded with the values from the default
 func NewFormats() Registry {
+	//nolint:forcetypeassert
 	return NewSeededFormats(Default.(*defaultFormats).data, nil)
 }
 
@@ -93,7 +95,7 @@ func NewSeededFormats(seeds []knownFormat, normalizer NameNormalizer) Registry {
 }
 
 // MapStructureHookFunc is a decode hook function for mapstructure
-func (f *defaultFormats) MapStructureHookFunc() mapstructure.DecodeHookFunc { //nolint:gocyclo,cyclop
+func (f *defaultFormats) MapStructureHookFunc() mapstructure.DecodeHookFunc {
 	return func(from reflect.Type, to reflect.Type, obj interface{}) (interface{}, error) {
 		if from.Kind() != reflect.String {
 			return obj, nil
@@ -108,7 +110,7 @@ func (f *defaultFormats) MapStructureHookFunc() mapstructure.DecodeHookFunc { //
 			if to == tpe {
 				switch v.Name {
 				case "date":
-					d, err := time.Parse(RFC3339FullDate, data)
+					d, err := time.ParseInLocation(RFC3339FullDate, data, DefaultTimeLocation)
 					if err != nil {
 						return nil, err
 					}
@@ -116,7 +118,7 @@ func (f *defaultFormats) MapStructureHookFunc() mapstructure.DecodeHookFunc { //
 				case "datetime":
 					input := data
 					if len(input) == 0 {
-						return nil, fmt.Errorf("empty string is an invalid datetime format")
+						return nil, stderrors.New("empty string is an invalid datetime format")
 					}
 					return ParseDateTime(input)
 				case "duration":

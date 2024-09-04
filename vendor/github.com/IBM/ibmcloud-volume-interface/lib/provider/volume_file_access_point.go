@@ -78,8 +78,8 @@ type VolumeAccessPointRequest struct {
 	//ResourceGroup for ENI
 	ResourceGroup *ResourceGroup `json:"resource_group,omitempty"`
 
-	//EncryptionInTransit
-	EncryptionInTransit string `json:"transit_encryption,omitempty"`
+	//TransitEncryption
+	TransitEncryption string `json:"transit_encryption,omitempty"`
 }
 
 // VolumeAccessPointResponse used for both delete and create access point

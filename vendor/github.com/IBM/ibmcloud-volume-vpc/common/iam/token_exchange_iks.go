@@ -61,6 +61,10 @@ func NewTokenExchangeIKSService(iksAuthConfig *IksAuthConfiguration, k8sClient *
 		secret_provider.ProviderType: secret_provider.VPC,
 	}
 	spObject, err := secret_provider.NewSecretProvider(k8sClient, providerType)
+	if err != nil {
+		return nil, err
+	}
+
 	return &tokenExchangeIKSService{
 		iksAuthConfig: iksAuthConfig,
 		httpClient:    httpClient,

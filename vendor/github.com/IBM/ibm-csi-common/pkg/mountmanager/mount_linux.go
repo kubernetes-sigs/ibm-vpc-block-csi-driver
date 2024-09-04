@@ -21,10 +21,41 @@
 package mountmanager
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net"
+	"net/http"
 	"os"
+	"strings"
+	"time"
 
 	mount "k8s.io/mount-utils"
 )
+
+const (
+	//socket path
+	defaultSocketPath = "/tmp/mysocket.sock"
+	// mount url
+	urlMountPath = "http://unix/api/mount"
+	// debug url
+	urlDebugPath = "http://unix/api/debugLogs"
+	// http timeout
+	timeout = 3 * time.Minute
+)
+
+// MountEITBasedFileShare mounts EIT based FileShare on host system
+func (m *NodeMounter) MountEITBasedFileShare(mountPath string, targetPath string, fsType string, requestID string) (string, error) {
+	// Create payload
+	payload := fmt.Sprintf(`{"mountPath":"%s","targetPath":"%s","fsType":"%s","requestID":"%s"}`, mountPath, targetPath, fsType, requestID)
+	errResponse, err := createMountHelperContainerRequest(payload, urlMountPath)
+
+	if err != nil {
+		return errResponse, err
+	}
+	return "", nil
+}
 
 // MakeFile creates an empty file.
 func (m *NodeMounter) MakeFile(path string) error {
@@ -74,4 +105,56 @@ func (m *NodeMounter) Resize(devicePath string, deviceMountPath string) (bool, e
 		}
 	}
 	return true, nil
+}
+
+// createMountHelperContainerRequest creates a request to mount-helper-container server over UNIX socket and returns errors if any.
+func createMountHelperContainerRequest(payload string, url string) (string, error) {
+	// Get socket path
+	socketPath := os.Getenv("SOCKET_PATH")
+	if socketPath == "" {
+		socketPath = defaultSocketPath
+	}
+	// Create a custom dialer function for Unix socket connection
+	dialer := func(ctx context.Context, network, addr string) (net.Conn, error) {
+		return net.Dial("unix", socketPath)
+	}
+
+	// Create an HTTP client with the Unix socket transport
+	client := &http.Client{
+		Transport: &http.Transport{
+			DialContext: dialer,
+		},
+		Timeout: timeout,
+	}
+
+	//Create POST request
+	req, err := http.NewRequest("POST", url, strings.NewReader(payload))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	response, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
+
+	// Unmarshell json response
+	var responseBody struct {
+		MountExitCode   string `json:"MountExitCode"`
+		ExitDescription string `json:"Description"`
+	}
+	err = json.Unmarshal(body, &responseBody)
+	if err != nil {
+		return "", err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return responseBody.ExitDescription, fmt.Errorf("Response from mount-helper-container -> Exit Status Code: %s ,ResponseCode: %v", responseBody.MountExitCode, response.StatusCode)
+	}
+	return "", nil
 }

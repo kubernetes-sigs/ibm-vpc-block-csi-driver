@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The Kubernetes Authors.
+Copyright 2024 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -312,11 +312,11 @@ func (c *fakeProviderSession) CreateVolume(volumeRequest provider.Volume) (*prov
 	}
 	fakeVolume := &fakeVolume{
 		Volume: &provider.Volume{
-			VolumeID:   fmt.Sprintf("vol-uuid-test-vol-%s", uuid.New().String()[:10]),
-			Name:       volumeRequest.Name,
-			Region:     volumeRequest.Region,
-			Capacity:   volumeRequest.Capacity,
-			SnapshotID: volumeRequest.SnapshotID,
+			VolumeID: fmt.Sprintf("vol-uuid-test-vol-%s", uuid.New().String()[:10]),
+			Name:     volumeRequest.Name,
+			Region:   volumeRequest.Region,
+			Capacity: volumeRequest.Capacity,
+			Snapshot: provider.Snapshot{SnapshotID: volumeRequest.SnapshotID},
 		},
 	}
 

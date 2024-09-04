@@ -60,8 +60,10 @@ func (vpcs *VPCSession) CreateVolume(volumeRequest provider.Volume) (volumeRespo
 			Name: volumeRequest.Az,
 		},
 	}
-	// adding snapshot ID in the request if it is provided to create the volume from snapshot
-	if len(volumeRequest.SnapshotID) > 0 {
+	// adding snapshot CRN and ID in the request, if it is provided to create the volume from snapshot
+	if len(volumeRequest.SnapshotCRN) > 0 {
+		volumeTemplate.SourceSnapshot = &models.Snapshot{CRN: volumeRequest.SnapshotCRN}
+	} else if len(volumeRequest.SnapshotID) > 0 { // This is for backward compatibility
 		volumeTemplate.SourceSnapshot = &models.Snapshot{ID: volumeRequest.SnapshotID}
 	}
 
