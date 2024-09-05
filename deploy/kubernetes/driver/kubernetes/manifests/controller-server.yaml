@@ -26,6 +26,7 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 2121
+        runAsGroup: 2121
       containers:
         - name: csi-snapshotter
           image: MUSTPATCHWITHKUSTOMIZE
