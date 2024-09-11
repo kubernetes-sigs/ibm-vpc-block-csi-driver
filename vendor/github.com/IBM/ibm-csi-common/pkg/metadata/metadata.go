@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 IBM Corp.
+ * Copyright 2024 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,16 +39,19 @@ type NodeMetadata interface {
 
 	// GetWorkerID ...
 	GetWorkerID() string
+
+	// GetAccountID ... get node's account ID
+	GetAccountID() string
 }
 
 type nodeMetadataManager struct {
 	zone     string
 	region   string
 	workerID string
+	accountID string
 }
 
 // NodeInfo ...
-//
 //go:generate counterfeiter -o fake/fake_node_info.go --fake-name FakeNodeInfo . NodeInfo
 type NodeInfo interface {
 	NewNodeMetadata(logger *zap.Logger) (NodeMetadata, error)
@@ -84,15 +87,15 @@ func (nodeManager *NodeInfoManager) NewNodeMetadata(logger *zap.Logger) (NodeMet
 		return nil, errorMsg
 	}
 
-	var workerID string
+	var workerID, accountID string
 
 	// If the cluster is satellite, the machine-type label equals to UPI
 	if nodeLabels[utils.MachineTypeLabel] == utils.UPI {
 		// For a satellite cluster, workerID is fetched from vpc-instance-id node label, which is updated by the vpc-node-label-updater (init container)
 		workerID = nodeLabels[utils.NodeInstanceIDLabel]
 	} else {
-		// For managed and IPI cluster, workerID is fetched from the ProviderID in node spec.
-		workerID = fetchInstanceID(node.Spec.ProviderID)
+		// For managed and IPI cluster, workerID and accountID is fetched from the ProviderID in node spec.
+		workerID, accountID = fetchInstanceAndAccountID(node.Spec.ProviderID)
 		if workerID == "" {
 			return nil, fmt.Errorf("Unable to fetch instance ID from node provider ID - %s", node.Spec.ProviderID)
 		}
@@ -102,6 +105,7 @@ func (nodeManager *NodeInfoManager) NewNodeMetadata(logger *zap.Logger) (NodeMet
 		zone:     nodeLabels[utils.NodeZoneLabel],
 		region:   nodeLabels[utils.NodeRegionLabel],
 		workerID: workerID,
+		accountID: accountID,
 	}, nil
 }
 
@@ -117,12 +121,16 @@ func (manager *nodeMetadataManager) GetWorkerID() string {
 	return manager.workerID
 }
 
-// fetchInstanceID fetches instance ID from the provider ID in node spec.
-func fetchInstanceID(providerID string) string {
+func (manager *nodeMetadataManager) GetAccountID() string {
+	return manager.accountID
+}
+
+// fetchInstanceAndAccountID fetches instance and account ID from the provider ID in node spec.
+func fetchInstanceAndAccountID(providerID string) (string, string) {
 	s := strings.Split(providerID, "/")
 	if len(s) != 7 {
-		return ""
+		return "", ""
 	}
 
-	return s[6]
+	return s[6], s[2]
 }
