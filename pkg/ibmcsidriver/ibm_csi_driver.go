@@ -35,6 +35,7 @@ type IBMCSIDriver struct {
 	vendorVersion string
 	logger        *zap.Logger
 	region        string
+	accountID     string
 	ids           *CSIIdentityServer
 	ns            *CSINodeServer
 	cs            *CSIControllerServer
@@ -111,6 +112,7 @@ func (icDriver *IBMCSIDriver) SetupIBMCSIDriver(provider cloudProvider.CloudProv
 		return fmt.Errorf("Controller_Helper: Failed to initialize node metadata: error: %v", err)
 	}
 	icDriver.region = regionMetadata.GetRegion()
+	icDriver.accountID = regionMetadata.GetAccountID()
 
 	return nil
 }
