@@ -591,7 +591,7 @@ func (csiCS *CSIControllerServer) ListSnapshots(ctx context.Context, req *csi.Li
 		}, nil
 	}
 
-	maxEntries := int(req.MaxEntries)
+	maxEntries := int(req.MaxEntries) //nolint
 	tags := map[string]string{}
 	sourceVolumeID := req.GetSourceVolumeId()
 	if len(sourceVolumeID) != 0 {
