@@ -563,35 +563,41 @@ func (csiCS *CSIControllerServer) ListSnapshots(ctx context.Context, req *csi.Li
 	snapshotID := req.GetSnapshotId()
 	snapID, snapshotAccountID := getSnapshotAndAccountIDsFromCRN(snapshotID)
 
+	ctxLogger.Info("*****************************************", zap.Reflect("Node-ACCOUNTID", csiCS.Driver.accountID), zap.Reflect("SNAPHSOTID", snapshotAccountID))
+
 	if len(snapID) != 0 && csiCS.Driver.accountID == snapshotAccountID { // in case snapshotID's account and cluster account ID is same
-		snapshot, err := session.GetSnapshot(snapID)
-		if snapshot == nil {
-			return &csi.ListSnapshotsResponse{}, nil
+		if csiCS.Driver.accountID == snapshotAccountID {
+			snapshot, err := session.GetSnapshot(snapID)
+			if snapshot == nil {
+				return &csi.ListSnapshotsResponse{}, nil
+			}
+			if providerError.RetrivalFailed == providerError.GetErrorType(err) {
+				ctxLogger.Info("Snapshot not found. Returning success ...")
+				return &csi.ListSnapshotsResponse{}, nil
+			}
+			return &csi.ListSnapshotsResponse{
+				Entries: append(entries, &csi.ListSnapshotsResponse_Entry{
+					Snapshot: createCSISnapshotResponse(*snapshot).Snapshot,
+				}),
+				NextToken: "",
+			}, nil
+		} else { // In case of cross account volume snapshot
+			return &csi.ListSnapshotsResponse{
+				Entries: append(entries, &csi.ListSnapshotsResponse_Entry{
+					Snapshot: &csi.Snapshot{
+						SnapshotId:     snapshotID,
+						SourceVolumeId: "",
+						ReadyToUse:     true,
+					},
+				}),
+				NextToken: "",
+			}, nil
 		}
-		if providerError.RetrivalFailed == providerError.GetErrorType(err) {
-			ctxLogger.Info("Snapshot not found. Returning success ...")
-			return &csi.ListSnapshotsResponse{}, nil
-		}
-		return &csi.ListSnapshotsResponse{
-			Entries: append(entries, &csi.ListSnapshotsResponse_Entry{
-				Snapshot: createCSISnapshotResponse(*snapshot).Snapshot,
-			}),
-			NextToken: "",
-		}, nil
-	} else { // in case of cross account snapshot restore
-		return &csi.ListSnapshotsResponse{
-			Entries: append(entries, &csi.ListSnapshotsResponse_Entry{
-				Snapshot: &csi.Snapshot{
-					SnapshotId:     snapshotID,
-					SourceVolumeId: "",
-					ReadyToUse:     true,
-				},
-			}),
-			NextToken: "",
-		}, nil
+
 	}
 
-	maxEntries := int(req.MaxEntries) //nolint
+	maxEntries := int(req.GetMaxEntries())
+	ctxLogger.Info("******************************", zap.Reflect("SanpshotMAXENTRIES", req.GetMaxEntries()))
 	tags := map[string]string{}
 	sourceVolumeID := req.GetSourceVolumeId()
 	if len(sourceVolumeID) != 0 {
