@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The Kubernetes Authors.
+Copyright 2024 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -527,7 +527,7 @@ func (csiCS *CSIControllerServer) DeleteSnapshot(ctx context.Context, req *csi.D
 	}
 
 	snapshot := &provider.Snapshot{}
-	snapshot.SnapshotID = getSnapshotIDFromCRN(snapshotID)
+	snapshot.SnapshotID, _ = getSnapshotAndAccountIDsFromCRN(snapshotID)
 
 	err = session.DeleteSnapshot(snapshot)
 	if err != nil {
@@ -561,24 +561,39 @@ func (csiCS *CSIControllerServer) ListSnapshots(ctx context.Context, req *csi.Li
 
 	entries := []*csi.ListSnapshotsResponse_Entry{}
 	snapshotID := req.GetSnapshotId()
-	if len(snapshotID) != 0 {
-		snapshot, err := session.GetSnapshot(snapshotID)
-		if snapshot == nil {
-			return &csi.ListSnapshotsResponse{}, nil
+	snapID, snapshotAccountID := getSnapshotAndAccountIDsFromCRN(snapshotID)
+	if len(snapID) != 0 {
+		if csiCS.Driver.accountID == snapshotAccountID { // in case snapshotID's account and cluster account ID is same
+			snapshot, err := session.GetSnapshot(snapID)
+			if snapshot == nil {
+				return &csi.ListSnapshotsResponse{}, nil
+			}
+			if providerError.RetrivalFailed == providerError.GetErrorType(err) {
+				ctxLogger.Info("Snapshot not found. Returning success ...")
+				return &csi.ListSnapshotsResponse{}, nil
+			}
+			return &csi.ListSnapshotsResponse{
+				Entries: append(entries, &csi.ListSnapshotsResponse_Entry{
+					Snapshot: createCSISnapshotResponse(*snapshot).Snapshot,
+				}),
+				NextToken: "",
+			}, nil
+		} else { // In case of cross account volume snapshot
+			return &csi.ListSnapshotsResponse{
+				Entries: append(entries, &csi.ListSnapshotsResponse_Entry{
+					Snapshot: &csi.Snapshot{
+						SnapshotId:     snapshotID,
+						SourceVolumeId: "",
+						ReadyToUse:     true,
+					},
+				}),
+				NextToken: "",
+			}, nil
 		}
-		if providerError.RetrivalFailed == providerError.GetErrorType(err) {
-			ctxLogger.Info("Snapshot not found. Returning success ...")
-			return &csi.ListSnapshotsResponse{}, nil
-		}
-		return &csi.ListSnapshotsResponse{
-			Entries: append(entries, &csi.ListSnapshotsResponse_Entry{
-				Snapshot: createCSISnapshotResponse(*snapshot).Snapshot,
-			}),
-			NextToken: "",
-		}, nil
+
 	}
 
-	maxEntries := int(req.MaxEntries)
+	maxEntries := int(req.GetMaxEntries())
 	tags := map[string]string{}
 	sourceVolumeID := req.GetSourceVolumeId()
 	if len(sourceVolumeID) != 0 {

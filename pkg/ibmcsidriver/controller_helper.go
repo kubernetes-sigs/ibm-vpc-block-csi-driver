@@ -461,13 +461,28 @@ func createCSIVolumeResponse(vol provider.Volume, capBytes int64, zones []string
 	return volResp
 }
 
-// getSnapshotIDFromCRN ...
-func getSnapshotIDFromCRN(crn string) string {
+// getAccountID ...
+func getAccountID(input string) string {
+	tokens := strings.Split(input, "/")
+
+	if len(tokens) > 1 {
+		return tokens[1]
+	} else {
+		return ""
+	}
+}
+
+// getSnapshotAndAccountIDsFromCRN ...
+func getSnapshotAndAccountIDsFromCRN(crn string) (string, string) {
 	// This method will be able to handle either crn is actual crn or caller passed snapshot ID also
 	// expected CRN -> crn:v1:service:public:is:us-south:a/c468d8642937fecd8a0860fe0f379bf9::snapshot:r006-1234fe0c-3d9b-4c95-a6d1-8e0d4bcb6ecb
 	// or crn passed as sanpshotID like r006-1234fe0c-3d9b-4c95-a6d1-8e0d4bcb6ecb
-	crnParts := strings.Split(crn, ":")
-	return crnParts[len(crnParts)-1]
+	crnTokens := strings.Split(crn, ":")
+
+	if len(crnTokens) > 9 {
+		return crnTokens[len(crnTokens)-1], getAccountID(crnTokens[len(crnTokens)-4])
+	}
+	return crn, "" // assuming that crn will contain only snapshotID
 }
 
 // createCSISnapshotResponse ...
