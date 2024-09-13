@@ -1474,6 +1474,14 @@ func TestListSnapshots(t *testing.T) {
 			expErrCode:        codes.OK,
 			libSnapshotError:  nil,
 		},
+		{
+			name:              "List snapshot with snapshotID as CRN",
+			snapshotID:        "crn:v1:staging:public:is:us-south:a/77f2bcedd73fe82c1c::snapshot:r134-1ad4-4852-b24a-b65050e42429",
+			expectedEntries:   1,
+			libGetSnapshotErr: false,
+			expErrCode:        codes.OK,
+			libSnapshotError:  nil,
+		},
 	}
 	timeNow := time.Now()
 	// Creating test logger

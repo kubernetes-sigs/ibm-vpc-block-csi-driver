@@ -472,7 +472,7 @@ func getAccountID(input string) string {
 	}
 }
 
-// getSnapshotIDFromCRN ...
+// getSnapshotAndAccountIDsFromCRN ...
 func getSnapshotAndAccountIDsFromCRN(crn string) (string, string) {
 	// This method will be able to handle either crn is actual crn or caller passed snapshot ID also
 	// expected CRN -> crn:v1:service:public:is:us-south:a/c468d8642937fecd8a0860fe0f379bf9::snapshot:r006-1234fe0c-3d9b-4c95-a6d1-8e0d4bcb6ecb

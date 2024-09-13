@@ -562,11 +562,8 @@ func (csiCS *CSIControllerServer) ListSnapshots(ctx context.Context, req *csi.Li
 	entries := []*csi.ListSnapshotsResponse_Entry{}
 	snapshotID := req.GetSnapshotId()
 	snapID, snapshotAccountID := getSnapshotAndAccountIDsFromCRN(snapshotID)
-
-	ctxLogger.Info("*****************************************", zap.Reflect("Node-ACCOUNTID", csiCS.Driver.accountID), zap.Reflect("SNAPHSOTID", snapshotAccountID))
-
-	if len(snapID) != 0 && csiCS.Driver.accountID == snapshotAccountID { // in case snapshotID's account and cluster account ID is same
-		if csiCS.Driver.accountID == snapshotAccountID {
+	if len(snapID) != 0 {
+		if csiCS.Driver.accountID == snapshotAccountID { // in case snapshotID's account and cluster account ID is same
 			snapshot, err := session.GetSnapshot(snapID)
 			if snapshot == nil {
 				return &csi.ListSnapshotsResponse{}, nil
@@ -597,7 +594,6 @@ func (csiCS *CSIControllerServer) ListSnapshots(ctx context.Context, req *csi.Li
 	}
 
 	maxEntries := int(req.GetMaxEntries())
-	ctxLogger.Info("******************************", zap.Reflect("SanpshotMAXENTRIES", req.GetMaxEntries()))
 	tags := map[string]string{}
 	sourceVolumeID := req.GetSourceVolumeId()
 	if len(sourceVolumeID) != 0 {
