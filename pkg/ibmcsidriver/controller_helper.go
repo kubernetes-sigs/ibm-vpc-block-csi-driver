@@ -48,6 +48,10 @@ var customCapacityIopsRanges = []classRange{
 	{100, 499, 100, 6000},
 	{500, 999, 100, 10000},
 	{1000, 1999, 100, 20000},
+	{2000, 3999, 200, 40000},
+	{4000, 7999, 300, 40000},
+	{8000, 9999, 500, 48000},
+	{10000, 16000, 1000, 48000},
 }
 
 // normalize the requested capacity(in GiB) to what is supported by the driver
