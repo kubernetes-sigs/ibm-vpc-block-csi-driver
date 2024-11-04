@@ -24,7 +24,7 @@ const (
 	// MinimumVolumeSizeInBytes minimum size of the volume in bytes
 	MinimumVolumeSizeInBytes int64 = 10 * GiB
 	// MaximumVolumeSizeInBytes the max allowed capacity
-	MaximumVolumeSizeInBytes int64 = 2 * 1024 * GiB //2000GB = 2TB
+	MaximumVolumeSizeInBytes int64 = 16 * 1024 * GiB //16000GB = 16TB
 
 	// MinimumVolumeDiskSizeInGb minimum size of the volume in GB
 	MinimumVolumeDiskSizeInGb = 10
