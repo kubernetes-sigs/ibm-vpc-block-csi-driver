@@ -84,4 +84,7 @@ const (
 
 	// ConfigFileName ...
 	ConfigFileName = "slclient.toml"
+
+	// MaximumBlockVolumeDiskSizeInGb ...
+	MaximumBlockVolumeDiskSizeInGb = 16000
 )

@@ -48,6 +48,10 @@ var customCapacityIopsRanges = []classRange{
 	{100, 499, 100, 6000},
 	{500, 999, 100, 10000},
 	{1000, 1999, 100, 20000},
+	{2000, 3999, 200, 40000},
+	{4000, 7999, 300, 40000},
+	{8000, 9999, 500, 48000},
+	{10000, 16000, 1000, 48000},
 }
 
 // normalize the requested capacity(in GiB) to what is supported by the driver
@@ -278,7 +282,7 @@ func isValidCapacityIOPS4CustomClass(size int, iops int) (bool, error) {
 
 	if ind < 0 {
 		return false, fmt.Errorf("invalid PVC size for custom class: <%v>. Should be in range [%d - %d]GiB",
-			size, utils.MinimumVolumeDiskSizeInGb, utils.MaximumVolumeDiskSizeInGb)
+			size, utils.MinimumVolumeDiskSizeInGb, utils.MaximumBlockVolumeDiskSizeInGb)
 	}
 
 	if iops < customCapacityIopsRanges[ind].minIops || iops > customCapacityIopsRanges[ind].maxIops {
