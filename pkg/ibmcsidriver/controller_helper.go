@@ -282,7 +282,7 @@ func isValidCapacityIOPS4CustomClass(size int, iops int) (bool, error) {
 
 	if ind < 0 {
 		return false, fmt.Errorf("invalid PVC size for custom class: <%v>. Should be in range [%d - %d]GiB",
-			size, utils.MinimumVolumeDiskSizeInGb, utils.MaximumBlockVolumeDiskSizeInGb)
+			size, MinimumBlockVolumeDiskSizeInGb, MaximumBlockVolumeDiskSizeInGb)
 	}
 
 	if iops < customCapacityIopsRanges[ind].minIops || iops > customCapacityIopsRanges[ind].maxIops {
