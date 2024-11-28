@@ -84,5 +84,4 @@ const (
 
 	// ConfigFileName ...
 	ConfigFileName = "slclient.toml"
-
 )
