@@ -65,6 +65,9 @@ const (
 	// CustomProfile ...
 	CustomProfile = "custom"
 
+	// SDPProfile ...
+	SDPProfile = "sdp"
+
 	// ClassVersion ...
 	ClassVersion = "classVersion"
 
@@ -127,4 +130,4 @@ const (
 var SupportedFS = []string{"ext2", "ext3", "ext4", "xfs"}
 
 // SupportedProfile the supported profile names
-var SupportedProfile = []string{"custom", "general-purpose", "5iops-tier", "10iops-tier"}
+var SupportedProfile = []string{"custom", "general-purpose", "5iops-tier", "10iops-tier", "sdp"}

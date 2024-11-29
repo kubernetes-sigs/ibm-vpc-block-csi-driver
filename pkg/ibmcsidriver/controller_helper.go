@@ -246,8 +246,8 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 		return volume, err
 	}
 
-	if volume.VPCVolume.Profile != nil && volume.VPCVolume.Profile.Name != CustomProfile {
-		// Specify IOPS only for custom class
+	if volume.VPCVolume.Profile != nil && (volume.VPCVolume.Profile.Name != CustomProfile && volume.VPCVolume.Profile.Name != SDPProfile) {
+		// Specify IOPS only for custom and sdp class
 		volume.Iops = nil
 	}
 
@@ -342,19 +342,25 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 				volume.Region = value
 			}
 		case IOPS:
-			// Override IOPS only for custom class
-			if volume.Capacity != nil && volume.VPCVolume.Profile != nil && volume.VPCVolume.Profile.Name == "custom" {
-				var iops int
-				var check bool
-				iops, err = strconv.Atoi(value)
-				if err != nil {
-					err = fmt.Errorf("%v:<%v> invalid value", key, value)
-				} else {
-					if check, err = isValidCapacityIOPS4CustomClass(*(volume.Capacity), iops); check {
-						iopsStr := value
-						logger.Info("override", zap.Any(IOPS, value))
-						volume.Iops = &iopsStr
+			// Override IOPS only for custom or sdp class
+			if volume.Capacity != nil && volume.VPCVolume.Profile != nil {
+				if volume.VPCVolume.Profile.Name == CustomProfile {
+					var iops int
+					var check bool
+					iops, err = strconv.Atoi(value)
+					if err != nil {
+						err = fmt.Errorf("%v:<%v> invalid value", key, value)
+					} else {
+						if check, err = isValidCapacityIOPS4CustomClass(*(volume.Capacity), iops); check {
+							iopsStr := value
+							logger.Info("override", zap.Any(IOPS, value))
+							volume.Iops = &iopsStr
+						}
 					}
+				}
+				if volume.VPCVolume.Profile.Name == SDPProfile {
+					iops := value
+					volume.Iops = &iops
 				}
 			}
 		default:
