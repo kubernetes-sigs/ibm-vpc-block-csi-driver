@@ -121,12 +121,6 @@ const (
 
 	// MAX_SNAPSHOT_CREATE_DELAY ... This is max timeout value for csi-snapshotter
 	MAX_SNAPSHOT_CREATE_DELAY = 900 //900 seconds
-
-	// MaximumBlockVolumeDiskSizeInGb maximum size of the volume in GB ...
-	MaximumBlockVolumeDiskSizeInGb = 16000
-
-	// // MinimumBlockVolumeDiskSizeInGb minimum size of the volume in GB ...
-	MinimumBlockVolumeDiskSizeInGb = 10
 )
 
 // SupportedFS the supported FS types
