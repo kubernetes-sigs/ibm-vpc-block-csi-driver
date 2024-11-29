@@ -350,25 +350,9 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 			}
 		case IOPS:
 			// Override IOPS only for custom or sdp class
-			if volume.Capacity != nil && volume.VPCVolume.Profile != nil {
-				if volume.VPCVolume.Profile.Name == CustomProfile {
-					var iops int
-					var check bool
-					iops, err = strconv.Atoi(value)
-					if err != nil {
-						err = fmt.Errorf("%v:<%v> invalid value", key, value)
-					} else {
-						if check, err = isValidCapacityIOPS4CustomClass(*(volume.Capacity), iops); check {
-							iopsStr := value
-							logger.Info("override", zap.Any(IOPS, value))
-							volume.Iops = &iopsStr
-						}
-					}
-				}
-				if volume.VPCVolume.Profile.Name == SDPProfile {
-					iops := value
-					volume.Iops = &iops
-				}
+			if len(value) != 0 {
+				iops := value
+				volume.Iops = &iops
 			}
 		default:
 			err = fmt.Errorf("<%s> is an invalid parameter", key)
