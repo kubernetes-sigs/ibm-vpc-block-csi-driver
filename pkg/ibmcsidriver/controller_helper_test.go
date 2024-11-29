@@ -363,55 +363,11 @@ func TestGetVolumeParameters(t *testing.T) {
 	}
 }
 
-func TestIsValidCapacityIOPS4CustomClass(t *testing.T) {
-	testCases := []struct {
-		testCaseName   string
-		requestSize    int
-		requestIops    int
-		expectedStatus bool
-		expectedError  error
-	}{
-		{
-			testCaseName:   "Valid capacity IOPS",
-			requestSize:    20,
-			requestIops:    110,
-			expectedStatus: true,
-			expectedError:  nil,
-		},
-		{
-			testCaseName:   "Invalid capacity",
-			requestSize:    5,
-			requestIops:    110,
-			expectedStatus: false,
-			expectedError:  fmt.Errorf("invalid PVC size for custom class: <%v>. Should be in range [%d - %d]GiB", 5, utils.MinimumVolumeDiskSizeInGb, utils.MaximumVolumeDiskSizeInGb),
-		},
-		{
-			testCaseName:   "Invalid IOPS",
-			requestSize:    20,
-			requestIops:    5,
-			expectedStatus: false,
-			expectedError:  fmt.Errorf("invalid IOPS: <%v> for capacity: <%vGiB>. Should be in range [%d - %d]", 5, 20, customCapacityIopsRanges[0].minIops, customCapacityIopsRanges[0].maxIops),
-		},
-	}
-
-	for _, testcase := range testCases {
-		t.Run(testcase.testCaseName, func(t *testing.T) {
-			isValid, err := isValidCapacityIOPS4CustomClass(testcase.requestSize, testcase.requestIops)
-			if testcase.expectedError != nil {
-				assert.Equal(t, err, testcase.expectedError)
-			} else {
-				assert.Equal(t, testcase.expectedStatus, isValid)
-			}
-		})
-	}
-}
-
 func TestOverrideParams(t *testing.T) {
 	volumeName := "volName"
 	volumeSize := 11 // in Gib which is equal to 11811160064 byte
 	noIops := ""
 	iops110 := "110"
-	secretInvalidIops := "aa5" // For 10GB
 	testCases := []struct {
 		testCaseName   string
 		request        *csi.CreateVolumeRequest
@@ -541,29 +497,6 @@ func TestOverrideParams(t *testing.T) {
 			},
 			expectedStatus: true,
 			expectedError:  nil,
-		},
-		{
-			testCaseName: "Secret invalid IOPS for custom class",
-			request: &csi.CreateVolumeRequest{Name: volumeName, CapacityRange: &csi.CapacityRange{RequiredBytes: 11811160064, LimitBytes: utils.MinimumVolumeSizeInBytes + utils.MinimumVolumeSizeInBytes},
-				Parameters: map[string]string{Profile: "custom",
-					Zone:          "testzone",
-					Region:        "us-south-test",
-					Tag:           "test",
-					ResourceGroup: "myresourcegroups",
-					Encrypted:     "false",
-					EncryptionKey: "123",
-					IOPS:          noIops,
-				},
-				Secrets: map[string]string{
-					IOPS: secretInvalidIops,
-				},
-			},
-			expectedVolume: &provider.Volume{Name: &volumeName,
-				Capacity:  &volumeSize,
-				VPCVolume: provider.VPCVolume{Profile: &provider.Profile{Name: "custom"}},
-			},
-			expectedStatus: false,
-			expectedError:  fmt.Errorf("%v:<%v> invalid value", IOPS, secretInvalidIops),
 		},
 		{
 			testCaseName: "Nil volume as input/output",

@@ -32,24 +32,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// Capacity vs IOPS range for Custom Class
-type classRange struct {
-	minSize int
-	maxSize int
-	minIops int
-	maxIops int
-}
-
-// Range as per IBM volume provider Storage
-var customCapacityIopsRanges = []classRange{
-	{10, 39, 100, 1000},
-	{40, 79, 100, 2000},
-	{80, 99, 100, 4000},
-	{100, 499, 100, 6000},
-	{500, 999, 100, 10000},
-	{1000, 1999, 100, 20000},
-}
-
 // normalize the requested capacity(in GiB) to what is supported by the driver
 func getRequestedCapacity(capRange *csi.CapacityRange) (int64, error) {
 	// Input is in bytes from csi
@@ -266,28 +248,6 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 	return volume, nil
 }
 
-// Validate size and iops for custom class
-func isValidCapacityIOPS4CustomClass(size int, iops int) (bool, error) {
-	var ind = -1
-	for i, entry := range customCapacityIopsRanges {
-		if size >= entry.minSize && size <= entry.maxSize {
-			ind = i
-			break
-		}
-	}
-
-	if ind < 0 {
-		return false, fmt.Errorf("invalid PVC size for custom class: <%v>. Should be in range [%d - %d]GiB",
-			size, utils.MinimumVolumeDiskSizeInGb, utils.MaximumVolumeDiskSizeInGb)
-	}
-
-	if iops < customCapacityIopsRanges[ind].minIops || iops > customCapacityIopsRanges[ind].maxIops {
-		return false, fmt.Errorf("invalid IOPS: <%v> for capacity: <%vGiB>. Should be in range [%d - %d]",
-			iops, size, customCapacityIopsRanges[ind].minIops, customCapacityIopsRanges[ind].maxIops)
-	}
-	return true, nil
-}
-
 func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *config.Config, volume *provider.Volume) error {
 	var encrypt = "undef"
 	var err error
@@ -343,19 +303,9 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 			}
 		case IOPS:
 			// Override IOPS only for custom class
-			if volume.Capacity != nil && volume.VPCVolume.Profile != nil && volume.VPCVolume.Profile.Name == "custom" {
-				var iops int
-				var check bool
-				iops, err = strconv.Atoi(value)
-				if err != nil {
-					err = fmt.Errorf("%v:<%v> invalid value", key, value)
-				} else {
-					if check, err = isValidCapacityIOPS4CustomClass(*(volume.Capacity), iops); check {
-						iopsStr := value
-						logger.Info("override", zap.Any(IOPS, value))
-						volume.Iops = &iopsStr
-					}
-				}
+			if len(value) != 0 {
+				iops := value
+				volume.Iops = &iops
 			}
 		default:
 			err = fmt.Errorf("<%s> is an invalid parameter", key)
