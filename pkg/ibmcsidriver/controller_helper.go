@@ -51,12 +51,17 @@ var customCapacityIopsRanges = []classRange{
 }
 
 // normalize the requested capacity(in GiB) to what is supported by the driver
-func getRequestedCapacity(capRange *csi.CapacityRange) (int64, error) {
+func getRequestedCapacity(capRange *csi.CapacityRange, profile *provider.Profile) (int64, error) {
 	// Input is in bytes from csi
 	var capBytes int64
 	// Default case where nothing is set
 	if capRange == nil {
-		capBytes = utils.MinimumVolumeSizeInBytes
+		if profile != nil && profile.Name == SDPProfile { // SDP profile minimum size is 1GB
+			capBytes = MinimumSDPVolumeSizeInBytes
+		} else {
+			capBytes = utils.MinimumVolumeSizeInBytes // tierd and custom profile minimum size is 10 GB
+		}
+
 		// returns in GiB
 		return capBytes, nil
 	}
@@ -83,7 +88,9 @@ func getRequestedCapacity(capRange *csi.CapacityRange) (int64, error) {
 
 	// Limit is more than Required, but larger than Minimum. So we just set capcity to Minimum
 	// Too small, default
-	if capBytes < utils.MinimumVolumeSizeInBytes {
+	if profile != nil && profile.Name == SDPProfile && capBytes < MinimumSDPVolumeSizeInBytes { // SDP profile
+		capBytes = MinimumSDPVolumeSizeInBytes
+	} else if profile != nil && profile.Name == CustomProfile && capBytes < utils.MinimumVolumeSizeInBytes { //Other tierd and custom profiles
 		capBytes = utils.MinimumVolumeSizeInBytes
 	}
 
@@ -197,7 +204,7 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 
 	// Get the requested capacity from the request
 	capacityRange := req.GetCapacityRange()
-	capBytes, err := getRequestedCapacity(capacityRange)
+	capBytes, err := getRequestedCapacity(capacityRange, volume.VPCVolume.Profile)
 	if err != nil {
 		err = fmt.Errorf("invalid PVC capacity size: '%v'", err)
 		logger.Error("getVolumeParameters", zap.NamedError("invalid parameter", err))

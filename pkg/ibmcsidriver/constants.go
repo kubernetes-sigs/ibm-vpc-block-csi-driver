@@ -18,6 +18,7 @@ limitations under the License.
 package ibmcsidriver
 
 import (
+	"github.com/IBM/ibm-csi-common/pkg/utils"
 	"github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/config"
 )
 
@@ -124,6 +125,8 @@ const (
 
 	// MAX_SNAPSHOT_CREATE_DELAY ... This is max timeout value for csi-snapshotter
 	MAX_SNAPSHOT_CREATE_DELAY = 900 //900 seconds
+
+	MinimumSDPVolumeSizeInBytes int64 = 1 * utils.GiB
 )
 
 // SupportedFS the supported FS types
