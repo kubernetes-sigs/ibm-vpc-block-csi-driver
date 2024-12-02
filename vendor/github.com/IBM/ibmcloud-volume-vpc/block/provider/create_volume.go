@@ -137,6 +137,7 @@ func validateVolumeRequest(volumeRequest *provider.Volume, clusterVolumeLabel st
 		return resourceGroup, iops, userError.GetUserError("VolumeCapacityInvalid", nil, *volumeRequest.Capacity)
 	}
 
+	// IOPS not modifiable if profile is not custom or sdp
 	if (volumeRequest.VPCVolume.Profile.Name != customProfile && volumeRequest.VPCVolume.Profile.Name != sdpProfile) && iops > 0 {
 		return resourceGroup, iops, userError.GetUserError("VolumeProfileIopsInvalid", nil)
 	}
