@@ -69,14 +69,9 @@ func getRequestedCapacity(capRange *csi.CapacityRange, profileName string) (int6
 
 	// Limit is more than Required, but larger than Minimum. So we just set capcity to Minimum
 	// Too small, default
-	if profileName == SDPProfile {
-		if capBytes < MinimumSDPVolumeSizeInBytes { // SDP profile
-			capBytes = MinimumSDPVolumeSizeInBytes
-		}
-	} else {
-		if capBytes < utils.MinimumVolumeSizeInBytes { //Other tierd and custom profiles
-			capBytes = utils.MinimumVolumeSizeInBytes
-		}
+	// If profile is SDP profile then no need to check for minimum size as the RoundUpBytes will giving minimum value as 1 GiB
+	if profileName != SDPProfile && capBytes < utils.MinimumVolumeSizeInBytes {
+		capBytes = utils.MinimumVolumeSizeInBytes
 	}
 
 	return capBytes, nil
