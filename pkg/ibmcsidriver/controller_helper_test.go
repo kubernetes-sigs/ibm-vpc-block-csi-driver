@@ -46,7 +46,14 @@ func TestGetRequestedCapacity(t *testing.T) {
 	}{
 		{
 			testCaseName:  "Check minimum size supported by volume provider in case of nil passed as input for sdp profile",
-			capRange:      &csi.CapacityRange{},
+			capRange:      nil,
+			profileName:   "sdp",
+			expectedValue: MinimumSDPVolumeSizeInBytes,
+			expectedError: nil,
+		},
+		{
+			testCaseName:  "Check minimum size supported by volume provider in case of lower value passed as input for sdp profile",
+			capRange:      &csi.CapacityRange{RequiredBytes: 1024},
 			profileName:   "sdp",
 			expectedValue: MinimumSDPVolumeSizeInBytes,
 			expectedError: nil,
