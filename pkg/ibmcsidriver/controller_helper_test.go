@@ -40,18 +40,28 @@ func TestGetRequestedCapacity(t *testing.T) {
 	testCases := []struct {
 		testCaseName  string
 		capRange      *csi.CapacityRange
+		profileName   string
 		expectedValue int64
 		expectedError error
 	}{
 		{
 			testCaseName:  "Check minimum size supported by volume provider in case of nil passed as input",
 			capRange:      &csi.CapacityRange{},
+			profileName:   "sdp",
+			expectedValue: MinimumSDPVolumeSizeInBytes,
+			expectedError: nil,
+		},
+		{
+			testCaseName:  "Check minimum size supported by volume provider in case of nil passed as input",
+			capRange:      &csi.CapacityRange{},
+			profileName:   "custom",
 			expectedValue: utils.MinimumVolumeSizeInBytes,
 			expectedError: nil,
 		},
 		{
 			testCaseName:  "Capacity range is nil",
 			capRange:      nil,
+			profileName:   "general-purpose",
 			expectedValue: utils.MinimumVolumeSizeInBytes,
 			expectedError: nil,
 		},
@@ -59,6 +69,7 @@ func TestGetRequestedCapacity(t *testing.T) {
 			testCaseName: "Check minimum size supported by volume provider",
 			capRange: &csi.CapacityRange{RequiredBytes: 1024,
 				LimitBytes: utils.MinimumVolumeSizeInBytes},
+			profileName:   "custom",
 			expectedValue: utils.MinimumVolumeSizeInBytes,
 			expectedError: nil,
 		},
@@ -66,6 +77,7 @@ func TestGetRequestedCapacity(t *testing.T) {
 			testCaseName: "Check size passed as actual value",
 			capRange: &csi.CapacityRange{RequiredBytes: 11811160064,
 				LimitBytes: utils.MinimumVolumeSizeInBytes + utils.MinimumVolumeSizeInBytes}, // MinimumVolumeSizeInBytes->10737418240
+			profileName:   "custom",
 			expectedValue: 11811160064,
 			expectedError: nil,
 		},
@@ -73,6 +85,7 @@ func TestGetRequestedCapacity(t *testing.T) {
 			testCaseName: "Expected error check-success",
 			capRange: &csi.CapacityRange{RequiredBytes: 1073741824 * 30,
 				LimitBytes: utils.MinimumVolumeSizeInBytes}, // MinimumVolumeSizeInBytes->10737418240
+			profileName:   "custom",
 			expectedValue: 0,
 			expectedError: fmt.Errorf("limit bytes %v is less than required bytes %v", utils.MinimumVolumeSizeInBytes, 1073741824*30),
 		},
@@ -80,6 +93,7 @@ func TestGetRequestedCapacity(t *testing.T) {
 			testCaseName: "Expected error check against limit byte-success",
 			capRange: &csi.CapacityRange{RequiredBytes: utils.MinimumVolumeSizeInBytes - 100,
 				LimitBytes: 10737418230}, // MinimumVolumeSizeInBytes->10737418240
+			profileName:   "custom",
 			expectedValue: 0,
 			expectedError: fmt.Errorf("limit bytes %v is less than minimum volume size: %v", 10737418230, utils.MinimumVolumeSizeInBytes),
 		},
@@ -87,7 +101,7 @@ func TestGetRequestedCapacity(t *testing.T) {
 
 	for _, testcase := range testCases {
 		t.Run(testcase.testCaseName, func(t *testing.T) {
-			sizeCap, err := getRequestedCapacity(testcase.capRange)
+			sizeCap, err := getRequestedCapacity(testcase.capRange, testcase.profileName)
 			if testcase.expectedError != nil {
 				assert.Equal(t, err, testcase.expectedError)
 			} else {
