@@ -133,7 +133,10 @@ func validateVolumeRequest(volumeRequest *provider.Volume, clusterVolumeLabel st
 	// Capacity should not be empty
 	if volumeRequest.Capacity == nil {
 		return resourceGroup, iops, userError.GetUserError("VolumeCapacityInvalid", nil, nil)
-	} else if volumeRequest.VPCVolume.Profile.Name != sdpProfile && *volumeRequest.Capacity < minSize {
+	}
+
+	// Minimum Capacity validation for non SDP profiles.
+	if *volumeRequest.Capacity < minSize && volumeRequest.VPCVolume.Profile.Name != sdpProfile {
 		return resourceGroup, iops, userError.GetUserError("VolumeCapacityInvalid", nil, *volumeRequest.Capacity)
 	}
 
