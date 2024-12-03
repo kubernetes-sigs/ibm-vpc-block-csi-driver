@@ -104,12 +104,10 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 	var err error
 	volume := &provider.Volume{}
 	volume.Name = &req.Name
-	var profileName string
 	for key, value := range req.GetParameters() {
 		switch key {
 		case Profile:
 			if utils.ListContainsSubstr(SupportedProfile, value) {
-				profileName = value
 				volume.VPCVolume.Profile = &provider.Profile{Name: value}
 			} else {
 				err = fmt.Errorf("%s:<%v> unsupported profile. Supported profiles are: %v", key, value, SupportedProfile)
@@ -184,9 +182,15 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 		volume.VPCVolume.VolumeEncryptionKey = nil
 	}
 
+	if volume.VPCVolume.Profile == nil {
+		err = fmt.Errorf("volume profile is empty, you need to pass valid profile name")
+		logger.Error("getVolumeParameters", zap.NamedError("InvalidRequest", err))
+		return volume, err
+	}
+
 	// Get the requested capacity from the request
 	capacityRange := req.GetCapacityRange()
-	capBytes, err := getRequestedCapacity(capacityRange, profileName)
+	capBytes, err := getRequestedCapacity(capacityRange, volume.VPCVolume.Profile.Name)
 	if err != nil {
 		err = fmt.Errorf("invalid PVC capacity size: '%v'", err)
 		logger.Error("getVolumeParameters", zap.NamedError("invalid parameter", err))
