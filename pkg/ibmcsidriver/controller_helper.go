@@ -33,12 +33,16 @@ import (
 )
 
 // normalize the requested capacity(in GiB) to what is supported by the driver
-func getRequestedCapacity(capRange *csi.CapacityRange) (int64, error) {
+func getRequestedCapacity(capRange *csi.CapacityRange, profileName string) (int64, error) {
 	// Input is in bytes from csi
 	var capBytes int64
 	// Default case where nothing is set
 	if capRange == nil {
-		capBytes = utils.MinimumVolumeSizeInBytes
+		if profileName == SDPProfile { // SDP profile minimum size is 1GB
+			capBytes = MinimumSDPVolumeSizeInBytes
+		} else {
+			capBytes = utils.MinimumVolumeSizeInBytes // tierd and custom profile minimum size is 10 GB
+		}
 		// returns in GiB
 		return capBytes, nil
 	}
@@ -65,7 +69,8 @@ func getRequestedCapacity(capRange *csi.CapacityRange) (int64, error) {
 
 	// Limit is more than Required, but larger than Minimum. So we just set capcity to Minimum
 	// Too small, default
-	if capBytes < utils.MinimumVolumeSizeInBytes {
+	// If profile is SDP profile then no need to check for minimum size as the RoundUpBytes will giving minimum value as 1 GiB
+	if capBytes < utils.MinimumVolumeSizeInBytes && profileName != SDPProfile {
 		capBytes = utils.MinimumVolumeSizeInBytes
 	}
 
@@ -158,7 +163,7 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 			logger.Info("Ignoring storage class parameter, for backward compatibility", zap.Any("ClassParameter", Generation))
 
 		case IOPS:
-			// Default IOPS can be specified in Custom class
+			// Default IOPS can be specified in Custom or sdp class
 			if len(value) != 0 {
 				iops := value
 				volume.Iops = &iops
@@ -177,9 +182,15 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 		volume.VPCVolume.VolumeEncryptionKey = nil
 	}
 
+	if volume.VPCVolume.Profile == nil {
+		err = fmt.Errorf("volume profile is empty, you need to pass valid profile name")
+		logger.Error("getVolumeParameters", zap.NamedError("InvalidRequest", err))
+		return volume, err
+	}
+
 	// Get the requested capacity from the request
 	capacityRange := req.GetCapacityRange()
-	capBytes, err := getRequestedCapacity(capacityRange)
+	capBytes, err := getRequestedCapacity(capacityRange, volume.VPCVolume.Profile.Name)
 	if err != nil {
 		err = fmt.Errorf("invalid PVC capacity size: '%v'", err)
 		logger.Error("getVolumeParameters", zap.NamedError("invalid parameter", err))
@@ -228,8 +239,8 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 		return volume, err
 	}
 
-	if volume.VPCVolume.Profile != nil && volume.VPCVolume.Profile.Name != CustomProfile {
-		// Specify IOPS only for custom class
+	if volume.VPCVolume.Profile != nil && (volume.VPCVolume.Profile.Name != CustomProfile && volume.VPCVolume.Profile.Name != SDPProfile) {
+		// Specify IOPS only for custom or SDP class
 		volume.Iops = nil
 	}
 
@@ -302,7 +313,7 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 				volume.Region = value
 			}
 		case IOPS:
-			// Override IOPS only for custom class
+			// Override IOPS only for custom or sdp class
 			if len(value) != 0 {
 				iops := value
 				volume.Iops = &iops

@@ -71,6 +71,7 @@ var skipErrorCodes = map[string]bool{
 	SnapshotIDNotFound:                     true,
 	"snapshots_source_volume_not_found":    true,
 	"snapshots_source_volume_not_attached": true,
+	"volume_capacity_maximum":              true,
 
 	// IKS ms error code for skip re-try
 	"ST0008": true, //resources not found
