@@ -55,6 +55,7 @@ type Volume struct {
 	VolumeType    string                `json:"volume_type,omitempty"`
 	HealthState   string                `json:"health_state,omitempty"`
 	HealthReasons *[]VolumeHealthReason `json:"health_reasons,omitempty"`
+	ETag          string
 }
 
 // ListVolumeFilters ...

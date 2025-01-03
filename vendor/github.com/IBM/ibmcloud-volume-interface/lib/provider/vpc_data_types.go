@@ -26,6 +26,7 @@ type VPCVolume struct {
 	VolumeEncryptionKey *VolumeEncryptionKey `json:"encryption_key,omitempty"`
 	Profile             *Profile             `json:"profile,omitempty"`
 	CRN                 string               `json:"crn,omitempty"`
+	ETag                string
 	VPCBlockVolume
 	VPCFileVolume
 }

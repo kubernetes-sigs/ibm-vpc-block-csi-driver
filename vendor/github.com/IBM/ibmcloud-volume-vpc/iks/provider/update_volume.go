@@ -22,19 +22,17 @@ import (
 
 	"github.com/IBM/ibmcloud-volume-interface/lib/metrics"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
-	vpc_provider "github.com/IBM/ibmcloud-volume-vpc/block/provider"
 	userError "github.com/IBM/ibmcloud-volume-vpc/common/messages"
-	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/models"
 	"go.uber.org/zap"
 )
 
 // UpdateVolume updates the volume with given information
 func (vpcIks *IksVpcSession) UpdateVolume(volumeRequest provider.Volume) (err error) {
-	vpcIks.Logger.Debug("Entry of UpdateVolume method...")
-	defer vpcIks.Logger.Debug("Exit from UpdateVolume method...")
-	defer metrics.UpdateDurationFromStart(vpcIks.Logger, "UpdateVolume", time.Now())
+	vpcIks.IksSession.Logger.Debug("Entry of UpdateVolume method...")
+	defer vpcIks.IksSession.Logger.Debug("Exit from UpdateVolume method...")
+	defer metrics.UpdateDurationFromStart(vpcIks.IksSession.Logger, "UpdateVolume", time.Now())
 
-	vpcIks.Logger.Info("Basic validation for UpdateVolume request... ", zap.Reflect("RequestedVolumeDetails", volumeRequest))
+	/* vpcIks.IksSession.Logger.Info("Basic validation for UpdateVolume request... ", zap.Reflect("RequestedVolumeDetails", volumeRequest))
 
 	// Build the template to send to backend
 	volumeTemplate := models.NewVolume(volumeRequest)
@@ -42,16 +40,24 @@ func (vpcIks *IksVpcSession) UpdateVolume(volumeRequest provider.Volume) (err er
 	if err != nil {
 		return err
 	}
-	vpcIks.Logger.Info("Successfully validated inputs for UpdateVolume request... ")
+	vpcIks.IksSession.Logger.Info("Successfully validated inputs for UpdateVolume request... ")
 
-	vpcIks.Logger.Info("Calling  provider for volume update...")
-	err = vpcIks.APIRetry.FlexyRetry(vpcIks.Logger, func() (error, bool) {
-		err = vpcIks.IksSession.Apiclient.VolumeService().UpdateVolume(&volumeTemplate, vpcIks.Logger)
+	vpcIks.IksSession.Logger.Info("Calling  provider for volume update in ETCD...")
+	err = vpcIks.IksSession.APIRetry.FlexyRetry(vpcIks.IksSession.Logger, func() (error, bool) {
+		err = vpcIks.IksSession.Apiclient.VolumeService().UpdateVolume(&volumeTemplate, vpcIks.IksSession.Logger)
 		return err, err == nil || vpc_provider.SkipRetryForIKS(err)
 	})
 
 	if err != nil {
-		vpcIks.Logger.Debug("Failed to update volume", zap.Reflect("BackendError", err))
+		vpcIks.IksSession.Logger.Debug("Failed to update volume", zap.Reflect("BackendError", err))
+		return userError.GetUserError("UpdateFailed", err)
+	} */
+
+	vpcIks.IksSession.Logger.Info("Calling  provider for volume update with tags via RIAAS...")
+	err = vpcIks.VPCSession.UpdateVolume(volumeRequest)
+
+	if err != nil {
+		vpcIks.IksSession.Logger.Debug("Failed to update volume with tags", zap.Reflect("BackendError", err))
 		return userError.GetUserError("UpdateFailed", err)
 	}
 
