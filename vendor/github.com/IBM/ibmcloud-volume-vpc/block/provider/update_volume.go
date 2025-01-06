@@ -28,9 +28,10 @@ import (
 func (vpc *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 
 	var volumeDetails *models.Volume
-	err := vpc.APIRetry.FlexyRetry(vpc.Logger, func() (error, bool) {
+	var err error
+	err = vpc.APIRetry.FlexyRetry(vpc.Logger, func() (error, bool) {
 		// Get volume details
-		volumeDetails, err := vpc.Apiclient.VolumeService().GetVolume(volumeRequest.VolumeID, vpc.Logger)
+		volumeDetails, err = vpc.Apiclient.VolumeService().GetVolume(volumeRequest.VolumeID, vpc.Logger)
 
 		// Stop retry in case of volume status is available
 		return err, volumeDetails != nil && volumeDetails.Status == validVolumeStatus
@@ -39,6 +40,8 @@ func (vpc *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 	if err != nil {
 		return userError.GetUserError("UpdateVolumeWithTagsFailed", err)
 	}
+
+	vpc.Logger.Info("Successfully fetched volume... ", zap.Reflect("volumeDetails", volumeDetails))
 
 	// Converting volume to lib volume type
 	existVolume := FromProviderToLibVolume(volumeDetails, vpc.Logger)
@@ -50,8 +53,6 @@ func (vpc *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 		UserTags: volumeRequest.VPCVolume.Tags,
 		ETag:     existVolume.ETag,
 	}
-
-	vpc.Logger.Info("Successfully validated inputs for UpdateVolumeWithTags request... ")
 
 	vpc.Logger.Info("Calling VPC provider for volume UpdateVolumeWithTags...")
 
