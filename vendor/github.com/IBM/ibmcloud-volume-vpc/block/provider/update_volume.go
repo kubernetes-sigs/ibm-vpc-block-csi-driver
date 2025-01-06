@@ -27,11 +27,21 @@ import (
 // UpdateVolume POSTs to /volumes
 func (vpc *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 
-	// Get volume details
-	existVolume, err := vpc.GetVolume(volumeRequest.VolumeID)
+	var volumeDetails *models.Volume
+	err := vpc.APIRetry.FlexyRetry(vpc.Logger, func() (error, bool) {
+		// Get volume details
+		volumeDetails, err := vpc.Apiclient.VolumeService().GetVolume(volumeRequest.VolumeID, vpc.Logger)
+
+		// Stop retry in case of volume status is available
+		return err, volumeDetails != nil && volumeDetails.Status == validVolumeStatus
+	})
+
 	if err != nil {
 		return userError.GetUserError("UpdateVolumeWithTagsFailed", err)
 	}
+
+	// Converting volume to lib volume type
+	existVolume := FromProviderToLibVolume(volumeDetails, vpc.Logger)
 
 	volumeRequest.VPCVolume.Tags = append(volumeRequest.VPCVolume.Tags, existVolume.Tags...)
 

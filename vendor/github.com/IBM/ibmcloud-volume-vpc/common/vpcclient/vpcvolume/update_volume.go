@@ -43,6 +43,7 @@ func (vs *VolumeService) UpdateVolume(volumeTemplate *models.Volume, ctxLogger *
 
 	request := vs.client.NewRequest(operation)
 	request.SetHeader("If-Match", volumeTemplate.ETag)
+
 	req := request.PathParameter(volumeIDParam, volumeTemplate.ID)
 	ctxLogger.Info("Equivalent curl command and payload details", zap.Reflect("URL", req.URL()), zap.Reflect("Payload", volumeTemplate), zap.Reflect("Operation", operation))
 	_, err := req.JSONBody(volumeTemplate).JSONError(&apiErr).Invoke()
