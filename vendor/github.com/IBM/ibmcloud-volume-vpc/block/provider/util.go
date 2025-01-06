@@ -66,6 +66,7 @@ var skipErrorCodes = map[string]bool{
 	"volume_profile_capacity_iops_invalid": true,
 	"internal_error":                       false,
 	"invalid_route":                        false,
+	"volume_etag_precondition_fail":        true,
 	SnapshotNotFound:                       true,
 	"snapshots_not_authorized":             true,
 	SnapshotIDNotFound:                     true,

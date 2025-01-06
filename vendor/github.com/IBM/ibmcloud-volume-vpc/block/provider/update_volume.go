@@ -36,14 +36,14 @@ func (vpc *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 	volumeRequest.VPCVolume.Tags = append(volumeRequest.VPCVolume.Tags, existVolume.Tags...)
 
 	volume := models.Volume{
-		ID:   volumeRequest.VolumeID,
-		Tags: volumeRequest.VPCVolume.Tags,
-		ETag: existVolume.ETag,
+		ID:       volumeRequest.VolumeID,
+		UserTags: volumeRequest.VPCVolume.Tags,
+		ETag:     existVolume.ETag,
 	}
 
-	vpc.Logger.Info("Successfully validated inputs for UpdateVolumeWithTagsFailed request... ")
+	vpc.Logger.Info("Successfully validated inputs for UpdateVolumeWithTags request... ")
 
-	vpc.Logger.Info("Calling VPC provider for volume UpdateVolumeWithTagsFailed...")
+	vpc.Logger.Info("Calling VPC provider for volume UpdateVolumeWithTags...")
 
 	err = retry(vpc.Logger, func() error {
 		err = vpc.Apiclient.VolumeService().UpdateVolume(&volume, vpc.Logger)
