@@ -22,6 +22,7 @@ import (
 
 	"github.com/IBM/ibmcloud-volume-interface/lib/metrics"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
+	vpc_provider "github.com/IBM/ibmcloud-volume-vpc/block/provider"
 	userError "github.com/IBM/ibmcloud-volume-vpc/common/messages"
 	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/models"
 	"go.uber.org/zap"

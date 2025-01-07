@@ -26,7 +26,6 @@ import (
 
 // UpdateVolume POSTs to /volumes
 func (vpcs *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
-
 	var volumeDetails *models.Volume
 	var err error
 
