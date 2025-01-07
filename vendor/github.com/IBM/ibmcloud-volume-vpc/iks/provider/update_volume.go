@@ -23,6 +23,7 @@ import (
 	"github.com/IBM/ibmcloud-volume-interface/lib/metrics"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	userError "github.com/IBM/ibmcloud-volume-vpc/common/messages"
+	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/models"
 	"go.uber.org/zap"
 )
 
@@ -32,7 +33,7 @@ func (vpcIks *IksVpcSession) UpdateVolume(volumeRequest provider.Volume) (err er
 	defer vpcIks.IksSession.Logger.Debug("Exit from UpdateVolume method...")
 	defer metrics.UpdateDurationFromStart(vpcIks.IksSession.Logger, "UpdateVolume", time.Now())
 
-	/* vpcIks.IksSession.Logger.Info("Basic validation for UpdateVolume request... ", zap.Reflect("RequestedVolumeDetails", volumeRequest))
+	vpcIks.IksSession.Logger.Info("Basic validation for UpdateVolume request... ", zap.Reflect("RequestedVolumeDetails", volumeRequest))
 
 	// Build the template to send to backend
 	volumeTemplate := models.NewVolume(volumeRequest)
@@ -51,7 +52,7 @@ func (vpcIks *IksVpcSession) UpdateVolume(volumeRequest provider.Volume) (err er
 	if err != nil {
 		vpcIks.IksSession.Logger.Debug("Failed to update volume", zap.Reflect("BackendError", err))
 		return userError.GetUserError("UpdateFailed", err)
-	} */
+	}
 
 	vpcIks.IksSession.Logger.Info("Calling  provider for volume update with tags via RIAAS...")
 	err = vpcIks.VPCSession.UpdateVolume(volumeRequest)

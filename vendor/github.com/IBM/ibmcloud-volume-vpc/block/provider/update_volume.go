@@ -25,26 +25,34 @@ import (
 )
 
 // UpdateVolume POSTs to /volumes
-func (vpc *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
+func (vpcs *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 
 	var volumeDetails *models.Volume
 	var err error
-	err = vpc.APIRetry.FlexyRetry(vpc.Logger, func() (error, bool) {
-		// Get volume details
-		volumeDetails, err = vpc.Apiclient.VolumeService().GetVolume(volumeRequest.VolumeID, vpc.Logger)
 
-		// Stop retry in case of volume status is available
-		return err, volumeDetails != nil && volumeDetails.Status == validVolumeStatus
+	err = retry(vpcs.Logger, func() error {
+		// Get volume details
+		volumeDetails, err = vpcs.Apiclient.VolumeService().GetVolume(volumeRequest.VolumeID, vpcs.Logger)
+
+		if err != nil {
+			return err
+		}
+		vpcs.Logger.Info("Getting volume details from VPC provider...", zap.Reflect("volumeDetails", volumeDetails))
+		if volumeDetails != nil && volumeDetails.Status == validVolumeStatus {
+			vpcs.Logger.Info("Volume got valid (available) state", zap.Reflect("volumeDetails", volumeDetails))
+			return nil
+		}
+		return userError.GetUserError("VolumeNotInValidState", err, volumeRequest.VolumeID)
 	})
 
 	if err != nil {
 		return userError.GetUserError("UpdateVolumeWithTagsFailed", err)
 	}
 
-	vpc.Logger.Info("Successfully fetched volume... ", zap.Reflect("volumeDetails", volumeDetails))
+	vpcs.Logger.Info("Successfully fetched volume... ", zap.Reflect("volumeDetails", volumeDetails))
 
 	// Converting volume to lib volume type
-	existVolume := FromProviderToLibVolume(volumeDetails, vpc.Logger)
+	existVolume := FromProviderToLibVolume(volumeDetails, vpcs.Logger)
 
 	volumeRequest.VPCVolume.Tags = append(volumeRequest.VPCVolume.Tags, existVolume.Tags...)
 
@@ -54,15 +62,15 @@ func (vpc *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 		ETag:     existVolume.ETag,
 	}
 
-	vpc.Logger.Info("Calling VPC provider for volume UpdateVolumeWithTags...")
+	vpcs.Logger.Info("Calling VPC provider for volume UpdateVolumeWithTags...")
 
-	err = retry(vpc.Logger, func() error {
-		err = vpc.Apiclient.VolumeService().UpdateVolume(&volume, vpc.Logger)
+	err = retry(vpcs.Logger, func() error {
+		err = vpcs.Apiclient.VolumeService().UpdateVolume(&volume, vpcs.Logger)
 		return err
 	})
 
 	if err != nil {
-		vpc.Logger.Debug("Failed to update volume with tags from VPC provider", zap.Reflect("BackendError", err))
+		vpcs.Logger.Debug("Failed to update volume with tags from VPC provider", zap.Reflect("BackendError", err))
 		return userError.GetUserError("FailedToUpdateVolume", err, volumeRequest.VolumeID)
 	}
 
