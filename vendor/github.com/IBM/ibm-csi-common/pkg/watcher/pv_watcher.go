@@ -20,6 +20,7 @@ package watcher
 import (
 	"flag"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -70,6 +71,8 @@ const (
 	VolumeCRN = "volumeCRN"
 	//ProvisionerTag ...
 	ProvisionerTag = "provisioner:"
+	//CapacityTag ...
+	CapacityTag = "capacity:"
 
 	//VolumeStatus ...
 	VolumeStatus = "status"
@@ -214,7 +217,6 @@ func (pvw *PVWatcher) getVolume(pv *v1.PersistentVolume, ctxLogger *zap.Logger) 
 		// Set only status in case of delete operation
 		volume.Attributes[VolumeStatus] = VolumeStatusDeleted
 	} else {
-		volume.Tags = tags
 		//Get Capacity and convert to GiB
 		capacity := pv.Spec.Capacity[v1.ResourceStorage]
 		capacityGiB := utils.BytesToGiB(capacity.Value())
@@ -222,6 +224,8 @@ func (pvw *PVWatcher) getVolume(pv *v1.PersistentVolume, ctxLogger *zap.Logger) 
 		iops := pv.Spec.CSI.VolumeAttributes[utils.IOPSLabel]
 		volume.Iops = &iops
 		volume.Attributes[VolumeStatus] = VolumeStatusCreated
+		tags = append(tags, CapacityTag+strconv.Itoa(capacityGiB))
+		volume.Tags = tags
 	}
 	ctxLogger.Debug("Exit getVolume()", zap.Reflect("volume", volume))
 	return volume

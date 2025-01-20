@@ -18,6 +18,8 @@
 package provider
 
 import (
+	"strings"
+
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	userError "github.com/IBM/ibmcloud-volume-vpc/common/messages"
 	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/models"
@@ -26,10 +28,52 @@ import (
 
 // UpdateVolume POSTs to /volumes
 func (vpcs *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
+	var volume *models.Volume
+	var err error
+
+	//Fetch existing volume Tags
+	existVolume, err := vpcs.getVolumeWithTags(volumeRequest)
+
+	if err != nil {
+		return err
+	}
+
+	//If tags are equal then skip the API call
+	if ifTagsEqual(existVolume.Tags, volumeRequest.VPCVolume.Tags) {
+		vpcs.Logger.Info("There is no change in volumeTags, skipping the updateVolume via RIAAS... ", zap.Reflect("existVolume", existVolume.Tags), zap.Reflect("volumeRequest", volumeRequest.VPCVolume.Tags))
+		return nil
+	}
+
+	//Append the existing tags with the requested input tags
+	existVolume.Tags = append(existVolume.Tags, volumeRequest.VPCVolume.Tags...)
+
+	volume = &models.Volume{
+		ID:       volumeRequest.VolumeID,
+		UserTags: existVolume.Tags,
+		ETag:     existVolume.ETag,
+	}
+
+	vpcs.Logger.Info("Calling VPC provider for volume UpdateVolumeWithTags...")
+
+	err = RetryWithMinRetries(vpcs.Logger, func() error {
+		err = vpcs.Apiclient.VolumeService().UpdateVolume(volume, vpcs.Logger)
+		return err
+	})
+
+	if err != nil {
+		vpcs.Logger.Debug("Failed to update volume with tags from VPC provider", zap.Reflect("BackendError", err))
+		return userError.GetUserError("FailedToUpdateVolume", err, volumeRequest.VolumeID)
+	}
+
+	return err
+}
+
+// getVolumeWithTags will fetch existing volume details using VolumeID
+func (vpcs *VPCSession) getVolumeWithTags(volumeRequest provider.Volume) (*provider.Volume, error) {
 	var volumeDetails *models.Volume
 	var err error
 
-	err = retry(vpcs.Logger, func() error {
+	err = RetryWithMinRetries(vpcs.Logger, func() error {
 		// Get volume details
 		volumeDetails, err = vpcs.Apiclient.VolumeService().GetVolume(volumeRequest.VolumeID, vpcs.Logger)
 
@@ -45,7 +89,7 @@ func (vpcs *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 	})
 
 	if err != nil {
-		return userError.GetUserError("UpdateVolumeWithTagsFailed", err)
+		return nil, userError.GetUserError("VolumeNotInValidState", err)
 	}
 
 	vpcs.Logger.Info("Successfully fetched volume... ", zap.Reflect("volumeDetails", volumeDetails))
@@ -53,25 +97,18 @@ func (vpcs *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 	// Converting volume to lib volume type
 	existVolume := FromProviderToLibVolume(volumeDetails, vpcs.Logger)
 
-	volumeRequest.VPCVolume.Tags = append(volumeRequest.VPCVolume.Tags, existVolume.Tags...)
+	return existVolume, nil
+}
 
-	volume := models.Volume{
-		ID:       volumeRequest.VolumeID,
-		UserTags: volumeRequest.VPCVolume.Tags,
-		ETag:     existVolume.ETag,
+func ifTagsEqual(existingTags []string, newTags []string) bool {
+	//Join slice into a string
+	tags := strings.Join(existingTags, ",")
+	for _, v := range newTags {
+		if !strings.Contains(tags, v) {
+			//Tags are different
+			return false
+		}
 	}
-
-	vpcs.Logger.Info("Calling VPC provider for volume UpdateVolumeWithTags...")
-
-	err = retry(vpcs.Logger, func() error {
-		err = vpcs.Apiclient.VolumeService().UpdateVolume(&volume, vpcs.Logger)
-		return err
-	})
-
-	if err != nil {
-		vpcs.Logger.Debug("Failed to update volume with tags from VPC provider", zap.Reflect("BackendError", err))
-		return userError.GetUserError("FailedToUpdateVolume", err, volumeRequest.VolumeID)
-	}
-
-	return err
+	//Tags are equal
+	return true
 }
