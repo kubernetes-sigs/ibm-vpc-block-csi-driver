@@ -102,9 +102,9 @@ func (vpcs *VPCSession) getVolumeWithTags(volumeRequest provider.Volume) (*provi
 
 func ifTagsEqual(existingTags []string, newTags []string) bool {
 	//Join slice into a string
-	tags := strings.Join(existingTags, ",")
+	tags := strings.ToLower(strings.Join(existingTags, ","))
 	for _, v := range newTags {
-		if !strings.Contains(tags, v) {
+		if !strings.Contains(tags, strings.ToLower(v)) {
 			//Tags are different
 			return false
 		}
