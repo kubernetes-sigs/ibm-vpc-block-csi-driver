@@ -89,7 +89,7 @@ func (vpcs *VPCSession) getVolumeWithTags(volumeRequest provider.Volume) (*provi
 	})
 
 	if err != nil {
-		return nil, userError.GetUserError("VolumeNotInValidState", err)
+		return nil, err
 	}
 
 	vpcs.Logger.Info("Successfully fetched volume... ", zap.Reflect("volumeDetails", volumeDetails))

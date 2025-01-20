@@ -25,6 +25,5 @@ func InitMetadata(nodeName string, logger *zap.Logger) (NodeMetadata, error) {
 		zone:     "testzone",
 		region:   "testregion",
 		workerID: "testworkerid",
-		accountID: "testaccountid",
 	}, nil
 }

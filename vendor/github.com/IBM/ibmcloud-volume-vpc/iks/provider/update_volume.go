@@ -56,14 +56,14 @@ func (vpcIks *IksVpcSession) UpdateVolume(volumeRequest provider.Volume) (err er
 		return userError.GetUserError("UpdateFailed", err)
 	}
 
-	vpcIks.IksSession.Logger.Info("Calling  provider for volume update with tags via RIAAS...")
 	err = vpc_provider.RetryWithMinRetries(vpcIks.IksSession.Logger, func() error {
+		vpcIks.IksSession.Logger.Info("Calling  provider for volume update with tags via RIAAS...")
 		err = vpcIks.VPCSession.UpdateVolume(volumeRequest)
 		return err
 	})
 
 	if err != nil {
-		vpcIks.IksSession.Logger.Debug("Failed to update volume with tags", zap.Reflect("BackendError", err))
+		vpcIks.IksSession.Logger.Error("Failed to update volume with tags", zap.Reflect("BackendError", err))
 		return userError.GetUserError("UpdateFailed", err)
 	}
 
