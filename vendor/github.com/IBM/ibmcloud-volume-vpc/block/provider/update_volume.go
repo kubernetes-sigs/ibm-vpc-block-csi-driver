@@ -26,8 +26,10 @@ import (
 	"go.uber.org/zap"
 )
 
-// UpdateVolume POSTs to /volumes
+// UpdateVolume PATCH to /volumes
 func (vpcs *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
+	vpcs.Logger.Debug("Entry of UpdateVolume RIAAS method...")
+	defer vpcs.Logger.Debug("Exit from UpdateVolume RIAAS method...")
 	var volume *models.Volume
 	var err error
 
@@ -38,7 +40,7 @@ func (vpcs *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 		return err
 	}
 
-	//If tags are equal then skip the API call
+	//If tags are equal then skip the UpdateVolume RIAAS API call
 	if ifTagsEqual(existVolume.Tags, volumeRequest.VPCVolume.Tags) {
 		vpcs.Logger.Info("There is no change in volumeTags, skipping the updateVolume via RIAAS... ", zap.Reflect("existVolume", existVolume.Tags), zap.Reflect("volumeRequest", volumeRequest.VPCVolume.Tags))
 		return nil
@@ -55,10 +57,7 @@ func (vpcs *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 
 	vpcs.Logger.Info("Calling VPC provider for volume UpdateVolumeWithTags...")
 
-	err = RetryWithMinRetries(vpcs.Logger, func() error {
-		err = vpcs.Apiclient.VolumeService().UpdateVolume(volume, vpcs.Logger)
-		return err
-	})
+	err = vpcs.Apiclient.VolumeService().UpdateVolume(volume, vpcs.Logger)
 
 	if err != nil {
 		vpcs.Logger.Debug("Failed to update volume with tags from VPC provider", zap.Reflect("BackendError", err))
@@ -70,6 +69,7 @@ func (vpcs *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 
 // getVolumeWithTags will fetch existing volume details using VolumeID
 func (vpcs *VPCSession) getVolumeWithTags(volumeRequest provider.Volume) (*provider.Volume, error) {
+	vpcs.Logger.Info("Getting volume with existing tags from VPC provider ...")
 	var volumeDetails *models.Volume
 	var err error
 
@@ -80,9 +80,9 @@ func (vpcs *VPCSession) getVolumeWithTags(volumeRequest provider.Volume) (*provi
 		if err != nil {
 			return err
 		}
-		vpcs.Logger.Info("Getting volume details from VPC provider...", zap.Reflect("volumeDetails", volumeDetails))
+		vpcs.Logger.Debug("Getting volume details from VPC provider...", zap.Reflect("volumeDetails", volumeDetails))
 		if volumeDetails != nil && volumeDetails.Status == validVolumeStatus {
-			vpcs.Logger.Info("Volume got valid (available) state", zap.Reflect("volumeDetails", volumeDetails))
+			vpcs.Logger.Info("Volume got valid (available) state")
 			return nil
 		}
 		return userError.GetUserError("VolumeNotInValidState", err, volumeRequest.VolumeID)
@@ -100,6 +100,7 @@ func (vpcs *VPCSession) getVolumeWithTags(volumeRequest provider.Volume) (*provi
 	return existVolume, nil
 }
 
+// ifTagsEqual will check if there is change to existing tags
 func ifTagsEqual(existingTags []string, newTags []string) bool {
 	//Join slice into a string
 	tags := strings.ToLower(strings.Join(existingTags, ","))

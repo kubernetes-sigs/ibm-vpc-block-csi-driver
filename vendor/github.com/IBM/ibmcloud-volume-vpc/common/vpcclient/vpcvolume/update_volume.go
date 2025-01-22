@@ -26,7 +26,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// UpdateVolume POSTs to /volumes. Riaas/VPC does have volume update support yet
+// UpdateVolume PATCH to /volumes
 func (vs *VolumeService) UpdateVolume(volumeTemplate *models.Volume, ctxLogger *zap.Logger) error {
 	ctxLogger.Debug("Entry Backend UpdateVolume")
 	defer ctxLogger.Debug("Exit Backend UpdateVolume")

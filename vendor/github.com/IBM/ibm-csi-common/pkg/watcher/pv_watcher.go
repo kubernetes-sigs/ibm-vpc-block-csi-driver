@@ -160,7 +160,21 @@ func (pvw *PVWatcher) updateVolume(oldobj, obj interface{}) {
 		}()
 
 		ctxLogger.Info("Entry updateVolume()", zap.Reflect("obj", obj))
+		ctxLogger.Info("Entry updateVolume()", zap.Reflect("oldobj", oldobj))
 		pv, _ := obj.(*v1.PersistentVolume)
+		if oldobj != nil {
+			oldpv, _ := oldobj.(*v1.PersistentVolume)
+			oldCapacity := oldpv.Spec.Capacity[v1.ResourceStorage]
+			capacity := pv.Spec.Capacity[v1.ResourceStorage]
+			iops := pv.Spec.CSI.VolumeAttributes[utils.IOPSLabel]
+			oldiops := oldpv.Spec.CSI.VolumeAttributes[utils.IOPSLabel]
+
+			if (pv.Status.Phase == oldpv.Status.Phase) && (oldCapacity.Value() == capacity.Value()) && (oldiops == iops) {
+				ctxLogger.Info("Skipping update Volume as there is no change in status , capacity and iops")
+				return
+			}
+		}
+
 		session, err := pvw.cloudProvider.GetProviderSession(context.Background(), ctxLogger)
 		if session != nil {
 			volume := pvw.getVolume(pv, ctxLogger)

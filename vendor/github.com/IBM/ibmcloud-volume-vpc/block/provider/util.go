@@ -32,7 +32,7 @@ import (
 var maxRetryAttempt = 10
 
 // minRetryAttempt ...
-var minRetryAttempt = 5
+var minRetryAttempt = 3
 
 // maxRetryGap ...
 var maxRetryGap = 60
@@ -148,7 +148,7 @@ func RetryWithMinRetries(logger *zap.Logger, retryfunc func() error) error {
 				}
 			}
 			if (i + 1) < minRetryAttempt {
-				logger.Info("Error while executing the function. Re-attempting execution ..", zap.Int("attempt..", i+2), zap.Int("retry-gap", retryGap), zap.Int("max-retry-Attempts", maxRetryAttempt), zap.Error(err))
+				logger.Info("Error while executing the function. Re-attempting execution ..", zap.Int("attempt..", i+2), zap.Int("retry-gap", retryGap), zap.Int("max-retry-Attempts", minRetryAttempt), zap.Error(err))
 			}
 			continue
 		}
