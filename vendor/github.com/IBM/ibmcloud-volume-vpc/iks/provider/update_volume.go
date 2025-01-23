@@ -44,17 +44,17 @@ func (vpcIks *IksVpcSession) UpdateVolume(volumeRequest provider.Volume) (err er
 	}
 	vpcIks.Logger.Info("Successfully validated inputs for UpdateVolume request... ")
 
-	vpcIks.Logger.Info("Calling  provider for volume update in ETCD...")
+	vpcIks.Logger.Info("Calling  provider for volume update...")
 	err = vpcIks.APIRetry.FlexyRetry(vpcIks.Logger, func() (error, bool) {
 		err = vpcIks.IksSession.Apiclient.VolumeService().UpdateVolume(&volumeTemplate, vpcIks.Logger)
 		return err, err == nil || vpc_provider.SkipRetryForIKS(err)
 	})
 
 	if err != nil {
-		vpcIks.Logger.Debug("Failed to update volume in ETCD", zap.Reflect("BackendError", err))
+		vpcIks.Logger.Debug("Failed to update volume", zap.Reflect("BackendError", err))
 		return userError.GetUserError("UpdateFailed", err)
 	}
-	vpcIks.Logger.Info("Successfully updated volume in ETCD...")
+	vpcIks.Logger.Info("Successfully updated volume...")
 
 	// Lets invoke Update Volume with Tags via RIAAS, we will skip this call if there is no change in tags.
 	err = vpc_provider.RetryWithMinRetries(vpcIks.Logger, func() error {

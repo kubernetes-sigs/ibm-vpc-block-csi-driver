@@ -28,8 +28,6 @@ import (
 
 // UpdateVolume PATCH to /volumes
 func (vpcs *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
-	vpcs.Logger.Debug("Entry of UpdateVolume RIAAS method...")
-	defer vpcs.Logger.Debug("Exit from UpdateVolume RIAAS method...")
 	var volume *models.Volume
 	var err error
 
@@ -42,7 +40,7 @@ func (vpcs *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 
 	//If tags are equal then skip the UpdateVolume RIAAS API call
 	if ifTagsEqual(existVolume.Tags, volumeRequest.VPCVolume.Tags) {
-		vpcs.Logger.Info("There is no change in volumeTags, skipping the updateVolume via RIAAS... ", zap.Reflect("existVolume", existVolume.Tags), zap.Reflect("volumeRequest", volumeRequest.VPCVolume.Tags))
+		vpcs.Logger.Info("here is no change in user tags for volume, skipping the updateVolume for VPC IaaS... ", zap.Reflect("existVolume", existVolume.Tags), zap.Reflect("volumeRequest", volumeRequest.VPCVolume.Tags))
 		return nil
 	}
 
@@ -57,10 +55,13 @@ func (vpcs *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 
 	vpcs.Logger.Info("Calling VPC provider for volume UpdateVolumeWithTags...")
 
-	err = vpcs.Apiclient.VolumeService().UpdateVolume(volume, vpcs.Logger)
+	err = RetryWithMinRetries(vpcs.Logger, func() error {
+		err = vpcs.Apiclient.VolumeService().UpdateVolume(volume, vpcs.Logger)
+		return err
+	})
 
 	if err != nil {
-		vpcs.Logger.Debug("Failed to update volume with tags from VPC provider", zap.Reflect("BackendError", err))
+		vpcs.Logger.Error("Failed to update volume tags from VPC provider", zap.Reflect("BackendError", err))
 		return userError.GetUserError("FailedToUpdateVolume", err, volumeRequest.VolumeID)
 	}
 
@@ -80,7 +81,6 @@ func (vpcs *VPCSession) getVolumeWithTags(volumeRequest provider.Volume) (*provi
 		if err != nil {
 			return err
 		}
-		vpcs.Logger.Debug("Getting volume details from VPC provider...", zap.Reflect("volumeDetails", volumeDetails))
 		if volumeDetails != nil && volumeDetails.Status == validVolumeStatus {
 			vpcs.Logger.Info("Volume got valid (available) state")
 			return nil

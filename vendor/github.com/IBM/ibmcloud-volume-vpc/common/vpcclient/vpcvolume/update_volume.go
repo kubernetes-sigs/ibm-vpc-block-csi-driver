@@ -26,7 +26,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// UpdateVolume PATCH to /volumes
+// UpdateVolume PATCH to /volumes for updating user tags only
 func (vs *VolumeService) UpdateVolume(volumeTemplate *models.Volume, ctxLogger *zap.Logger) error {
 	ctxLogger.Debug("Entry Backend UpdateVolume")
 	defer ctxLogger.Debug("Exit Backend UpdateVolume")
