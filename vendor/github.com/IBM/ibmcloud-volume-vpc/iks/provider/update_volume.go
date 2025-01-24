@@ -55,6 +55,7 @@ func (vpcIks *IksVpcSession) UpdateVolume(volumeRequest provider.Volume) (err er
 		return userError.GetUserError("UpdateFailed", err)
 	}
 	vpcIks.Logger.Info("Successfully updated volume...")
+	return err
 }
 
 // validateVolumeRequest validating volume request
