@@ -29,10 +29,23 @@ import (
 // UpdateVolume PATCH to /volumes
 func (vpcs *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 	var volume *models.Volume
+	var existVolume *provider.Volume
 	var err error
 
-	//Fetch existing volume Tags
-	existVolume, err := vpcs.getVolumeWithTags(volumeRequest)
+	//Fetch existing volume Tags	
+	err = RetryWithMinRetries(vpcs.Logger, func() error {
+		// Get volume details
+		existVolume, err = vpcs.GetVolume(volumeRequest.VolumeID)
+
+		if err != nil {
+			return err
+		}
+		if existVolume != nil && existVolume.Status == validVolumeStatus {
+			vpcs.Logger.Info("Volume got valid (available) state")
+			return nil
+		}
+		return userError.GetUserError("VolumeNotInValidState", err, volumeRequest.VolumeID)
+	})
 
 	if err != nil {
 		return err
@@ -66,38 +79,6 @@ func (vpcs *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 	}
 
 	return err
-}
-
-// getVolumeWithTags will fetch existing volume details using VolumeID
-func (vpcs *VPCSession) getVolumeWithTags(volumeRequest provider.Volume) (*provider.Volume, error) {
-	vpcs.Logger.Info("Getting volume with existing tags from VPC provider ...")
-	var volumeDetails *models.Volume
-	var err error
-
-	err = RetryWithMinRetries(vpcs.Logger, func() error {
-		// Get volume details
-		volumeDetails, err = vpcs.Apiclient.VolumeService().GetVolume(volumeRequest.VolumeID, vpcs.Logger)
-
-		if err != nil {
-			return err
-		}
-		if volumeDetails != nil && volumeDetails.Status == validVolumeStatus {
-			vpcs.Logger.Info("Volume got valid (available) state")
-			return nil
-		}
-		return userError.GetUserError("VolumeNotInValidState", err, volumeRequest.VolumeID)
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	vpcs.Logger.Info("Successfully fetched volume... ", zap.Reflect("volumeDetails", volumeDetails))
-
-	// Converting volume to lib volume type
-	existVolume := FromProviderToLibVolume(volumeDetails, vpcs.Logger)
-
-	return existVolume, nil
 }
 
 // ifTagsEqual will check if there is change to existing tags

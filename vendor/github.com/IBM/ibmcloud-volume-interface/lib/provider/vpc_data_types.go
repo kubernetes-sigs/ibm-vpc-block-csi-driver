@@ -27,13 +27,14 @@ type VPCVolume struct {
 	Profile             *Profile             `json:"profile,omitempty"`
 	CRN                 string               `json:"crn,omitempty"`
 	ETag                string               `json:"etag,omitempty"`
+	Status              string               `json:"status,omitempty"`
+	Tags                []string             `json:"volume_tags,omitempty"`
 	VPCBlockVolume
 	VPCFileVolume
 }
 
 // VPCBlockVolume specific parameters
 type VPCBlockVolume struct {
-	Tags              []string            `json:"volume_tags,omitempty"`
 	VolumeAttachments *[]VolumeAttachment `json:"volume_attachments,omitempty"`
 }
 
