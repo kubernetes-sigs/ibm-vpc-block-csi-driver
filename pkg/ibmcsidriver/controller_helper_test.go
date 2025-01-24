@@ -198,9 +198,8 @@ func TestGetVolumeParameters(t *testing.T) {
 			},
 			expectedVolume: &provider.Volume{Name: &volumeName,
 				Capacity: &volumeSize,
-				VPCVolume: provider.VPCVolume{VPCBlockVolume: provider.VPCBlockVolume{
+				VPCVolume: provider.VPCVolume{
 					Tags: []string{createdByIBM},
-				},
 					Profile:       &provider.Profile{Name: "general-purpose"},
 					ResourceGroup: &provider.ResourceGroup{ID: "myresourcegroups"},
 				},
@@ -333,9 +332,8 @@ func TestGetVolumeParameters(t *testing.T) {
 			},
 			expectedVolume: &provider.Volume{Name: &volumeName,
 				Capacity: &volumeSize,
-				VPCVolume: provider.VPCVolume{VPCBlockVolume: provider.VPCBlockVolume{
+				VPCVolume: provider.VPCVolume{
 					Tags: []string{createdByIBM},
-				},
 					Profile:       &provider.Profile{Name: "general-purpose"},
 					ResourceGroup: &provider.ResourceGroup{ID: "myresourcegroups"},
 				},
@@ -421,9 +419,8 @@ func TestOverrideParams(t *testing.T) {
 			},
 			expectedVolume: &provider.Volume{Name: &volumeName,
 				Capacity: &volumeSize,
-				VPCVolume: provider.VPCVolume{VPCBlockVolume: provider.VPCBlockVolume{
+				VPCVolume: provider.VPCVolume{
 					Tags: []string{createdByIBM},
-				},
 					Profile:       &provider.Profile{Name: "general-purpose"},
 					ResourceGroup: &provider.ResourceGroup{ID: "secret-rg"},
 				},
@@ -507,9 +504,8 @@ func TestOverrideParams(t *testing.T) {
 			},
 			expectedVolume: &provider.Volume{Name: &volumeName,
 				Capacity: &volumeSize,
-				VPCVolume: provider.VPCVolume{VPCBlockVolume: provider.VPCBlockVolume{
+				VPCVolume: provider.VPCVolume{
 					Tags: []string{createdByIBM},
-				},
 					Profile:       &provider.Profile{Name: "custom"},
 					ResourceGroup: &provider.ResourceGroup{ID: "myresourcegroups"},
 				},
@@ -604,9 +600,8 @@ func TestCreateCSIVolumeResponse(t *testing.T) {
 		{
 			testCaseName: "Valid volume response",
 			requestVol: provider.Volume{VolumeID: volumeID,
-				VPCVolume: provider.VPCVolume{VPCBlockVolume: provider.VPCBlockVolume{
+				VPCVolume: provider.VPCVolume{
 					Tags: []string{createdByIBM},
-				},
 					Profile:       &provider.Profile{Name: "general-purpose"},
 					ResourceGroup: &provider.ResourceGroup{ID: "myresourcegroups"},
 				},
@@ -636,9 +631,8 @@ func TestCreateCSIVolumeResponse(t *testing.T) {
 		{
 			testCaseName: "Valid volume response with region in vol request empty",
 			requestVol: provider.Volume{VolumeID: volumeID,
-				VPCVolume: provider.VPCVolume{VPCBlockVolume: provider.VPCBlockVolume{
+				VPCVolume: provider.VPCVolume{
 					Tags: []string{createdByIBM},
-				},
 					Profile:       &provider.Profile{Name: "general-purpose"},
 					ResourceGroup: &provider.ResourceGroup{ID: "myresourcegroups"},
 				},
