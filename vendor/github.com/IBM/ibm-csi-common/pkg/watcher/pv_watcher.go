@@ -182,20 +182,21 @@ func (pvw *PVWatcher) updateVolume(oldobj, obj interface{}) {
 			iksVpc, ok := session.(*iks_vpc_provider.IksVpcSession)
 
 			if !ok {
-				ctxLogger.Error("Volume Metadata not saved successfully, there is internal error")
+				ctxLogger.Error("Failed to get the IKS-VPC session, Try to restart the CSI driver controller POD")
 				return
 			}
 
 			volume := pvw.getVolume(newpv, ctxLogger)
-			ctxLogger.Info("volume to update ", zap.Reflect("volume", volume))
+			ctxLogger.Info("Updating metadata for the volume", zap.Reflect("volume", volume))
 			err := iksVpc.UpdateVolume(volume)
 			if err != nil {
-				ctxLogger.Warn("Unable to update the volume in ETCD", zap.Error(err))
+				ctxLogger.Warn("Failed to update volume metadata", zap.Error(err))
 				pvw.recorder.Event(newpv, v1.EventTypeWarning, VolumeUpdateEventReason, err.Error())
 			}
+			ctxLogger.Info("Updating tags from VPC IaaS")
 			err = iksVpc.VPCSession.UpdateVolume(volume)
 			if err != nil {
-				ctxLogger.Warn("Unable to update the volume with tags", zap.Error(err))
+				ctxLogger.Warn("Failed to update volume with tags from VPC IaaS", zap.Error(err))
 				pvw.recorder.Event(newpv, v1.EventTypeWarning, VolumeUpdateEventReason, err.Error())
 			} else {
 				pvw.recorder.Event(newpv, v1.EventTypeNormal, VolumeUpdateEventReason, VolumeUpdateEventSuccess)

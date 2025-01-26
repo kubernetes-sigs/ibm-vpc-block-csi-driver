@@ -53,7 +53,7 @@ func (vpcs *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 
 	//If tags are equal then skip the UpdateVolume RIAAS API call
 	if ifTagsEqual(existVolume.Tags, volumeRequest.VPCVolume.Tags) {
-		vpcs.Logger.Info("here is no change in user tags for volume, skipping the updateVolume for VPC IaaS... ", zap.Reflect("existVolume", existVolume.Tags), zap.Reflect("volumeRequest", volumeRequest.VPCVolume.Tags))
+		vpcs.Logger.Info("There is no change in user tags for volume, skipping the updateVolume for VPC IaaS... ", zap.Reflect("existVolume", existVolume.Tags), zap.Reflect("volumeRequest", volumeRequest.VPCVolume.Tags))
 		return nil
 	}
 

@@ -45,6 +45,9 @@ func (vs *VolumeService) UpdateVolume(volumeTemplate *models.Volume, ctxLogger *
 	request.SetHeader("If-Match", volumeTemplate.ETag)
 
 	req := request.PathParameter(volumeIDParam, volumeTemplate.ID)
+	//We dont require this as part ot PATCH body lets omit it
+	volumeTemplate.ID = ""
+	volumeTemplate.ETag = ""
 	ctxLogger.Info("Equivalent curl command and payload details", zap.Reflect("URL", req.URL()), zap.Reflect("Payload", volumeTemplate), zap.Reflect("Operation", operation))
 	_, err := req.JSONBody(volumeTemplate).JSONError(&apiErr).Invoke()
 
