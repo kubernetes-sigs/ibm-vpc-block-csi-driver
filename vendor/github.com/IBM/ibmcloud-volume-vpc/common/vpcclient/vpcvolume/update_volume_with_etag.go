@@ -26,31 +26,31 @@ import (
 	"go.uber.org/zap"
 )
 
-// GetVolume POSTs to /volumes
-func (vs *VolumeService) GetVolumeEtag(volumeID string, ctxLogger *zap.Logger) (*models.Volume, string, error) {
-	ctxLogger.Debug("Entry Backend GetVolumeEtag")
-	defer ctxLogger.Debug("Exit Backend GetVolumeEtag")
+// UpdateVolume PATCH to /volumes for updating user tags only
+func (vs *VolumeService) UpdateVolumeWithEtag(volumeID string, etag string, volumeTemplate *models.Volume, ctxLogger *zap.Logger) error {
+	ctxLogger.Debug("Entry Backend UpdateVolume")
+	defer ctxLogger.Debug("Exit Backend UpdateVolume")
 
-	defer util.TimeTracker("GetVolumeEtag", time.Now())
+	defer util.TimeTracker("UpdateVolume", time.Now())
 
 	operation := &client.Operation{
-		Name:        "GetVolume",
-		Method:      "GET",
+		Name:        "UpdateVolume",
+		Method:      "PATCH",
 		PathPattern: volumeIDPath,
 	}
 
-	var volume models.Volume
 	var apiErr models.Error
 
 	request := vs.client.NewRequest(operation)
-	ctxLogger.Info("Equivalent curl command", zap.Reflect("URL", request.URL()), zap.Reflect("Operation", operation))
+	request.SetHeader("If-Match", etag)
 
 	req := request.PathParameter(volumeIDParam, volumeID)
-	resp, err := req.JSONSuccess(&volume).JSONError(&apiErr).Invoke()
+	ctxLogger.Info("Equivalent curl command and payload details", zap.Reflect("URL", req.URL()), zap.Reflect("Payload", volumeTemplate), zap.Reflect("Operation", operation))
+	_, err := req.JSONBody(volumeTemplate).JSONError(&apiErr).Invoke()
 
 	if err != nil {
-		return nil, "", err
+		return err
 	}
 
-	return &volume, resp.Header.Get("etag"), nil
+	return nil
 }
