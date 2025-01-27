@@ -33,6 +33,16 @@ func (vs *VolumeService) UpdateVolume(volumeTemplate *models.Volume, ctxLogger *
 
 	defer util.TimeTracker("UpdateVolume", time.Now())
 
+	//First try to get the Etag and user-tags
+	existingVolume, etag, err := vs.GetVolumeEtag(volumeTemplate.ID, ctxLogger)
+
+	if err != nil {
+		return err
+	}
+
+	//Append the existing tags with the requested input tags
+	volumeTemplate.UserTags = append(volumeTemplate.UserTags, existingVolume.UserTags...)
+
 	operation := &client.Operation{
 		Name:        "UpdateVolume",
 		Method:      "PATCH",
@@ -42,14 +52,13 @@ func (vs *VolumeService) UpdateVolume(volumeTemplate *models.Volume, ctxLogger *
 	var apiErr models.Error
 
 	request := vs.client.NewRequest(operation)
-	request.SetHeader("If-Match", volumeTemplate.ETag)
+	request.SetHeader("If-Match", etag)
 
 	req := request.PathParameter(volumeIDParam, volumeTemplate.ID)
 	//We dont require this as part ot PATCH body lets omit it
 	volumeTemplate.ID = ""
-	volumeTemplate.ETag = ""
 	ctxLogger.Info("Equivalent curl command and payload details", zap.Reflect("URL", req.URL()), zap.Reflect("Payload", volumeTemplate), zap.Reflect("Operation", operation))
-	_, err := req.JSONBody(volumeTemplate).JSONError(&apiErr).Invoke()
+	_, err = req.JSONBody(volumeTemplate).JSONError(&apiErr).Invoke()
 
 	if err != nil {
 		return err

@@ -27,11 +27,11 @@ import (
 )
 
 // GetVolume POSTs to /volumes
-func (vs *VolumeService) GetVolume(volumeID string, ctxLogger *zap.Logger) (*models.Volume, error) {
-	ctxLogger.Debug("Entry Backend GetVolume")
-	defer ctxLogger.Debug("Exit Backend GetVolume")
+func (vs *VolumeService) GetVolumeEtag(volumeID string, ctxLogger *zap.Logger) (*models.Volume, string, error) {
+	ctxLogger.Debug("Entry Backend GetVolumeEtag")
+	defer ctxLogger.Debug("Exit Backend GetVolumeEtag")
 
-	defer util.TimeTracker("GetVolume", time.Now())
+	defer util.TimeTracker("GetVolumeEtag", time.Now())
 
 	operation := &client.Operation{
 		Name:        "GetVolume",
@@ -46,34 +46,11 @@ func (vs *VolumeService) GetVolume(volumeID string, ctxLogger *zap.Logger) (*mod
 	ctxLogger.Info("Equivalent curl command", zap.Reflect("URL", request.URL()), zap.Reflect("Operation", operation))
 
 	req := request.PathParameter(volumeIDParam, volumeID)
-	_, err := req.JSONSuccess(&volume).JSONError(&apiErr).Invoke()
+	resp, err := req.JSONSuccess(&volume).JSONError(&apiErr).Invoke()
 
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	return &volume, nil
-}
-
-// GetVolumeByName GETs /volumes
-func (vs *VolumeService) GetVolumeByName(volumeName string, ctxLogger *zap.Logger) (*models.Volume, error) {
-	ctxLogger.Debug("Entry Backend GetVolumeByName")
-	defer ctxLogger.Debug("Exit Backend GetVolumeByName")
-
-	defer util.TimeTracker("GetVolumeByName", time.Now())
-
-	// Get the volume details for a single volume, ListVolumeFilters will return only 1 volume in list
-	filters := &models.ListVolumeFilters{VolumeName: volumeName}
-	volumes, err := vs.ListVolumes(1, "", filters, ctxLogger)
-	if err != nil {
-		return nil, err
-	}
-
-	if volumes != nil {
-		volumeslist := volumes.Volumes
-		if len(volumeslist) > 0 {
-			return volumeslist[0], nil
-		}
-	}
-	return nil, err
+	return &volume, resp.Header.Get("etag"), nil
 }
