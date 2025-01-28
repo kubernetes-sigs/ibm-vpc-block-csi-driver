@@ -18,11 +18,15 @@
 package ibmcloudprovider
 
 import (
+	"bytes"	
+	"testing"
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider/fake"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -69,6 +73,37 @@ type FakeIBMCloudStorageProvider struct {
 }
 
 var _ CloudProviderInterface = &FakeIBMCloudStorageProvider{}
+
+func GetTestLogger(t *testing.T) (logger *zap.Logger, teardown func()) {
+	atom := zap.NewAtomicLevel()
+	atom.SetLevel(zap.DebugLevel)
+
+	encoderCfg := zap.NewProductionEncoderConfig()
+	encoderCfg.TimeKey = "timestamp"
+	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
+
+	buf := &bytes.Buffer{}
+
+	logger = zap.New(
+		zapcore.NewCore(
+			zapcore.NewJSONEncoder(encoderCfg),
+			zapcore.AddSync(buf),
+			atom,
+		),
+		zap.AddCaller(),
+	)
+
+	teardown = func() {
+		err := logger.Sync()
+		assert.Nil(t, err)
+
+		if t.Failed() {
+			t.Log(buf)
+		}
+	}
+
+	return
+}
 
 // NewFakeIBMCloudStorageProvider ...
 func NewFakeIBMCloudStorageProvider(configPath string, logger *zap.Logger) (*FakeIBMCloudStorageProvider, error) {

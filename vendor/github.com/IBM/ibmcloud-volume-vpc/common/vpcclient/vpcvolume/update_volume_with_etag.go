@@ -28,10 +28,10 @@ import (
 
 // UpdateVolume PATCH to /volumes for updating user tags only
 func (vs *VolumeService) UpdateVolumeWithEtag(volumeID string, etag string, volumeTemplate *models.Volume, ctxLogger *zap.Logger) error {
-	ctxLogger.Debug("Entry Backend UpdateVolume")
-	defer ctxLogger.Debug("Exit Backend UpdateVolume")
+	ctxLogger.Debug("Entry Backend UpdateVolumeWithEtag")
+	defer ctxLogger.Debug("Exit Backend UpdateVolumeWithEtag")
 
-	defer util.TimeTracker("UpdateVolume", time.Now())
+	defer util.TimeTracker("UpdateVolumeWithEtag", time.Now())
 
 	operation := &client.Operation{
 		Name:        "UpdateVolume",

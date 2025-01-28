@@ -20,7 +20,7 @@ package ibmcsidriver
 import (
 	"fmt"
 
-	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
+	cloudProvider "github.com/IBM/ibmcloud-volume-vpc/pkg/ibmcloudprovider"
 	commonError "github.com/IBM/ibm-csi-common/pkg/messages"
 	nodeMetadata "github.com/IBM/ibm-csi-common/pkg/metadata"
 	mountManager "github.com/IBM/ibm-csi-common/pkg/mountmanager"

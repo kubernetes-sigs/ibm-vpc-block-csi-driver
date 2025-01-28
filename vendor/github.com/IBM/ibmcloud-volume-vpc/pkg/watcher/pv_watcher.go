@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 IBM Corp.
+ * Copyright 2025 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,15 @@ import (
 	"strings"
 	"time"
 
+	uid "github.com/gofrs/uuid"
+	"go.uber.org/zap/zapcore"
+
 	"github.com/golang/glog"
 
-	cloudprovider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
-	"github.com/IBM/ibm-csi-common/pkg/utils"
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	iks_vpc_provider "github.com/IBM/ibmcloud-volume-vpc/iks/provider"
+	cloudprovider "github.com/IBM/ibmcloud-volume-vpc/pkg/ibmcloudprovider"
 
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
@@ -83,6 +85,24 @@ const (
 	VolumeUpdateEventReason = "VolumeMetaDataSaved"
 	//VolumeUpdateEventSuccess ...
 	VolumeUpdateEventSuccess = "Success"
+
+	// VolumeIDLabel ...
+	VolumeIDLabel = "volumeId"
+
+	// VolumeCRNLabel ...
+	VolumeCRNLabel = "volumeCRN"
+
+	// ClusterIDLabel ...
+	ClusterIDLabel = "clusterID"
+
+	// IOPSLabel ...
+	IOPSLabel = "iops"
+
+	// ZoneLabel ...
+	ZoneLabel = "zone"
+
+	// GiB in bytes
+	GiB = 1024 * 1024 * 1024
 )
 
 // VolumeTypeMap ...
@@ -153,7 +173,7 @@ func (pvw *PVWatcher) Start() {
 func (pvw *PVWatcher) updateVolume(oldobj, obj interface{}) {
 	// Run as non-blocking thread to allow parallel processing of volumes
 	go func() {
-		ctxLogger, requestID := utils.GetContextLogger(context.Background(), false)
+		ctxLogger, requestID := GetContextLogger(context.Background(), false)
 		// panic-recovery function that avoid watcher thread to stop because of unexexpected error
 		defer func() {
 			if r := recover(); r != nil {
@@ -168,8 +188,8 @@ func (pvw *PVWatcher) updateVolume(oldobj, obj interface{}) {
 			oldpv, _ := oldobj.(*v1.PersistentVolume)
 			oldCapacity := oldpv.Spec.Capacity[v1.ResourceStorage]
 			capacity := newpv.Spec.Capacity[v1.ResourceStorage]
-			iops := newpv.Spec.CSI.VolumeAttributes[utils.IOPSLabel]
-			oldiops := oldpv.Spec.CSI.VolumeAttributes[utils.IOPSLabel]
+			iops := newpv.Spec.CSI.VolumeAttributes[IOPSLabel]
+			oldiops := oldpv.Spec.CSI.VolumeAttributes[IOPSLabel]
 
 			if (newpv.Status.Phase == oldpv.Status.Phase) && (oldCapacity.Value() == capacity.Value()) && (oldiops == iops) {
 				ctxLogger.Info("Skipping update Volume as there is no change in status , capacity and iops")
@@ -217,7 +237,7 @@ func (pvw *PVWatcher) getTags(pv *v1.PersistentVolume, ctxLogger *zap.Logger) (s
 		tags = strings.Split(tagstr, ",")
 	}
 	// append default tags to users tag list
-	tags = append(tags, utils.ClusterIDLabel+":"+volAttributes[utils.ClusterIDLabel])
+	tags = append(tags, ClusterIDLabel+":"+volAttributes[ClusterIDLabel])
 	tags = append(tags, ReclaimPolicyTag+string(pv.Spec.PersistentVolumeReclaimPolicy))
 	tags = append(tags, StorageClassTag+pv.Spec.StorageClassName)
 	tags = append(tags, NameSpaceTag+pv.Spec.ClaimRef.Namespace)
@@ -237,8 +257,8 @@ func (pvw *PVWatcher) getVolume(pv *v1.PersistentVolume, ctxLogger *zap.Logger) 
 		VolumeType: provider.VolumeType(VolumeTypeMap[pv.Spec.CSI.Driver]),
 	}
 	volume.CRN = crn
-	clusterID := pv.Spec.CSI.VolumeAttributes[utils.ClusterIDLabel]
-	volume.Attributes = map[string]string{strings.ToLower(utils.ClusterIDLabel): clusterID}
+	clusterID := pv.Spec.CSI.VolumeAttributes[ClusterIDLabel]
+	volume.Attributes = map[string]string{strings.ToLower(ClusterIDLabel): clusterID}
 	if pv.Status.Phase == v1.VolumeReleased {
 		// Set only status in case of delete operation
 		volume.Attributes[VolumeStatus] = VolumeStatusDeleted
@@ -246,9 +266,9 @@ func (pvw *PVWatcher) getVolume(pv *v1.PersistentVolume, ctxLogger *zap.Logger) 
 		volume.Tags = tags
 		//Get Capacity and convert to GiB
 		capacity := pv.Spec.Capacity[v1.ResourceStorage]
-		capacityGiB := utils.BytesToGiB(capacity.Value())
+		capacityGiB := BytesToGiB(capacity.Value())
 		volume.Capacity = &capacityGiB
-		iops := pv.Spec.CSI.VolumeAttributes[utils.IOPSLabel]
+		iops := pv.Spec.CSI.VolumeAttributes[IOPSLabel]
 		volume.Iops = &iops
 		volume.Attributes[VolumeStatus] = VolumeStatusCreated
 	}
@@ -265,4 +285,49 @@ func (pvw *PVWatcher) filter(obj interface{}) bool {
 	}
 	pvw.logger.Debug("Exit filter()", zap.Bool("provisoinerMatch", provisoinerMatch))
 	return provisoinerMatch
+}
+
+// BytesToGiB converts Bytes to GiB
+func BytesToGiB(volumeSizeBytes int64) int {
+	return int(volumeSizeBytes / GiB)
+}
+
+// GetContextLogger ...
+func GetContextLogger(ctx context.Context, isDebug bool) (*zap.Logger, string) {
+	return GetContextLoggerWithRequestID(ctx, isDebug, nil)
+}
+
+// GetContextLoggerWithRequestID  adds existing requestID in the logger
+// The Existing requestID might be coming from ControllerPublishVolume etc
+func GetContextLoggerWithRequestID(ctx context.Context, isDebug bool, requestIDIn *string) (*zap.Logger, string) {
+	consoleDebugging := zapcore.Lock(os.Stdout)
+	consoleErrors := zapcore.Lock(os.Stderr)
+	encoderConfig := zap.NewProductionEncoderConfig()
+	encoderConfig.TimeKey = "ts"
+	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	traceLevel := zap.NewAtomicLevel()
+	if isDebug {
+		traceLevel.SetLevel(zap.DebugLevel)
+	} else {
+		traceLevel.SetLevel(zap.InfoLevel)
+	}
+
+	core := zapcore.NewTee(
+		zapcore.NewCore(zapcore.NewJSONEncoder(encoderConfig), consoleDebugging, zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+			return (lvl >= traceLevel.Level()) && (lvl < zapcore.ErrorLevel)
+		})),
+		zapcore.NewCore(zapcore.NewJSONEncoder(encoderConfig), consoleErrors, zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+			return lvl >= zapcore.ErrorLevel
+		})),
+	)
+	logger := zap.New(core, zap.AddCaller())
+	// generating a unique request ID so that logs can be filter
+	if requestIDIn == nil {
+		// Generate New RequestID if not provided
+		uuid, _ := uid.NewV4() // #nosec G104: Attempt to randomly generate uuid
+		requestID := uuid.String()
+		requestIDIn = &requestID
+	}
+	logger = logger.With(zap.String("RequestID", *requestIDIn))
+	return logger, *requestIDIn + " "
 }

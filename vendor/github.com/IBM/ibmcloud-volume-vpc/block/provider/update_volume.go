@@ -41,7 +41,7 @@ func (vpcs *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 			return err
 		}
 		if existVolume != nil && existVolume.Status == validVolumeStatus {
-			vpcs.Logger.Info("Volume got valid (available) state")
+			vpcs.Logger.Info("Volume got valid (available) state",zap.Reflect("etag", etag))
 			return nil
 		}
 		return userError.GetUserError("VolumeNotInValidState", err, volumeRequest.VolumeID)
@@ -53,7 +53,7 @@ func (vpcs *VPCSession) UpdateVolume(volumeRequest provider.Volume) error {
 
 	//If tags are equal then skip the UpdateVolume RIAAS API call
 	if ifTagsEqual(existVolume.UserTags, volumeRequest.VPCVolume.Tags) {
-		vpcs.Logger.Info("There is no change in user tags for volume, skipping the updateVolume for VPC IaaS... ", zap.Reflect("existVolume", existVolume.Tags), zap.Reflect("volumeRequest", volumeRequest.VPCVolume.Tags))
+		vpcs.Logger.Info("There is no change in user tags for volume, skipping the updateVolume for VPC IaaS... ", zap.Reflect("existVolume", existVolume.UserTags), zap.Reflect("volumeRequest", volumeRequest.VPCVolume.Tags))
 		return nil
 	}
 

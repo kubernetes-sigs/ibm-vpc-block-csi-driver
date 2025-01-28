@@ -19,7 +19,7 @@ package ibmcsidriver
 import (
 	"testing"
 
-	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
+	cloudProvider "github.com/IBM/ibmcloud-volume-vpc/pkg/ibmcloudprovider"
 	"github.com/stretchr/testify/assert"
 )
 
