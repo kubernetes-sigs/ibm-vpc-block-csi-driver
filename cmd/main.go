@@ -32,7 +32,7 @@ import (
 	"github.com/IBM/ibm-csi-common/pkg/metrics"
 	mountManager "github.com/IBM/ibm-csi-common/pkg/mountmanager"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
-	"github.com/IBM/ibm-csi-common/pkg/watcher"
+	"github.com/IBM/ibmcloud-volume-vpc/pkg/watcher"
 	cloudProvider "github.com/IBM/ibmcloud-volume-vpc/pkg/ibmcloudprovider"
 	csiConfig "github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/config"
 	driver "github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/pkg/ibmcsidriver"

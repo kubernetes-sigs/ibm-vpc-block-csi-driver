@@ -54,7 +54,7 @@ func (vpcIks *IksVpcSession) UpdateVolume(volumeRequest provider.Volume) (err er
 		vpcIks.Logger.Debug("Failed to update volume", zap.Reflect("BackendError", err))
 		return userError.GetUserError("UpdateFailed", err)
 	}
-
+	vpcIks.Logger.Info("Successfully updated volume...")
 	return err
 }
 
