@@ -41,8 +41,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	cloudProvider "github.com/IBM/ibmcloud-volume-vpc/pkg/ibmcloudprovider"
 	nodeMetadata "github.com/IBM/ibm-csi-common/pkg/metadata"
+	cloudProvider "github.com/IBM/ibmcloud-volume-vpc/pkg/ibmcloudprovider"
 
 	mountManager "github.com/IBM/ibm-csi-common/pkg/mountmanager"
 
