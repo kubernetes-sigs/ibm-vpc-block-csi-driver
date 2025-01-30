@@ -23,7 +23,6 @@ import (
 	"strings"
 	"time"
 
-	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	"github.com/IBM/ibmcloud-volume-interface/provider/local"
@@ -44,7 +43,7 @@ type IBMCloudStorageProvider struct {
 	ClusterID      string
 }
 
-var _ cloudProvider.CloudProviderInterface = &IBMCloudStorageProvider{}
+var _ CloudProviderInterface = &IBMCloudStorageProvider{}
 
 // NewIBMCloudStorageProvider ...
 func NewIBMCloudStorageProvider(clusterVolumeLabel string, k8sClient *k8s_utils.KubernetesClient, logger *zap.Logger) (*IBMCloudStorageProvider, error) {

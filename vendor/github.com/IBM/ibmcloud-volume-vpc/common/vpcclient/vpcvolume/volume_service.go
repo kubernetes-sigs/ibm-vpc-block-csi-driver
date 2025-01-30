@@ -24,11 +24,17 @@ import (
 )
 
 // VolumeManager operations
+//
+//go:generate counterfeiter -o fakes/volume.go --fake-name VolumeService . VolumeManager
 type VolumeManager interface {
 	// Create the volume with authorisation by passing required information in the volume object
 	CreateVolume(volumeTemplate *models.Volume, ctxLogger *zap.Logger) (*models.Volume, error)
+
 	// UpdateVolume updates the volume with authorisation by passing required information in the volume object
 	UpdateVolume(volumeTemplate *models.Volume, ctxLogger *zap.Logger) error
+
+	// UpdateVolumeWithEtag updates the volume with tags by passing etag in header
+	UpdateVolumeWithEtag(volumeID string, etag string, volumeTemplate *models.Volume, ctxLogger *zap.Logger) error
 
 	// ExpandVolume ...
 	ExpandVolume(volumeID string, volumeTemplate *models.Volume, ctxLogger *zap.Logger) (*models.Volume, error)
@@ -41,6 +47,9 @@ type VolumeManager interface {
 
 	// Get the volume by using volume name
 	GetVolumeByName(volumeName string, ctxLogger *zap.Logger) (*models.Volume, error)
+
+	// Get the volume etag by using ID
+	GetVolumeEtag(volumeID string, ctxLogger *zap.Logger) (*models.Volume, string, error)
 
 	// Others
 	// Get volume lists by using snapshot tags

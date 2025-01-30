@@ -22,7 +22,6 @@ import (
 	"strings"
 	"time"
 
-	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	commonError "github.com/IBM/ibm-csi-common/pkg/messages"
 	"github.com/IBM/ibm-csi-common/pkg/metrics"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
@@ -30,6 +29,7 @@ import (
 	providerError "github.com/IBM/ibmcloud-volume-interface/lib/utils"
 	utilReasonCode "github.com/IBM/ibmcloud-volume-interface/lib/utils/reasoncode"
 	userError "github.com/IBM/ibmcloud-volume-vpc/common/messages"
+	cloudProvider "github.com/IBM/ibmcloud-volume-vpc/pkg/ibmcloudprovider"
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 
 	"go.uber.org/zap"

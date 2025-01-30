@@ -24,7 +24,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// UpdateVolume POSTs to /volumes. Riaas/VPC does have volume update support yet
+// UpdateVolume PATCH to /volumes for updating
 func (vs *VolumeService) UpdateVolume(volumeTemplate *models.Volume, ctxLogger *zap.Logger) error {
 	return errors.New("unsupported Operation")
 }
