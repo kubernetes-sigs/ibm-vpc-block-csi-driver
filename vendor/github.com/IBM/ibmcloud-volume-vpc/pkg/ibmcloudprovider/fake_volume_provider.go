@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 IBM Corp.
+ * Copyright 2025 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,15 @@
 package ibmcloudprovider
 
 import (
-	"bytes"
+	"bytes"	
 	"testing"
-
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider/fake"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"golang.org/x/net/context"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -64,7 +64,16 @@ const (
 	TestAPIVersion = "2019-07-02"
 )
 
-// GetTestLogger ...
+// FakeIBMCloudStorageProvider Provider
+type FakeIBMCloudStorageProvider struct {
+	ProviderName   string
+	ProviderConfig *config.Config
+	ClusterID      string
+	fakeSession    *fake.FakeSession
+}
+
+var _ CloudProviderInterface = &FakeIBMCloudStorageProvider{}
+
 func GetTestLogger(t *testing.T) (logger *zap.Logger, teardown func()) {
 	atom := zap.NewAtomicLevel()
 	atom.SetLevel(zap.DebugLevel)
@@ -85,23 +94,16 @@ func GetTestLogger(t *testing.T) (logger *zap.Logger, teardown func()) {
 	)
 
 	teardown = func() {
-		_ = logger.Sync()
+		err := logger.Sync()
+		assert.Nil(t, err)
+
 		if t.Failed() {
 			t.Log(buf)
 		}
 	}
+
 	return
 }
-
-// FakeIBMCloudStorageProvider Provider
-type FakeIBMCloudStorageProvider struct {
-	ProviderName   string
-	ProviderConfig *config.Config
-	ClusterID      string
-	fakeSession    *fake.FakeSession
-}
-
-var _ CloudProviderInterface = &FakeIBMCloudStorageProvider{}
 
 // NewFakeIBMCloudStorageProvider ...
 func NewFakeIBMCloudStorageProvider(configPath string, logger *zap.Logger) (*FakeIBMCloudStorageProvider, error) {

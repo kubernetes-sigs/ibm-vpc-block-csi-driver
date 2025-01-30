@@ -126,6 +126,12 @@ func (r *Request) SetQueryValue(key, value string) *Request {
 	return r
 }
 
+// SetHeader ...
+func (r *Request) SetHeader(key, value string) *Request {
+	r.headers.Set(key, value)
+	return r
+}
+
 // JSONBody converts the supplied argument to JSON to use as the body of a request
 func (r *Request) JSONBody(p interface{}) *Request {
 	if r.operation.Method == http.MethodPost && reflect.ValueOf(p).Kind() == reflect.Struct {

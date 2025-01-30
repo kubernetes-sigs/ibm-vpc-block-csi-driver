@@ -21,7 +21,7 @@ import (
 	"os"
 	"testing"
 
-	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
+	cloudProvider "github.com/IBM/ibmcloud-volume-vpc/pkg/ibmcloudprovider"
 	"github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/pkg/ibmcsidriver/ibmcsidriverfakes"
 	"github.com/stretchr/testify/assert"
 )

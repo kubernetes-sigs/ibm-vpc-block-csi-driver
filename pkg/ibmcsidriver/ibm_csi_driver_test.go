@@ -22,10 +22,10 @@ import (
 
 	testingexec "k8s.io/utils/exec/testing"
 
-	cloudProvider "github.com/IBM/ibm-csi-common/pkg/ibmcloudprovider"
 	nodeMetadata "github.com/IBM/ibm-csi-common/pkg/metadata"
 	nodeInfo "github.com/IBM/ibm-csi-common/pkg/metadata/fake"
 	mountManager "github.com/IBM/ibm-csi-common/pkg/mountmanager"
+	cloudProvider "github.com/IBM/ibmcloud-volume-vpc/pkg/ibmcloudprovider"
 	"github.com/stretchr/testify/assert"
 )
 

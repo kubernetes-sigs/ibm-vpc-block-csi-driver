@@ -61,35 +61,35 @@ func (vpcIks *IksVpcSession) Type() provider.VolumeType {
 
 // AttachVolume attach volume based on given volume attachment request
 func (vpcIks *IksVpcSession) AttachVolume(volumeAttachmentRequest provider.VolumeAttachmentRequest) (*provider.VolumeAttachmentResponse, error) {
-	vpcIks.Logger.Debug("Entry of IksVpcSession.AttachVolume method...")
-	defer vpcIks.Logger.Debug("Exit from IksVpcSession.AttachVolume method...")
+	vpcIks.IksSession.Logger.Debug("Entry of IksVpcSession.AttachVolume method...")
+	defer vpcIks.IksSession.Logger.Debug("Exit from IksVpcSession.AttachVolume method...")
 	return vpcIks.IksSession.AttachVolume(volumeAttachmentRequest)
 }
 
 // DetachVolume attach volume based on given volume attachment request
 func (vpcIks *IksVpcSession) DetachVolume(volumeAttachmentRequest provider.VolumeAttachmentRequest) (*http.Response, error) {
 	vpcIks.IksSession.Logger.Debug("Entry of IksVpcSession.DetachVolume method...")
-	defer vpcIks.Logger.Debug("Exit from IksVpcSession.DetachVolume method...")
+	defer vpcIks.IksSession.Logger.Debug("Exit from IksVpcSession.DetachVolume method...")
 	return vpcIks.IksSession.DetachVolume(volumeAttachmentRequest)
 }
 
 // GetVolumeAttachment attach volume based on given volume attachment request
 func (vpcIks *IksVpcSession) GetVolumeAttachment(volumeAttachmentRequest provider.VolumeAttachmentRequest) (*provider.VolumeAttachmentResponse, error) {
-	vpcIks.Logger.Debug("Entry of IksVpcSession.GetVolumeAttachment method...")
-	defer vpcIks.Logger.Debug("Exit from IksVpcSession.GetVolumeAttachment method...")
+	vpcIks.IksSession.Logger.Debug("Entry of IksVpcSession.GetVolumeAttachment method...")
+	defer vpcIks.IksSession.Logger.Debug("Exit from IksVpcSession.GetVolumeAttachment method...")
 	return vpcIks.IksSession.GetVolumeAttachment(volumeAttachmentRequest)
 }
 
 // WaitForAttachVolume attach volume based on given volume attachment request
 func (vpcIks *IksVpcSession) WaitForAttachVolume(volumeAttachmentRequest provider.VolumeAttachmentRequest) (*provider.VolumeAttachmentResponse, error) {
-	vpcIks.Logger.Debug("Entry of IksVpcSession.WaitForAttachVolume method...")
-	defer vpcIks.Logger.Debug("Exit from IksVpcSession.WaitForAttachVolume method...")
+	vpcIks.IksSession.Logger.Debug("Entry of IksVpcSession.WaitForAttachVolume method...")
+	defer vpcIks.IksSession.Logger.Debug("Exit from IksVpcSession.WaitForAttachVolume method...")
 	return vpcIks.IksSession.WaitForAttachVolume(volumeAttachmentRequest)
 }
 
 // WaitForDetachVolume attach volume based on given volume attachment request
 func (vpcIks *IksVpcSession) WaitForDetachVolume(volumeAttachmentRequest provider.VolumeAttachmentRequest) error {
-	vpcIks.Logger.Debug("Entry of IksVpcSession.WaitForDetachVolume method...")
-	defer vpcIks.Logger.Debug("Exit from IksVpcSession.WaitForDetachVolume method...")
+	vpcIks.IksSession.Logger.Debug("Entry of IksVpcSession.WaitForDetachVolume method...")
+	defer vpcIks.IksSession.Logger.Debug("Exit from IksVpcSession.WaitForDetachVolume method...")
 	return vpcIks.IksSession.WaitForDetachVolume(volumeAttachmentRequest)
 }
