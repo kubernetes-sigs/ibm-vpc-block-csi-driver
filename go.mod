@@ -8,7 +8,7 @@ require (
 	github.com/IBM/ibmcloud-volume-vpc v1.1.14
 	github.com/IBM/secret-utils-lib v1.1.11
 	github.com/container-storage-interface/spec v1.9.0
-	github.com/golang/glog v1.2.1
+	github.com/golang/glog v1.2.4
 	github.com/google/uuid v1.6.0
 	github.com/kubernetes-csi/csi-test/v4 v4.3.0
 	github.com/prometheus/client_golang v1.19.1
