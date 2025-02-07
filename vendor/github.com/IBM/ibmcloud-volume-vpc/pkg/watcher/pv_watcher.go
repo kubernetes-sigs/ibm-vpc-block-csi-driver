@@ -173,6 +173,8 @@ func (pvw *PVWatcher) Start() {
 func (pvw *PVWatcher) updateVolume(oldobj, obj interface{}) {
 	// Run as non-blocking thread to allow parallel processing of volumes
 	go func() {
+		var oldStatus v1.PersistentVolumePhase
+		var newStatus v1.PersistentVolumePhase
 		ctxLogger, requestID := GetContextLogger(context.Background(), false)
 		// panic-recovery function that avoid watcher thread to stop because of unexexpected error
 		defer func() {
@@ -190,8 +192,9 @@ func (pvw *PVWatcher) updateVolume(oldobj, obj interface{}) {
 			capacity := newpv.Spec.Capacity[v1.ResourceStorage]
 			iops := newpv.Spec.CSI.VolumeAttributes[IOPSLabel]
 			oldiops := oldpv.Spec.CSI.VolumeAttributes[IOPSLabel]
-
-			if (newpv.Status.Phase == oldpv.Status.Phase) && (oldCapacity.Value() == capacity.Value()) && (oldiops == iops) {
+			newStatus = newpv.Status.Phase
+			oldStatus = oldpv.Status.Phase
+			if (newStatus == oldStatus) && (oldCapacity.Value() == capacity.Value()) && (oldiops == iops) {
 				ctxLogger.Info("Skipping update Volume as there is no change in status , capacity and iops")
 				return
 			}
@@ -206,21 +209,29 @@ func (pvw *PVWatcher) updateVolume(oldobj, obj interface{}) {
 				return
 			}
 
-			volume := pvw.getVolume(newpv, ctxLogger)
+			volume := pvw.getVolumeFromPV(newpv, ctxLogger)
+			// Updating metadata for the volume
 			ctxLogger.Info("Updating metadata for the volume", zap.Reflect("volume", volume))
 			err := iksVpc.UpdateVolume(volume)
 			if err != nil {
 				ctxLogger.Warn("Failed to update volume metadata", zap.Error(err))
 				pvw.recorder.Event(newpv, v1.EventTypeWarning, VolumeUpdateEventReason, err.Error())
 			}
-			ctxLogger.Info("Updating tags from VPC IaaS")
-			err = iksVpc.VPCSession.UpdateVolume(volume)
-			if err != nil {
-				ctxLogger.Warn("Failed to update volume with tags from VPC IaaS", zap.Error(err))
-				pvw.recorder.Event(newpv, v1.EventTypeWarning, VolumeUpdateEventReason, err.Error())
+
+			//Lets invoke the VPC IaaS update Volume only if there is status change and new status is bound state.
+			//This will be true only when PVC is first time created
+			if newStatus != oldStatus && newStatus == v1.VolumeBound {
+				ctxLogger.Info("Updating tags from VPC IaaS")
+				err = iksVpc.VPCSession.UpdateVolume(volume)
+				if err != nil {
+					ctxLogger.Warn("Failed to update volume with tags from VPC IaaS", zap.Error(err))
+					pvw.recorder.Event(newpv, v1.EventTypeWarning, VolumeUpdateEventReason, err.Error())
+				} else {
+					pvw.recorder.Event(newpv, v1.EventTypeNormal, VolumeUpdateEventReason, VolumeUpdateEventSuccess)
+					ctxLogger.Warn("Volume Metadata saved successfully")
+				}
 			} else {
-				pvw.recorder.Event(newpv, v1.EventTypeNormal, VolumeUpdateEventReason, VolumeUpdateEventSuccess)
-				ctxLogger.Warn("Volume Metadata saved successfully")
+				ctxLogger.Info("Skipping Updating tags from VPC IaaS as there is no change in tags")
 			}
 		}
 		ctxLogger.Info("Exit updateVolume()", zap.Error(err))
@@ -248,7 +259,7 @@ func (pvw *PVWatcher) getTags(pv *v1.PersistentVolume, ctxLogger *zap.Logger) (s
 	return volAttributes[VolumeCRN], tags
 }
 
-func (pvw *PVWatcher) getVolume(pv *v1.PersistentVolume, ctxLogger *zap.Logger) provider.Volume {
+func (pvw *PVWatcher) getVolumeFromPV(pv *v1.PersistentVolume, ctxLogger *zap.Logger) provider.Volume {
 	ctxLogger.Debug("Entry getVolume()", zap.Reflect("pv", pv))
 	crn, tags := pvw.getTags(pv, ctxLogger)
 	volume := provider.Volume{
