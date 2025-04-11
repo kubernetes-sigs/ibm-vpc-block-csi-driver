@@ -6,7 +6,7 @@ require (
 	github.com/IBM/ibm-csi-common v1.1.18
 	github.com/IBM/ibmcloud-volume-interface v1.2.9
 	github.com/IBM/ibmcloud-volume-vpc v1.1.15
-	github.com/IBM/secret-utils-lib v1.1.11
+	github.com/IBM/secret-utils-lib v1.1.12
 	github.com/container-storage-interface/spec v1.9.0
 	github.com/golang/glog v1.2.4
 	github.com/google/uuid v1.6.0
@@ -50,8 +50,7 @@ require (
 	github.com/go-playground/validator/v10 v10.19.0 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
-	github.com/golang-jwt/jwt/v4 v4.5.1 // indirect
+	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
