@@ -94,7 +94,7 @@ func (csiCS *CSIControllerServer) CreateVolume(ctx context.Context, req *csi.Cre
 		// Create copy of the requestedVolume
 		tempReqVol := (*requestedVolume)
 		// Mask VolumeEncryptionKey
-		tempReqVol.VPCVolume.VolumeEncryptionKey = &provider.VolumeEncryptionKey{CRN: "********"}
+		tempReqVol.VolumeEncryptionKey = &provider.VolumeEncryptionKey{CRN: "********"}
 		ctxLogger.Info("Volume request after masking encryption key", zap.Reflect("Volume", tempReqVol))
 	}
 
