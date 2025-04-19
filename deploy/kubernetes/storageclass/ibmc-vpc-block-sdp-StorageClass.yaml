@@ -5,8 +5,8 @@ metadata:
 provisioner: vpc.block.csi.ibm.io
 parameters:
   profile: "sdp"
-  iops: "100"
-  throughput: "1000"
+  iops: ""
+  throughput: ""
   csi.storage.k8s.io/fstype: "ext4"
   billingType: "hourly"
   encrypted: "false"
