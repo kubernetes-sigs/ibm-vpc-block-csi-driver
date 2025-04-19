@@ -129,8 +129,8 @@ const (
 	// MinimumSDPVolumeSizeInBytes ... This is minimum size require for sdp (acadia profile)
 	MinimumSDPVolumeSizeInBytes int64 = 1 * utils.GiB
 
-	// Bandwidth ...
-	Bandwidth = "bandwidth"
+	// Throughput ...
+	Throughput = "throughput"
 )
 
 // SupportedFS the supported FS types

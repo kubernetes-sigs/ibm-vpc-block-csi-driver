@@ -168,7 +168,7 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 				iops := value
 				volume.Iops = &iops
 			}
-		case Bandwidth: // getting bandwidth value from storage class if it is provided
+		case Throughput: // getting throughput value from storage class if it is provided
 			if len(value) != 0 {
 				bandwidth, err := strconv.ParseInt(value, 10, 32)
 				if err != nil {
@@ -325,6 +325,15 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 			if len(value) != 0 {
 				iops := value
 				volume.Iops = &iops
+			}
+		case Throughput: // getting throughput value from storage class if it is provided
+			if len(value) != 0 {
+				bandwidth, err := strconv.ParseInt(value, 10, 32)
+				if err != nil {
+					err = fmt.Errorf("'<%v>' is invalid, value of '%s' should be an int32 type", value, key)
+				} else {
+					volume.Bandwidth = int32(bandwidth)
+				}
 			}
 		default:
 			err = fmt.Errorf("<%s> is an invalid parameter", key)

@@ -6,7 +6,7 @@ provisioner: vpc.block.csi.ibm.io
 parameters:
   profile: "sdp"
   iops: "100"
-  bandwidth: "1000"
+  throughput: "1000"
   csi.storage.k8s.io/fstype: "ext4"
   billingType: "hourly"
   encrypted: "false"
