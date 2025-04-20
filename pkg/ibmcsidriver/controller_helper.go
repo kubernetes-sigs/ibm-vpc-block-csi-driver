@@ -41,7 +41,7 @@ func getRequestedCapacity(capRange *csi.CapacityRange, profileName string) (int6
 		if profileName == SDPProfile { // SDP profile minimum size is 1GB
 			capBytes = MinimumSDPVolumeSizeInBytes
 		} else {
-			capBytes = utils.MinimumVolumeSizeInBytes // tierd and custom profile minimum size is 10 GB
+			capBytes = utils.MinimumVolumeSizeInBytes // tier and custom profile minimum size is 10 GB
 		}
 		// returns in GiB
 		return capBytes, nil
