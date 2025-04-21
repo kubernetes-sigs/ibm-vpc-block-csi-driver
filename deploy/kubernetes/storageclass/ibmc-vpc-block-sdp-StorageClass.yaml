@@ -1,0 +1,19 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ibmc-vpc-block-sdp
+provisioner: vpc.block.csi.ibm.io
+parameters:
+  profile: "sdp"
+  iops: ""
+  throughput: ""
+  csi.storage.k8s.io/fstype: "ext4"
+  billingType: "hourly"
+  encrypted: "false"
+  encryptionKey: ""
+  resourceGroup: ""
+  zone: ""
+  tags: ""
+  generation: "gc"
+  classVersion: "1"
+reclaimPolicy: "Delete"

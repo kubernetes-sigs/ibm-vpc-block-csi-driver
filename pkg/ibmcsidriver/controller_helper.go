@@ -41,7 +41,7 @@ func getRequestedCapacity(capRange *csi.CapacityRange, profileName string) (int6
 		if profileName == SDPProfile { // SDP profile minimum size is 1GB
 			capBytes = MinimumSDPVolumeSizeInBytes
 		} else {
-			capBytes = utils.MinimumVolumeSizeInBytes // tierd and custom profile minimum size is 10 GB
+			capBytes = utils.MinimumVolumeSizeInBytes // tier and custom profile minimum size is 10 GB
 		}
 		// returns in GiB
 		return capBytes, nil
@@ -168,7 +168,15 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 				iops := value
 				volume.Iops = &iops
 			}
-
+		case Throughput: // getting throughput value from storage class if it is provided
+			if len(value) != 0 {
+				bandwidth, errParse := strconv.ParseInt(value, 10, 32)
+				if errParse != nil {
+					err = fmt.Errorf("'<%v>' is invalid, value of '%s' should be an int32 type", value, key)
+				} else {
+					volume.Bandwidth = int32(bandwidth)
+				}
+			}
 		default:
 			err = fmt.Errorf("<%s> is an invalid parameter", key)
 		}
@@ -317,6 +325,15 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 			if len(value) != 0 {
 				iops := value
 				volume.Iops = &iops
+			}
+		case Throughput: // getting throughput value from storage class if it is provided
+			if len(value) != 0 {
+				bandwidth, errParse := strconv.ParseInt(value, 10, 32)
+				if errParse != nil {
+					err = fmt.Errorf("'<%v>' is invalid, value of '%s' should be an int32 type", value, key)
+				} else {
+					volume.Bandwidth = int32(bandwidth)
+				}
 			}
 		default:
 			err = fmt.Errorf("<%s> is an invalid parameter", key)
