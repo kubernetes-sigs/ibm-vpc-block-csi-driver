@@ -17,3 +17,4 @@ parameters:
   generation: "gc"
   classVersion: "1"
 reclaimPolicy: "Delete"
+allowVolumeExpansion: true
