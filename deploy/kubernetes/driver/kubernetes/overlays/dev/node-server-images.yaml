@@ -10,6 +10,6 @@ spec:
           imagePullPolicy: Always
           image: registry.k8s.io/cloud-provider-ibm/ibm-vpc-block-csi-driver:v0.0.0
         - name: csi-driver-registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.11.1
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
         - name: liveness-probe
-          image: registry.k8s.io/sig-storage/livenessprobe:v2.13.1
+          image: registry.k8s.io/sig-storage/livenessprobe:v2.15.0
