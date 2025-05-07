@@ -6,6 +6,16 @@ import (
 )
 
 type FakeNodeMetadata struct {
+	GetAccountIDStub        func() string
+	getAccountIDMutex       sync.RWMutex
+	getAccountIDArgsForCall []struct {
+	}
+	getAccountIDReturns struct {
+		result1 string
+	}
+	getAccountIDReturnsOnCall map[int]struct {
+		result1 string
+	}
 	GetRegionStub        func() string
 	getRegionMutex       sync.RWMutex
 	getRegionArgsForCall []struct {
@@ -40,20 +50,74 @@ type FakeNodeMetadata struct {
 	invocationsMutex sync.RWMutex
 }
 
+func (fake *FakeNodeMetadata) GetAccountID() string {
+	fake.getAccountIDMutex.Lock()
+	ret, specificReturn := fake.getAccountIDReturnsOnCall[len(fake.getAccountIDArgsForCall)]
+	fake.getAccountIDArgsForCall = append(fake.getAccountIDArgsForCall, struct {
+	}{})
+	stub := fake.GetAccountIDStub
+	fakeReturns := fake.getAccountIDReturns
+	fake.recordInvocation("GetAccountID", []interface{}{})
+	fake.getAccountIDMutex.Unlock()
+	if stub != nil {
+		return stub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeNodeMetadata) GetAccountIDCallCount() int {
+	fake.getAccountIDMutex.RLock()
+	defer fake.getAccountIDMutex.RUnlock()
+	return len(fake.getAccountIDArgsForCall)
+}
+
+func (fake *FakeNodeMetadata) GetAccountIDCalls(stub func() string) {
+	fake.getAccountIDMutex.Lock()
+	defer fake.getAccountIDMutex.Unlock()
+	fake.GetAccountIDStub = stub
+}
+
+func (fake *FakeNodeMetadata) GetAccountIDReturns(result1 string) {
+	fake.getAccountIDMutex.Lock()
+	defer fake.getAccountIDMutex.Unlock()
+	fake.GetAccountIDStub = nil
+	fake.getAccountIDReturns = struct {
+		result1 string
+	}{result1}
+}
+
+func (fake *FakeNodeMetadata) GetAccountIDReturnsOnCall(i int, result1 string) {
+	fake.getAccountIDMutex.Lock()
+	defer fake.getAccountIDMutex.Unlock()
+	fake.GetAccountIDStub = nil
+	if fake.getAccountIDReturnsOnCall == nil {
+		fake.getAccountIDReturnsOnCall = make(map[int]struct {
+			result1 string
+		})
+	}
+	fake.getAccountIDReturnsOnCall[i] = struct {
+		result1 string
+	}{result1}
+}
+
 func (fake *FakeNodeMetadata) GetRegion() string {
 	fake.getRegionMutex.Lock()
 	ret, specificReturn := fake.getRegionReturnsOnCall[len(fake.getRegionArgsForCall)]
 	fake.getRegionArgsForCall = append(fake.getRegionArgsForCall, struct {
 	}{})
+	stub := fake.GetRegionStub
+	fakeReturns := fake.getRegionReturns
 	fake.recordInvocation("GetRegion", []interface{}{})
 	fake.getRegionMutex.Unlock()
-	if fake.GetRegionStub != nil {
-		return fake.GetRegionStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.getRegionReturns
 	return fakeReturns.result1
 }
 
@@ -97,15 +161,16 @@ func (fake *FakeNodeMetadata) GetWorkerID() string {
 	ret, specificReturn := fake.getWorkerIDReturnsOnCall[len(fake.getWorkerIDArgsForCall)]
 	fake.getWorkerIDArgsForCall = append(fake.getWorkerIDArgsForCall, struct {
 	}{})
+	stub := fake.GetWorkerIDStub
+	fakeReturns := fake.getWorkerIDReturns
 	fake.recordInvocation("GetWorkerID", []interface{}{})
 	fake.getWorkerIDMutex.Unlock()
-	if fake.GetWorkerIDStub != nil {
-		return fake.GetWorkerIDStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.getWorkerIDReturns
 	return fakeReturns.result1
 }
 
@@ -149,15 +214,16 @@ func (fake *FakeNodeMetadata) GetZone() string {
 	ret, specificReturn := fake.getZoneReturnsOnCall[len(fake.getZoneArgsForCall)]
 	fake.getZoneArgsForCall = append(fake.getZoneArgsForCall, struct {
 	}{})
+	stub := fake.GetZoneStub
+	fakeReturns := fake.getZoneReturns
 	fake.recordInvocation("GetZone", []interface{}{})
 	fake.getZoneMutex.Unlock()
-	if fake.GetZoneStub != nil {
-		return fake.GetZoneStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.getZoneReturns
 	return fakeReturns.result1
 }
 
@@ -199,6 +265,8 @@ func (fake *FakeNodeMetadata) GetZoneReturnsOnCall(i int, result1 string) {
 func (fake *FakeNodeMetadata) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
+	fake.getAccountIDMutex.RLock()
+	defer fake.getAccountIDMutex.RUnlock()
 	fake.getRegionMutex.RLock()
 	defer fake.getRegionMutex.RUnlock()
 	fake.getWorkerIDMutex.RLock()
