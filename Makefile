@@ -44,7 +44,7 @@ BUILD_NUMBER?=unknown
 GO111MODULE_FLAG?=on
 export GO111MODULE=$(GO111MODULE_FLAG)
 
-export LINT_VERSION="2.0.2"
+LINT_VERSION=v2.0.2
 
 GOFILES=$(shell find . -type f -name '*.go' -not -path "./vendor/*")
 
@@ -60,20 +60,18 @@ driver: deps buildimage
 .PHONY: deps
 deps:
 	echo "Installing dependencies ..."
-	@if ! which golangci-lint >/dev/null || [[ "$$(golangci-lint --version)" != *${LINT_VERSION}* ]]; then \
-		go install github.com/golangci/golangci-lint/cmd/golangci-lint@v${LINT_VERSION}; \
-	fi
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin ${LINT_VERSION}
 
 .PHONY: fmt
 fmt: lint
 	gofmt -l ${GOFILES}
 
 .PHONY: dofmt
-dofmt:
+dofmt: deps
 	$(GOPATH)/bin/golangci-lint run --disable-all --enable=gofmt --fix --timeout 600s
 
 .PHONY: lint
-lint:
+lint: deps
 	hack/verify-golint.sh
 
 .PHONY: build
@@ -81,7 +79,7 @@ build:
 	CGO_ENABLED=0 GOOS=$(shell go env GOOS) GOARCH=$(shell go env GOARCH) go build -mod=vendor -a -ldflags '-X main.vendorVersion='"${DRIVER_NAME}-${GIT_COMMIT_SHA}"' -extldflags "-static"' -o ${GOPATH}/bin/${EXE_DRIVER_NAME} ./cmd/
 
 .PHONY: verify
-verify:
+verify: deps
 	echo "Verifying and linting files ..."
 	./hack/verify-all.sh
 	echo "Congratulations! All Go source files have been linted."
