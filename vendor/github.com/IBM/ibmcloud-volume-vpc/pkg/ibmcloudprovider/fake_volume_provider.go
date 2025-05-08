@@ -18,15 +18,16 @@
 package ibmcloudprovider
 
 import (
-	"bytes"	
+	"bytes"
 	"testing"
+
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider/fake"
-	"go.uber.org/zap"
-	"golang.org/x/net/context"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"golang.org/x/net/context"
 )
 
 const (
@@ -52,7 +53,7 @@ const (
 	IAMClientSecret = "test-iam_client_secret"
 
 	// IAMAPIKey ...
-	IAMAPIKey = "test-iam_api_key"
+	IAMAPIKey = "test-iam_api_key" // #nosec G101
 
 	// RefreshToken ...
 	RefreshToken = "test-refresh_token"

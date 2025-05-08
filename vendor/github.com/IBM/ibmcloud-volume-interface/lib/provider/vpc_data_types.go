@@ -28,6 +28,7 @@ type VPCVolume struct {
 	CRN                 string               `json:"crn,omitempty"`
 	Status              string               `json:"status,omitempty"`
 	Tags                []string             `json:"volume_tags,omitempty"`
+	Bandwidth           int32                `json:"bandwidth,omitempty"`
 	VPCBlockVolume
 	VPCFileVolume
 }

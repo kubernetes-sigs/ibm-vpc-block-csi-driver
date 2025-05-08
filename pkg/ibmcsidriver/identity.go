@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The Kubernetes Authors.
+Copyright 2025 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,12 +28,13 @@ import (
 // CSIIdentityServer ...
 type CSIIdentityServer struct {
 	Driver *IBMCSIDriver
+	csi.UnimplementedIdentityServer
 }
 
 // GetPluginInfo ...
 func (csiIdentity *CSIIdentityServer) GetPluginInfo(ctx context.Context, req *csi.GetPluginInfoRequest) (*csi.GetPluginInfoResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
-	ctxLogger.Info("CSIIdentityServer-GetPluginInfo...", zap.Reflect("Request", *req))
+	ctxLogger.Info("CSIIdentityServer-GetPluginInfo...", zap.Reflect("Request", req))
 
 	if csiIdentity.Driver == nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.DriverNotConfigured, requestID, nil)
@@ -48,7 +49,7 @@ func (csiIdentity *CSIIdentityServer) GetPluginInfo(ctx context.Context, req *cs
 // GetPluginCapabilities ...
 func (csiIdentity *CSIIdentityServer) GetPluginCapabilities(ctx context.Context, req *csi.GetPluginCapabilitiesRequest) (*csi.GetPluginCapabilitiesResponse, error) {
 	ctxLogger, _ := utils.GetContextLogger(ctx, false)
-	ctxLogger.Info("CSIIdentityServer-GetPluginCapabilities...", zap.Reflect("Request", *req))
+	ctxLogger.Info("CSIIdentityServer-GetPluginCapabilities...", zap.Reflect("Request", req))
 
 	return &csi.GetPluginCapabilitiesResponse{
 		Capabilities: []*csi.PluginCapability{

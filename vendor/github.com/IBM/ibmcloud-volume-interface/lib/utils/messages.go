@@ -19,7 +19,10 @@ package util
 
 import (
 	"fmt"
+	"strings"
 )
+
+const vpcError = "Trace Code:"
 
 // Message Wrapper Message/Error Class
 type Message struct {
@@ -39,5 +42,9 @@ func (msg Message) Error() string {
 
 // Info ...
 func (msg Message) Info() string {
-	return fmt.Sprintf("{Code:%s, Type:%s, Description:%s, BackendError:%s, RC:%d}", msg.Code, msg.Type, msg.Description, msg.BackendError, msg.RC)
+	if strings.Contains(msg.BackendError, vpcError) {
+		return fmt.Sprintf("{%s.%s}", msg.BackendError, msg.Description)
+	} else {
+		return fmt.Sprintf("{Code:%s, Description:%s.%s, RC:%d}", msg.Code, msg.Description, msg.BackendError, msg.RC)
+	}
 }

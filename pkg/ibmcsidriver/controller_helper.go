@@ -121,7 +121,7 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 		switch key {
 		case Profile:
 			if utils.ListContainsSubstr(SupportedProfile, value) {
-				volume.VPCVolume.Profile = &provider.Profile{Name: value}
+				volume.Profile = &provider.Profile{Name: value}
 			} else {
 				err = fmt.Errorf("%s:<%v> unsupported profile. Supported profiles are: %v", key, value, SupportedProfile)
 			}
@@ -140,14 +140,14 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 		case Tag:
 			if len(value) != 0 {
 				tagstr := strings.TrimSpace(value)
-				volume.VPCVolume.Tags = strings.Split(tagstr, ",")
+				volume.Tags = strings.Split(tagstr, ",")
 			}
 
 		case ResourceGroup:
 			if len(value) > ResourceGroupIDMaxLen {
 				err = fmt.Errorf("%s:<%v> exceeds %d chars", key, value, ResourceGroupIDMaxLen)
 			}
-			volume.VPCVolume.ResourceGroup = &provider.ResourceGroup{ID: value}
+			volume.ResourceGroup = &provider.ResourceGroup{ID: value}
 
 		case BillingType:
 			// Its not supported by RIaaS, but this is just information for the user
@@ -163,7 +163,7 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 				err = fmt.Errorf("%s: exceeds %d bytes", key, EncryptionKeyMaxLen)
 			} else {
 				if len(value) != 0 {
-					volume.VPCVolume.VolumeEncryptionKey = &provider.VolumeEncryptionKey{CRN: value}
+					volume.VolumeEncryptionKey = &provider.VolumeEncryptionKey{CRN: value}
 				}
 			}
 
@@ -192,7 +192,7 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 	}
 	// If encripted is set to false
 	if encrypt == FalseStr {
-		volume.VPCVolume.VolumeEncryptionKey = nil
+		volume.VolumeEncryptionKey = nil
 	}
 
 	// Get the requested capacity from the request
@@ -246,7 +246,7 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 		return volume, err
 	}
 
-	if volume.VPCVolume.Profile != nil && volume.VPCVolume.Profile.Name != CustomProfile {
+	if volume.Profile != nil && volume.Profile.Name != CustomProfile {
 		// Specify IOPS only for custom class
 		volume.Iops = nil
 	}
@@ -302,7 +302,7 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 				err = fmt.Errorf("%s:<%v> exceeds %d bytes ", key, value, ResourceGroupIDMaxLen)
 			} else {
 				logger.Info("override", zap.Any(ResourceGroup, value))
-				volume.VPCVolume.ResourceGroup = &provider.ResourceGroup{ID: value}
+				volume.ResourceGroup = &provider.ResourceGroup{ID: value}
 			}
 		case Encrypted:
 			if value != TrueStr && value != FalseStr {
@@ -317,7 +317,7 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 			} else {
 				if len(value) != 0 {
 					logger.Info("override", zap.String("parameter", EncryptionKey))
-					volume.VPCVolume.VolumeEncryptionKey = &provider.VolumeEncryptionKey{CRN: value}
+					volume.VolumeEncryptionKey = &provider.VolumeEncryptionKey{CRN: value}
 				}
 			}
 		case Tag:
@@ -325,7 +325,7 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 				logger.Info("append", zap.Any(Tag, value))
 				tagstr := strings.TrimSpace(value)
 				secretTags := strings.Split(tagstr, ",")
-				volume.VPCVolume.Tags = append(volume.VPCVolume.Tags, secretTags...)
+				volume.Tags = append(volume.Tags, secretTags...)
 			}
 
 		case Zone:
@@ -343,7 +343,7 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 			}
 		case IOPS:
 			// Override IOPS only for custom class
-			if volume.Capacity != nil && volume.VPCVolume.Profile != nil && volume.VPCVolume.Profile.Name == "custom" {
+			if volume.Capacity != nil && volume.Profile != nil && volume.Profile.Name == "custom" {
 				var iops int
 				var check bool
 				iops, err = strconv.Atoi(value)
@@ -366,11 +366,11 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 		}
 	}
 	// Assign ResourceGroupID from config
-	if volume.VPCVolume.ResourceGroup == nil || len(volume.VPCVolume.ResourceGroup.ID) < 1 {
-		volume.VPCVolume.ResourceGroup = &provider.ResourceGroup{ID: config.VPC.G2ResourceGroupID}
+	if volume.ResourceGroup == nil || len(volume.ResourceGroup.ID) < 1 {
+		volume.ResourceGroup = &provider.ResourceGroup{ID: config.VPC.G2ResourceGroupID}
 	}
 	if encrypt == FalseStr {
-		volume.VPCVolume.VolumeEncryptionKey = nil
+		volume.VolumeEncryptionKey = nil
 	}
 	return nil
 }

@@ -176,4 +176,7 @@ const (
 
 	// SubnetFindFailed ...
 	SubnetFindFailed = "SubnetFindFailed"
+
+	// RC5XX
+	RC5XX = "RC:5"
 )

@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The Kubernetes Authors.
+Copyright 2025 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import (
 	"k8s.io/utils/exec"
 	testingexec "k8s.io/utils/exec/testing"
 	"os"
-	"reflect"
 	"runtime"
 	"strings"
 	"testing"
@@ -34,6 +33,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 const defaultVolumeID = "csiprovidervolumeid"
@@ -625,7 +625,7 @@ func TestNodeGetVolumeStats(t *testing.T) {
 		t.Logf("Test case: %s", tc.name)
 		fmt.Println(tc.resp)
 		resp, err := icDriver.ns.NodeGetVolumeStats(context.Background(), tc.req)
-		if !reflect.DeepEqual(resp, tc.resp) {
+		if !proto.Equal(resp, tc.resp) {
 			t.Fatalf("Expected response: %v, got: %v", tc.resp, resp)
 		}
 		if tc.expError != "" {

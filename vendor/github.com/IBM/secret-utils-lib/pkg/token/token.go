@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/IBM/secret-utils-lib/pkg/utils"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 // CheckTokenLifeTime checks whether the lifetime of token is valid or not

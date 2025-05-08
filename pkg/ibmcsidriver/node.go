@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The Kubernetes Authors.
+Copyright 2025 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ type CSINodeServer struct {
 	Stats    StatsUtils
 	// TODO: Only lock mutually exclusive calls and make locking more fine grained
 	mux sync.Mutex
+	csi.UnimplementedNodeServer
 }
 
 // StatsUtils ...
@@ -109,7 +110,7 @@ func (csiNS *CSINodeServer) NodePublishVolume(ctx context.Context, req *csi.Node
 	publishContext := req.GetPublishContext()
 	controlleRequestID := publishContext[PublishInfoRequestID]
 	ctxLogger, requestID := utils.GetContextLoggerWithRequestID(ctx, false, &controlleRequestID)
-	ctxLogger.Info("CSINodeServer-NodePublishVolume...", zap.Reflect("Request", *req))
+	ctxLogger.Info("CSINodeServer-NodePublishVolume...", zap.Reflect("Request", req))
 	metrics.UpdateDurationFromStart(ctxLogger, "NodePublishVolume", time.Now())
 	csiNS.mux.Lock()
 	defer csiNS.mux.Unlock()
@@ -183,7 +184,7 @@ func (csiNS *CSINodeServer) NodePublishVolume(ctx context.Context, req *csi.Node
 // NodeUnpublishVolume ...
 func (csiNS *CSINodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
-	ctxLogger.Info("CSINodeServer-NodeUnpublishVolume...", zap.Reflect("Request", *req))
+	ctxLogger.Info("CSINodeServer-NodeUnpublishVolume...", zap.Reflect("Request", req))
 	metrics.UpdateDurationFromStart(ctxLogger, "NodeUnpublishVolume", time.Now())
 	csiNS.mux.Lock()
 	defer csiNS.mux.Unlock()
@@ -213,7 +214,7 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 	publishContext := req.GetPublishContext()
 	controlleRequestID := publishContext[PublishInfoRequestID]
 	ctxLogger, requestID := utils.GetContextLoggerWithRequestID(ctx, false, &controlleRequestID)
-	ctxLogger.Info("CSINodeServer-NodeStageVolume...", zap.Reflect("Request", *req))
+	ctxLogger.Info("CSINodeServer-NodeStageVolume...", zap.Reflect("Request", req))
 	metrics.UpdateDurationFromStart(ctxLogger, "NodeStageVolume", time.Now())
 
 	csiNS.mux.Lock()
@@ -313,7 +314,7 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 // NodeUnstageVolume ...
 func (csiNS *CSINodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.NodeUnstageVolumeResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
-	ctxLogger.Info("CSINodeServer-NodeUnstageVolume ... ", zap.Reflect("Request", *req))
+	ctxLogger.Info("CSINodeServer-NodeUnstageVolume ... ", zap.Reflect("Request", req))
 	metrics.UpdateDurationFromStart(ctxLogger, "NodeUnstageVolume", time.Now())
 	csiNS.mux.Lock()
 	defer csiNS.mux.Unlock()
@@ -342,7 +343,7 @@ func (csiNS *CSINodeServer) NodeUnstageVolume(ctx context.Context, req *csi.Node
 // NodeGetCapabilities ...
 func (csiNS *CSINodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabilitiesRequest) (*csi.NodeGetCapabilitiesResponse, error) {
 	ctxLogger, _ := utils.GetContextLogger(ctx, false)
-	ctxLogger.Info("CSINodeServer-NodeGetCapabilities... ", zap.Reflect("Request", *req))
+	ctxLogger.Info("CSINodeServer-NodeGetCapabilities... ", zap.Reflect("Request", req))
 
 	return &csi.NodeGetCapabilitiesResponse{
 		Capabilities: csiNS.Driver.nscap,
@@ -352,7 +353,7 @@ func (csiNS *CSINodeServer) NodeGetCapabilities(ctx context.Context, req *csi.No
 // NodeGetInfo ...
 func (csiNS *CSINodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
-	ctxLogger.Info("CSINodeServer-NodeGetInfo... ", zap.Reflect("Request", *req))
+	ctxLogger.Info("CSINodeServer-NodeGetInfo... ", zap.Reflect("Request", req))
 
 	// maxVolumesPerNode is the maximum number of volumes attachable to a node
 	var maxVolumesPerNode int64 = DefaultVolumesPerNode
@@ -399,7 +400,7 @@ func (csiNS *CSINodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInf
 func (csiNS *CSINodeServer) NodeGetVolumeStats(ctx context.Context, req *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error) {
 	var resp *csi.NodeGetVolumeStatsResponse
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
-	ctxLogger.Info("CSINodeServer-NodeGetVolumeStats... ", zap.Reflect("Request", *req)) //nolint:staticcheck
+	ctxLogger.Info("CSINodeServer-NodeGetVolumeStats... ", zap.Reflect("Request", req)) //nolint:staticcheck
 	metrics.UpdateDurationFromStart(ctxLogger, "NodeGetVolumeStats", time.Now())
 	if req == nil || req.VolumeId == "" { //nolint:staticcheck
 		return nil, commonError.GetCSIError(ctxLogger, commonError.EmptyVolumeID, requestID, nil)
@@ -469,7 +470,7 @@ func (csiNS *CSINodeServer) NodeGetVolumeStats(ctx context.Context, req *csi.Nod
 // NodeExpandVolume ...
 func (csiNS *CSINodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolumeRequest) (*csi.NodeExpandVolumeResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
-	ctxLogger.Info("CSINodeServer-NodeExpandVolume", zap.Reflect("Request", *req))
+	ctxLogger.Info("CSINodeServer-NodeExpandVolume", zap.Reflect("Request", req))
 	volumeID := req.GetVolumeId()
 	if len(volumeID) == 0 {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.EmptyVolumeID, requestID, nil)

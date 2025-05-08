@@ -38,6 +38,7 @@ type Volume struct {
 	Name                string               `json:"name,omitempty"`
 	Capacity            int64                `json:"capacity,omitempty"`
 	Iops                int64                `json:"iops,omitempty"`
+	Bandwidth           int32                `json:"bandwidth,omitempty"`
 	VolumeEncryptionKey *VolumeEncryptionKey `json:"encryption_key,omitempty"`
 	ResourceGroup       *ResourceGroup       `json:"resource_group,omitempty"`
 	Tags                []string             `json:"tags,omitempty"` //We need to validate and remove this if not required.

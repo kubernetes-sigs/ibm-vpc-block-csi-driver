@@ -336,7 +336,7 @@ func (c *fakeProviderSession) CreateVolumeFromSnapshot(snapshot provider.Snapsho
 // Delete the volume
 func (c *fakeProviderSession) DeleteVolume(vol *provider.Volume) error {
 	for volName, f := range c.volumes {
-		if f.Volume.VolumeID == vol.VolumeID {
+		if f.VolumeID == vol.VolumeID {
 			delete(c.volumes, volName)
 			return nil
 		}
@@ -363,7 +363,7 @@ func (c *fakeProviderSession) ExpandVolume(expandVolumeRequest provider.ExpandVo
 	}
 
 	for _, f := range c.volumes {
-		if f.Volume.VolumeID == volumeID {
+		if f.VolumeID == volumeID {
 			return capacity, nil
 		}
 	}
@@ -373,7 +373,7 @@ func (c *fakeProviderSession) ExpandVolume(expandVolumeRequest provider.ExpandVo
 // Get the volume by using ID  //
 func (c *fakeProviderSession) GetVolume(id string) (*provider.Volume, error) {
 	for _, f := range c.volumes {
-		if f.Volume.VolumeID == id {
+		if f.VolumeID == id {
 			return f.Volume, nil
 		}
 	}
@@ -388,7 +388,7 @@ func (c *fakeProviderSession) GetVolume(id string) (*provider.Volume, error) {
 // Get the volume by using Name
 func (c *fakeProviderSession) GetVolumeByName(name string) (*provider.Volume, error) {
 	for _, f := range c.volumes {
-		if *f.Volume.Name == name {
+		if *f.Name == name {
 			return f.Volume, nil
 		}
 	}
@@ -505,7 +505,7 @@ func (c *fakeProviderSession) GetVolumeAttachment(attachRequest provider.VolumeA
 func (c *fakeProviderSession) CreateSnapshot(sourceVolumeID string, snapshotParameters provider.SnapshotParameters) (*provider.Snapshot, error) {
 	snapshotID := fmt.Sprintf("vol-uuid-test-vol-%s", uuid.New().String()[:10])
 	for _, existingSnapshot := range c.snapshots {
-		if existingSnapshot.Snapshot.SnapshotID == snapshotID && existingSnapshot.Snapshot.VolumeID == sourceVolumeID {
+		if existingSnapshot.SnapshotID == snapshotID && existingSnapshot.VolumeID == sourceVolumeID {
 			return nil, errors.New("snapshot already present for same volume")
 		}
 	}
@@ -550,7 +550,7 @@ func (c *fakeProviderSession) ListSnapshots(maxResults int, nextToken string, ta
 	var snapshots []*provider.Snapshot
 	var retToken string
 	for _, fakeSnapshot := range c.snapshots {
-		if fakeSnapshot.Snapshot.VolumeID == tags["source_volume.id"] || len(tags["source_volume.id"]) == 0 {
+		if fakeSnapshot.VolumeID == tags["source_volume.id"] || len(tags["source_volume.id"]) == 0 {
 			snapshots = append(snapshots, fakeSnapshot.Snapshot)
 		}
 	}
