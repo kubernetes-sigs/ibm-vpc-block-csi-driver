@@ -1,5 +1,5 @@
 #
-# Copyright 2024 The Kubernetes Authors.
+# Copyright 2025 The Kubernetes Authors.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ GIT_COMMIT_SHA="$(shell git rev-parse HEAD 2>/dev/null)"
 GIT_REMOTE_URL="$(shell git config --get remote.origin.url 2>/dev/null)"
 BUILD_DATE="$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")"
 OSS_FILES := go.mod Dockerfile
-GOLANG_VERSION="1.22.0"
+GOLANG_VERSION="1.23.8"
 
 
 STAGING_REGISTRY ?= gcr.io/k8s-staging-cloud-provider-ibm
