@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 IBM Corp.
+ * Copyright 2025 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import (
 	"time"
 
 	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/client/payload"
+	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/models"
 	"github.com/fatih/structs"
 )
 
@@ -222,6 +223,10 @@ func (r *Request) Invoke() (*http.Response, error) {
 			err = r.errorConsumer.Consume(resp.Body)
 			if err == nil {
 				err = r.errorConsumer.Receiver().(error)
+				apiErr, ok := err.(*models.Error)
+				if ok && len(apiErr.Errors) > 0 {
+					apiErr.Errors[0].Status = resp.Status
+				}
 			}
 		}
 	}
