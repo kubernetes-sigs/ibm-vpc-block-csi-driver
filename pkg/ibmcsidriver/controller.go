@@ -117,7 +117,7 @@ func (csiCS *CSIControllerServer) CreateVolume(ctx context.Context, req *csi.Cre
 		if userError.GetUserErrorCode(err) == string(utilReasonCode.Timeout) {
 			return nil, commonError.GetCSIError(ctxLogger, commonError.Timeout, requestID, err)
 		}
-		return nil, commonError.GetCSIBackendError(ctxLogger, requestID, err)
+		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
 	}
 
 	volumeSource := req.GetVolumeContentSource()
@@ -248,7 +248,7 @@ func (csiCS *CSIControllerServer) ControllerPublishVolume(ctx context.Context, r
 	if volDetail == nil && err == nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.ObjectNotFound, requestID, nil, volumeID)
 	} else if err != nil { // In case of other errors apart from volume not  found
-		return nil, commonError.GetCSIBackendError(ctxLogger, requestID, err)
+		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
 	}
 
 	clusterID := csiCS.CSIProvider.GetClusterID()
@@ -316,7 +316,7 @@ func (csiCS *CSIControllerServer) ControllerUnpublishVolume(ctx context.Context,
 	}
 	sess, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
 	if err != nil {
-		return nil, commonError.GetCSIBackendError(ctxLogger, requestID, err)
+		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
 	}
 	response, err := sess.DetachVolume(volumeAttachmentReq)
 	if err != nil {
@@ -350,7 +350,7 @@ func (csiCS *CSIControllerServer) ValidateVolumeCapabilities(ctx context.Context
 	// Check if Requested Volume exists
 	session, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
 	if err != nil {
-		return nil, commonError.GetCSIBackendError(ctxLogger, requestID, err)
+		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
 	}
 
 	// Get volume details by using volume ID, it should exists with provider
@@ -385,14 +385,20 @@ func (csiCS *CSIControllerServer) ListVolumes(ctx context.Context, req *csi.List
 
 	session, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
 	if err != nil {
-		return nil, commonError.GetCSIBackendError(ctxLogger, requestID, err)
+		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
 	}
 
 	maxEntries := int(req.MaxEntries)
 	tags := map[string]string{}
 	volumeList, err := session.ListVolumes(maxEntries, req.StartingToken, tags)
 	if err != nil {
-		return nil, commonError.GetCSIBackendError(ctxLogger, requestID, err)
+		errCode := err.(providerError.Message).Code
+		if strings.Contains(errCode, "InvalidListVolumesLimit") {
+			return nil, commonError.GetCSIError(ctxLogger, commonError.InvalidParameters, requestID, err)
+		} else if strings.Contains(errCode, "StartVolumeIDNotFound") {
+			return nil, commonError.GetCSIError(ctxLogger, commonError.StartVolumeIDNotFound, requestID, err, req.StartingToken)
+		}
+		return nil, commonError.GetCSIError(ctxLogger, commonError.ListVolumesFailed, requestID, err)
 	}
 
 	entries := []*csi.ListVolumesResponse_Entry{}
@@ -520,7 +526,7 @@ func (csiCS *CSIControllerServer) DeleteSnapshot(ctx context.Context, req *csi.D
 		if userError.GetUserErrorCode(err) == string(utilReasonCode.Timeout) {
 			return nil, commonError.GetCSIError(ctxLogger, commonError.Timeout, requestID, err)
 		}
-		return nil, commonError.GetCSIBackendError(ctxLogger, requestID, err)
+		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
 	}
 
 	snapshot := &provider.Snapshot{}
@@ -553,7 +559,7 @@ func (csiCS *CSIControllerServer) ListSnapshots(ctx context.Context, req *csi.Li
 		if userError.GetUserErrorCode(err) == string(utilReasonCode.Timeout) {
 			return nil, commonError.GetCSIError(ctxLogger, commonError.Timeout, requestID, err)
 		}
-		return nil, commonError.GetCSIBackendError(ctxLogger, requestID, err)
+		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
 	}
 
 	entries := []*csi.ListSnapshotsResponse_Entry{}
@@ -664,8 +670,8 @@ func (csiCS *CSIControllerServer) ControllerExpandVolume(ctx context.Context, re
 	// Volume not found
 	if volDetail == nil && err == nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.ObjectNotFound, requestID, nil, volumeID)
-	} else if err != nil { // In case of other errors apart from volume not  found
-		return nil, commonError.GetCSIBackendError(ctxLogger, requestID, err)
+	} else if err != nil { // In case of other errors apart from volume not found
+		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
 	}
 
 	volumeExpansionReq := provider.ExpandVolumeRequest{
