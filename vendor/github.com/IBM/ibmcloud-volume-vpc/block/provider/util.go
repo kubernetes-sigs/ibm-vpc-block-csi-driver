@@ -58,23 +58,28 @@ const (
 var volumeIDPartsCount = 5
 
 var skipErrorCodes = map[string]bool{
-	"validation_invalid_name":              true,
-	"volume_capacity_max":                  true,
-	"volume_id_invalid":                    true,
-	"volume_profile_iops_invalid":          true,
-	"volume_capacity_zero_or_negative":     true,
-	"not_found":                            true,
-	"volume_id_not_found":                  true,
-	"volume_name_not_found":                true,
-	"volume_profile_capacity_iops_invalid": true,
-	"internal_error":                       false,
-	"invalid_route":                        false,
-	SnapshotNotFound:                       true,
-	"snapshots_not_authorized":             true,
-	SnapshotIDNotFound:                     true,
-	"snapshots_source_volume_not_found":    true,
-	"snapshots_source_volume_not_attached": true,
-	"volume_capacity_maximum":              true,
+	"validation_invalid_name":                      true,
+	"volume_capacity_max":                          true,
+	"volume_id_invalid":                            true,
+	"volume_profile_iops_invalid":                  true,
+	"volume_capacity_zero_or_negative":             true,
+	"not_found":                                    true,
+	"volume_id_not_found":                          true,
+	"volume_name_not_found":                        true,
+	"volume_profile_capacity_iops_invalid":         true,
+	"internal_error":                               false,
+	"invalid_route":                                false,
+	SnapshotNotFound:                               true,
+	"snapshots_not_authorized":                     true,
+	SnapshotIDNotFound:                             true,
+	"snapshots_source_volume_not_found":            true,
+	"snapshots_source_volume_not_attached":         true,
+	"volume_capacity_maximum":                      true,
+	"volume_profile_not_found":                     true,
+	"validation_failed_maximum":                    true,
+	"validation_failed_anyof":                      true,
+	"volume_profile_capacity_maxbandwidth_invalid": true,
+	"validation_failed_pattern":                    true,
 
 	// IKS ms error code for skip re-try
 	"ST0008": true, //resources not found
@@ -387,6 +392,13 @@ func FromProviderToLibVolume(vpcVolume *models.Volume, logger *zap.Logger) (libV
 	if vpcVolume.SourceSnapshot != nil {
 		libVolume.SnapshotID = vpcVolume.SourceSnapshot.ID
 	}
+	if vpcVolume.Profile != nil {
+		libVolume.Profile = &provider.Profile{
+			Href: vpcVolume.Profile.Href,
+			Name: vpcVolume.Profile.Name,
+			CRN:  vpcVolume.Profile.CRN}
+	}
+	libVolume.Bandwidth = vpcVolume.Bandwidth
 	libVolume.CRN = vpcVolume.CRN
 	libVolume.Tags = vpcVolume.UserTags
 	libVolume.Status = string(vpcVolume.Status)
