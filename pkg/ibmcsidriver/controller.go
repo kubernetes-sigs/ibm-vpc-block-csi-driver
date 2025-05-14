@@ -398,7 +398,7 @@ func (csiCS *CSIControllerServer) ListVolumes(ctx context.Context, req *csi.List
 		} else if strings.Contains(errCode, "StartVolumeIDNotFound") {
 			return nil, commonError.GetCSIError(ctxLogger, commonError.StartVolumeIDNotFound, requestID, err, req.StartingToken)
 		}
-		return nil, commonError.GetCSIError(ctxLogger, commonError.ListVolumesFailed, requestID, err)
+		return nil, commonError.GetCSIBackendError(ctxLogger, requestID, err)
 	}
 
 	entries := []*csi.ListVolumesResponse_Entry{}
