@@ -628,7 +628,7 @@ func (csiCS *CSIControllerServer) ControllerExpandVolume(ctx context.Context, re
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	// populate requestID in the context
 	_ = context.WithValue(ctx, provider.RequestID, requestID)
-	defer metrics.UpdateDurationFromStart(ctxLogger, "ExpandVolume", time.Now())
+	defer metrics.UpdateDurationFromStart(ctxLogger, "ControllerExpandVolume", time.Now())
 	ctxLogger.Info("CSIControllerServer-ControllerExpandVolume", zap.Reflect("Request", req))
 	volumeID := req.GetVolumeId()
 	capacity := req.GetCapacityRange().GetRequiredBytes()
