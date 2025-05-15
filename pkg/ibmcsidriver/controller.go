@@ -236,7 +236,7 @@ func (csiCS *CSIControllerServer) ControllerPublishVolume(ctx context.Context, r
 
 	sess, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
 	if err != nil {
-		return nil, commonError.GetCSIBackendError(ctxLogger, requestID, err)
+		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
 	}
 
 	// Validate the node instance that the volume will be attached to actually exists
@@ -476,7 +476,7 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 		if userError.GetUserErrorCode(err) == string(utilReasonCode.Timeout) {
 			return nil, commonError.GetCSIError(ctxLogger, commonError.Timeout, requestID, err)
 		}
-		return nil, commonError.GetCSIBackendError(ctxLogger, requestID, err)
+		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
 	}
 
 	snapshot, err := session.GetSnapshotByName(snapshotName)
