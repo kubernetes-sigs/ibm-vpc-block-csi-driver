@@ -57,11 +57,12 @@ type ErrorItem struct {
 	Message  string       `json:"message,omitempty"`
 	MoreInfo string       `json:"more_info,omitempty"`
 	Target   *ErrorTarget `json:"reqID,omitempty"`
+	Status   string       `json:"status,omitempty"`
 }
 
 // Error ...
 func (ei ErrorItem) Error() string {
-	return ei.Message + " Please check " + ei.MoreInfo
+	return "Code:" + string(ei.Code) + ", Description:" + ei.Message + ", RC:" + ei.Status
 }
 
 // Error ...
@@ -92,5 +93,5 @@ type IksError struct {
 
 // Error ...
 func (ikserr IksError) Error() string {
-	return fmt.Sprintf("%s: %s", ikserr.Code, ikserr.Err)
+	return fmt.Sprintf("Trace Code:%s, Code:%s, Description:%s, RC:%d", ikserr.ReqID, ikserr.Code, ikserr.Err, ikserr.RC)
 }
