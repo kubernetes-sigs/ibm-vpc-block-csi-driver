@@ -69,7 +69,7 @@ func (csiCS *CSIControllerServer) CreateVolume(ctx context.Context, req *csi.Cre
 	// populate requestID in the context
 	ctx = context.WithValue(ctx, provider.RequestID, requestID)
 	ctxLogger.Info("CSIControllerServer-CreateVolume... ", zap.Reflect("Request", req))
-	defer metrics.UpdateDurationFromStart(ctxLogger, "CSICreateVolume", time.Now())
+	defer metrics.UpdateDurationFromStart(ctxLogger, "CreateVolume", time.Now())
 
 	// Check basic parameters validations i.e PVC name given
 	name := req.GetName()
