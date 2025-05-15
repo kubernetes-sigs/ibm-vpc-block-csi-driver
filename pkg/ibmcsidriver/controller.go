@@ -381,7 +381,7 @@ func (csiCS *CSIControllerServer) ListVolumes(ctx context.Context, req *csi.List
 	// populate requestID in the context
 	ctx = context.WithValue(ctx, provider.RequestID, requestID)
 	ctxLogger.Info("CSIControllerServer-ListVolumes...", zap.Reflect("Request", req))
-	defer metrics.UpdateDurationFromStart(ctxLogger, metrics.FunctionLabel("CSIListVolumes"), time.Now())
+	defer metrics.UpdateDurationFromStart(ctxLogger, metrics.FunctionLabel("ListVolumes"), time.Now())
 
 	session, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
 	if err != nil {
@@ -651,7 +651,7 @@ func (csiCS *CSIControllerServer) ControllerExpandVolume(ctx context.Context, re
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	// populate requestID in the context
 	_ = context.WithValue(ctx, provider.RequestID, requestID)
-	defer metrics.UpdateDurationFromStart(ctxLogger, "CSIExpandVolume", time.Now())
+	defer metrics.UpdateDurationFromStart(ctxLogger, "ExpandVolume", time.Now())
 	ctxLogger.Info("CSIControllerServer-ControllerExpandVolume", zap.Reflect("Request", req))
 	volumeID := req.GetVolumeId()
 	capacity := req.GetCapacityRange().GetRequiredBytes()
