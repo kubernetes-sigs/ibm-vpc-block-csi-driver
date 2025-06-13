@@ -18,6 +18,7 @@ limitations under the License.
 package ibmcsidriver
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -104,6 +105,20 @@ func (csiCS *CSIControllerServer) CreateVolume(ctx context.Context, req *csi.Cre
 	if err != nil {
 		ctxLogger.Error("Unable to extract parameters", zap.Error(err))
 		return nil, commonError.GetCSIError(ctxLogger, commonError.InvalidParameters, requestID, err)
+	}
+
+	//check for sdp profile and supported regions
+	sdpRegions := os.Getenv("SDP_PROFILE_REGIONS")
+	sdpRegionsList := strings.Split(sdpRegions, ",")
+	targetRegion := requestedVolume.Az
+	if requestedVolume.Profile.Name == "sdp" { //use list of regions(us-south,eu-de)
+		if contains(sdpRegionsList, targetRegion) {
+			fmt.Println(targetRegion, "is supported by sdp profile")
+			ctxLogger.Info(targetRegion + "is supported by sdp profile")
+		} else {
+			return nil, commonError.GetCSIError(ctxLogger, commonError.VolumeAlreadyExists, requestID, err, name, *requestedVolume.Capacity)
+		}
+
 	}
 
 	// TODO: Determine Zones and Region for the disk
@@ -695,4 +710,13 @@ func (csiCS *CSIControllerServer) ControllerGetVolume(ctx context.Context, req *
 func (csiCS *CSIControllerServer) ControllerModifyVolume(ctx context.Context, req *csi.ControllerModifyVolumeRequest) (*csi.ControllerModifyVolumeResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	return nil, commonError.GetCSIError(ctxLogger, commonError.MethodUnimplemented, requestID, nil, "ControllerModifyVolume")
+}
+
+func contains(slice []string, value string) bool {
+	for _, v := range slice {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }
