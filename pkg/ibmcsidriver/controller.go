@@ -19,6 +19,7 @@ package ibmcsidriver
 
 import (
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -104,6 +105,22 @@ func (csiCS *CSIControllerServer) CreateVolume(ctx context.Context, req *csi.Cre
 	if err != nil {
 		ctxLogger.Error("Unable to extract parameters", zap.Error(err))
 		return nil, commonError.GetCSIError(ctxLogger, commonError.InvalidParameters, requestID, err)
+	}
+
+	//check for sdp profile and supported regions
+	nonSDPRegions := os.Getenv("NON_SDP_PROFILE_REGIONS")
+	nonSDPRegionsList := strings.Split(nonSDPRegions, ",")
+	targetRegion := requestedVolume.Az
+
+	if requestedVolume.Profile.Name == "sdp" { //use list of regions(in-che,ca-mon,us-south-test)
+		found := slices.Contains(nonSDPRegionsList, targetRegion) //slices.Contains function is found in go versions>1.18
+		if found {
+			ctxLogger.Info(targetRegion + "is not supported by sdp profile")
+			return nil, commonError.GetCSIError(ctxLogger, commonError.VolumeAlreadyExists, requestID, err, name, *requestedVolume.Capacity)
+		} else {
+			ctxLogger.Info(targetRegion + "is supported by sdp profile")
+		}
+
 	}
 
 	// TODO: Determine Zones and Region for the disk
