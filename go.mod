@@ -109,3 +109,21 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.2 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
+
+// The below fixes the "go list -mod=readonly -m all" execution
+replace (
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.32.6
+	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.32.6
+	k8s.io/cri-api => k8s.io/cri-api v0.32.6
+	k8s.io/cri-client => k8s.io/cri-client v0.32.6
+	k8s.io/dynamic-resource-allocation => k8s.io/dynamic-resource-allocation v0.32.6
+	k8s.io/endpointslice => k8s.io/endpointslice v0.32.6
+	k8s.io/externaljwt => k8s.io/externaljwt v0.32.6
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.32.6
+	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.32.6
+	k8s.io/kube-proxy => k8s.io/kube-proxy v0.32.6
+	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.32.6
+	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.32.6
+	k8s.io/metrics => k8s.io/metrics v0.32.6
+	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.32.6
+)
