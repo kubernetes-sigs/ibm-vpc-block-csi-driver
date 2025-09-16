@@ -81,6 +81,9 @@ const (
 	// ObjectNotFound ...
 	ObjectNotFound = "ObjectNotFound"
 
+	// ProfileNotAllowlisted ...
+	ProfileNotAllowlisted = "ProfileNotAllowlisted"
+
 	// FailedPrecondition ...
 	FailedPrecondition = "FailedPrecondition"
 

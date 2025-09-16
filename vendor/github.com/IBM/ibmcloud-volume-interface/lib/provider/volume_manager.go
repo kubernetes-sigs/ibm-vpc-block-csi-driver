@@ -26,6 +26,9 @@ type VolumeManager interface {
 	Type() VolumeType
 
 	// Volume operations
+	// Get the volume profile by using profile name
+	GetVolumeProfileByName(name string) (*Profile, error)
+
 	// Create the volume with authorization by passing required information in the volume object
 	CreateVolume(VolumeRequest Volume) (*Volume, error)
 

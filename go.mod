@@ -3,10 +3,10 @@ module github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
 go 1.23.10
 
 require (
-	github.com/IBM/ibm-csi-common v1.1.21
-	github.com/IBM/ibmcloud-volume-interface v1.2.13
-	github.com/IBM/ibmcloud-volume-vpc v1.1.19
-	github.com/IBM/secret-utils-lib v1.1.14
+	github.com/IBM/ibm-csi-common v1.1.23
+	github.com/IBM/ibmcloud-volume-interface v1.2.16
+	github.com/IBM/ibmcloud-volume-vpc v1.1.20
+	github.com/IBM/secret-utils-lib v1.1.15
 	github.com/container-storage-interface/spec v1.11.0
 	github.com/golang/glog v1.2.4
 	github.com/google/uuid v1.6.0
@@ -19,8 +19,8 @@ require (
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.36.1
 	k8s.io/klog/v2 v2.130.1
-	k8s.io/kubernetes v1.32.6
-	k8s.io/mount-utils v0.32.6
+	k8s.io/kubernetes v1.32.8
+	k8s.io/mount-utils v0.32.8
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738
 )
 
@@ -28,7 +28,7 @@ require (
 	github.com/BurntSushi/toml v1.0.0 // indirect
 	github.com/IBM-Cloud/ibm-cloud-cli-sdk v0.6.7 // indirect
 	github.com/IBM/go-sdk-core/v5 v5.17.4 // indirect
-	github.com/IBM/secret-common-lib v1.1.13 // indirect
+	github.com/IBM/secret-common-lib v1.1.14 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
@@ -97,13 +97,13 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.32.6 // indirect
-	k8s.io/apiextensions-apiserver v0.32.6 // indirect
-	k8s.io/apimachinery v0.32.6 // indirect
-	k8s.io/apiserver v0.32.6 // indirect
-	k8s.io/client-go v0.32.6 // indirect
-	k8s.io/component-base v0.32.6 // indirect
-	k8s.io/controller-manager v0.32.6 // indirect
+	k8s.io/api v0.32.8 // indirect
+	k8s.io/apiextensions-apiserver v0.32.8 // indirect
+	k8s.io/apimachinery v0.32.8 // indirect
+	k8s.io/apiserver v0.32.8 // indirect
+	k8s.io/client-go v0.32.8 // indirect
+	k8s.io/component-base v0.32.8 // indirect
+	k8s.io/controller-manager v0.32.8 // indirect
 	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.2 // indirect

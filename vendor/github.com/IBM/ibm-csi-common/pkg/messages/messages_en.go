@@ -143,9 +143,15 @@ var messagesEn = map[string]Message{
 		Type:        codes.DeadlineExceeded,
 		Action:      "Wait for a few minutes and try again. If the error persists user can open a container network issue.",
 	},
+	ProfileNotAllowlisted: {
+		Code:        FailedPrecondition,
+		Description: "'%s' profile is not accessible",
+		Type:        codes.FailedPrecondition,
+		Action:      "Please open support ticket on VPC for allowlisting. Once allowlisted please restart the CSI Driver",
+	},
 	FailedPrecondition: {
 		Code:        FailedPrecondition,
-		Description: "Provider is not ready to responde",
+		Description: "Provider is not ready to respond",
 		Type:        codes.FailedPrecondition,
 		Action:      "Please retry after some time, if problem persist then report issue to IKS storage team",
 	},
