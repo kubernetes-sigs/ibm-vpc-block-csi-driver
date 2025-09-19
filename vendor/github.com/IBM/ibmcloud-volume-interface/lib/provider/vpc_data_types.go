@@ -124,9 +124,23 @@ type ResourceGroup struct {
 
 // Profile ...
 type Profile struct {
-	Href string `json:"href,omitempty"`
-	Name string `json:"name,omitempty"`
-	CRN  string `json:"crn,omitempty"`
+	CRN          string  `json:"crn,omitempty"`
+	Href         string  `json:"href,omitempty"`
+	Name         string  `json:"name,omitempty"`
+	Capacity     CapIops `json:"capacity,omitempty"`
+	Family       string  `json:"family,omitempty"`
+	Iops         CapIops `json:"iops,omitempty"`
+	ResourceType string  `json:"resource_type,omitempty"`
+}
+
+// CapIops
+type CapIops struct {
+	Default int32  `json:"default,omitempty"`
+	Max     int32  `json:"max,omitempty"`
+	Min     int32  `json:"min,omitempty"`
+	Step    int32  `json:"step,omitempty"`
+	Type    string `json:"type,omitempty"`
+	Value   int32  `json:"value,omitempty"`
 }
 
 // VolumeAttachment ...
