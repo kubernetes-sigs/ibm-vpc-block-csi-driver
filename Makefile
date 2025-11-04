@@ -20,7 +20,7 @@ GIT_COMMIT_SHA="$(shell git rev-parse HEAD 2>/dev/null)"
 GIT_REMOTE_URL="$(shell git config --get remote.origin.url 2>/dev/null)"
 BUILD_DATE="$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")"
 OSS_FILES := go.mod Dockerfile
-GOLANG_VERSION="1.23.12"
+GOLANG_VERSION="1.25.3"
 
 
 
