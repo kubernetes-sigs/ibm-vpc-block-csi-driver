@@ -1,4 +1,4 @@
-FROM golang:1.23.12
+FROM golang:1.25.3
 
 WORKDIR /go/src/github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
 ADD . /go/src/github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
