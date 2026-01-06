@@ -26,10 +26,10 @@ type SnapshotManager interface {
 	DeleteSnapshot(*Snapshot) error
 
 	// Get the snapshot
-	GetSnapshot(snapshotID string) (*Snapshot, error)
+	GetSnapshot(snapshotID string, sourceVolumeID ...string) (*Snapshot, error)
 
 	// Get the snapshot By name
-	GetSnapshotByName(snapshotName string) (*Snapshot, error)
+	GetSnapshotByName(snapshotName string, sourceVolumeID ...string) (*Snapshot, error)
 
 	// Snapshot list by using tags
 	ListSnapshots(limit int, start string, tags map[string]string) (*SnapshotList, error)
