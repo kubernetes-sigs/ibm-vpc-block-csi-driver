@@ -45,13 +45,14 @@ type NodeMetadata interface {
 }
 
 type nodeMetadataManager struct {
-	zone     string
-	region   string
-	workerID string
+	zone      string
+	region    string
+	workerID  string
 	accountID string
 }
 
 // NodeInfo ...
+//
 //go:generate counterfeiter -o fake/fake_node_info.go --fake-name FakeNodeInfo . NodeInfo
 type NodeInfo interface {
 	NewNodeMetadata(logger *zap.Logger) (NodeMetadata, error)
@@ -102,9 +103,9 @@ func (nodeManager *NodeInfoManager) NewNodeMetadata(logger *zap.Logger) (NodeMet
 	}
 
 	return &nodeMetadataManager{
-		zone:     nodeLabels[utils.NodeZoneLabel],
-		region:   nodeLabels[utils.NodeRegionLabel],
-		workerID: workerID,
+		zone:      nodeLabels[utils.NodeZoneLabel],
+		region:    nodeLabels[utils.NodeRegionLabel],
+		workerID:  workerID,
 		accountID: accountID,
 	}, nil
 }

@@ -133,12 +133,12 @@ func (volprov *DefaultVolumeProvider) DeleteSnapshot(*Snapshot) error {
 }
 
 // GetSnapshot gets the snapshot
-func (volprov *DefaultVolumeProvider) GetSnapshot(snapshotID string) (*Snapshot, error) {
+func (volprov *DefaultVolumeProvider) GetSnapshot(snapshotID string, sourceVolumeID ...string) (*Snapshot, error) {
 	return nil, nil
 }
 
 // GetSnapshotByName gets the snapshot
-func (volprov *DefaultVolumeProvider) GetSnapshotByName(snapshotName string) (*Snapshot, error) {
+func (volprov *DefaultVolumeProvider) GetSnapshotByName(snapshotName string, sourceVolumeID ...string) (*Snapshot, error) {
 	return nil, nil
 }
 
