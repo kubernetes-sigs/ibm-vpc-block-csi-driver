@@ -25,19 +25,17 @@ import (
 )
 
 // GetSnapshot get snapshot
-func (vpcs *VPCSession) GetSnapshot(snapshotID string) (*provider.Snapshot, error) {
+func (vpcs *VPCSession) GetSnapshot(snapshotID string, _ ...string) (*provider.Snapshot, error) {
 	vpcs.Logger.Info("Entry GetSnapshot", zap.Reflect("SnapshotID", snapshotID))
 	defer vpcs.Logger.Info("Exit GetSnapshot", zap.Reflect("SnapshotID", snapshotID))
 
 	vpcs.Logger.Info("Getting snapshot details from VPC provider...", zap.Reflect("SnapshotID", snapshotID))
-
 	var snapshot *models.Snapshot
 	var err error
 	err = retry(vpcs.Logger, func() error {
 		snapshot, err = vpcs.Apiclient.SnapshotService().GetSnapshot(snapshotID, vpcs.Logger)
 		return err
 	})
-
 	if err != nil {
 		return nil, userError.GetUserError("SnapshotIDNotFound", err, snapshotID)
 	}
@@ -49,7 +47,7 @@ func (vpcs *VPCSession) GetSnapshot(snapshotID string) (*provider.Snapshot, erro
 }
 
 // GetSnapshotByName ...
-func (vpcs *VPCSession) GetSnapshotByName(name string) (respSnap *provider.Snapshot, err error) {
+func (vpcs *VPCSession) GetSnapshotByName(name string, _ ...string) (respSnap *provider.Snapshot, err error) {
 	vpcs.Logger.Debug("Entry of GetSnapshotByName method...")
 	defer vpcs.Logger.Debug("Exit from GetSnapshotByName method...")
 
@@ -66,7 +64,6 @@ func (vpcs *VPCSession) GetSnapshotByName(name string) (respSnap *provider.Snaps
 		snapshot, err = vpcs.Apiclient.SnapshotService().GetSnapshotByName(name, vpcs.Logger)
 		return err
 	})
-
 	if err != nil {
 		return nil, userError.GetUserError("StorageFindFailedWithSnapshotName", err, snapshot)
 	}
