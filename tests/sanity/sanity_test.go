@@ -532,7 +532,7 @@ func (c *fakeProviderSession) DeleteSnapshot(snap *provider.Snapshot) error {
 }
 
 // Get the snapshot
-func (c *fakeProviderSession) GetSnapshot(snapshotID string) (*provider.Snapshot, error) {
+func (c *fakeProviderSession) GetSnapshot(snapshotID string, _ ...string) (*provider.Snapshot, error) {
 	fmt.Println("GetSnapshot", c.snapshots)
 	fmt.Println("snapshotID", snapshotID)
 	fmt.Println("c.snapshots[snapshotID]", c.snapshots[snapshotID])
@@ -571,7 +571,7 @@ func (c *fakeProviderSession) ListSnapshots(maxResults int, nextToken string, ta
 }
 
 // Get the snapshot By name
-func (c *fakeProviderSession) GetSnapshotByName(snapshotName string) (*provider.Snapshot, error) {
+func (c *fakeProviderSession) GetSnapshotByName(snapshotName string, _ ...string) (*provider.Snapshot, error) {
 	if len(snapshotName) == 0 {
 		return nil, errors.New("no name passed")
 	}
