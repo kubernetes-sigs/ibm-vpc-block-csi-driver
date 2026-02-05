@@ -467,6 +467,15 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 		return nil, commonError.GetCSIError(ctxLogger, commonError.MissingSourceVolumeID, requestID, nil)
 	}
 
+	// SnapshotClassParams
+	snapshotClassParams := req.GetParameters()
+
+	ctxLogger.Info("CreateSnapshot received CSI parameters",
+		zap.String("snapshotName", snapshotName),
+		zap.String("sourceVolumeID", sourceVolumeID),
+		zap.Any("snapshotClassParameters", snapshotClassParams),
+	)
+
 	// Validate if volume Already Exists
 	session, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
 	if err != nil {
