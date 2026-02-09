@@ -8,14 +8,14 @@ github.com/IBM/go-sdk-core/v5 v5.17.4 h1:VGb9+mRrnS2HpHZFM5hy4J6ppIWnwNrw0G+tLSg
 github.com/IBM/go-sdk-core/v5 v5.17.4/go.mod h1:KsAAI7eStAWwQa4F96MLy+whYSh39JzNjklZRbN/8ns=
 github.com/IBM/ibm-csi-common v1.1.24 h1:uHgWTtXcQO7FxEEoRpBcLUD1yNFmdLi4mEC5zZdPFXw=
 github.com/IBM/ibm-csi-common v1.1.24/go.mod h1:QW28zxMAqx8O1iMK57rK/C4CBnLuAol+0mNDZ3asOA8=
-github.com/IBM/ibmcloud-volume-interface v1.2.18 h1:JwoZe4mP7GsNoAywagf48h/65FXHi2NKn9SLD6ZYiIo=
-github.com/IBM/ibmcloud-volume-interface v1.2.18/go.mod h1:2gOMNp05rLXkfWtL9wvPHuQph2kFFwbczPpFFThAy38=
 github.com/IBM/ibmcloud-volume-vpc v1.1.21 h1:jRziFUPS25S+/hhuj0GPt1y+jvUz2Yy/apsLGrVlHRU=
 github.com/IBM/ibmcloud-volume-vpc v1.1.21/go.mod h1:Zrlx5rr2r+dg2Iz+YfZ5dpFWGkQdIeauYHG9xZyEExI=
 github.com/IBM/secret-common-lib v1.1.14 h1:EdEFOdhYrDRc2+2u9SLQznUnbnDDq4f9RHx0eAuFd+E=
 github.com/IBM/secret-common-lib v1.1.14/go.mod h1:bSCfMHVgnl31H0CDxz5qxlHH7dtcDxTU703TniZzAsw=
 github.com/IBM/secret-utils-lib v1.1.15 h1:wW6/TdsjQVz/WDg7yQjD8Jmvb2NqYE851pDYxJVOo3s=
 github.com/IBM/secret-utils-lib v1.1.15/go.mod h1:Hbslikwj+zwxz4MYKqckSmcGYcxB1w5EkwHJHa+kxgQ=
+github.com/MahanteshR12/ibmcloud-volume-interface v0.0.0-20260205102231-41f12b5f32eb h1:rEqcunBpPhvxi6eOVKU1+QGwHEDW7PiprTwGd/Nkiik=
+github.com/MahanteshR12/ibmcloud-volume-interface v0.0.0-20260205102231-41f12b5f32eb/go.mod h1:2gOMNp05rLXkfWtL9wvPHuQph2kFFwbczPpFFThAy38=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 h1:DklsrG3dyBCFEj5IhUbnKptjxatkF07cF2ak3yi77so=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2/go.mod h1:WaHUgvxTVq04UNunO+XhnAqY/wQc+bxr74GqbsZ/Jqw=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=

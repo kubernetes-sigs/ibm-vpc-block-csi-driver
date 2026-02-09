@@ -503,7 +503,7 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 	}
 	snapshotParameters.SnapshotTags = snapshotTags
 
-	snapshot, err = session.CreateSnapshot(sourceVolumeID, snapshotParameters)
+	snapshot, err = session.CreateSnapshot(sourceVolumeID, snapshotParameters, snapshotClassParams)
 
 	if err != nil {
 		time.Sleep(time.Duration(getMaxDelaySnapshotCreate(ctxLogger)) * time.Second) //To avoid multiple retries from kubernetes to CSI Driver

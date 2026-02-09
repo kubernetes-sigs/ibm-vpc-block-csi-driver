@@ -123,7 +123,7 @@ func (volprov *DefaultVolumeProvider) OrderSnapshot(VolumeRequest Volume) error 
 }
 
 // CreateSnapshot on the volume
-func (volprov *DefaultVolumeProvider) CreateSnapshot(sourceVolumeID string, snapshotParameters SnapshotParameters) (*Snapshot, error) {
+func (volprov *DefaultVolumeProvider) CreateSnapshot(sourceVolumeID string, snapshotMetadata SnapshotParameters, snapshotClassParams map[string]string) (*Snapshot, error) {
 	return nil, nil
 }
 

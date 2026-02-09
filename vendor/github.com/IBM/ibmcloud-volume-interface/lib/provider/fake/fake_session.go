@@ -556,7 +556,7 @@ func (fake *FakeSession) CloseCalls(stub func()) {
 	fake.CloseStub = stub
 }
 
-func (fake *FakeSession) CreateSnapshot(arg1 string, arg2 provider.SnapshotParameters) (*provider.Snapshot, error) {
+func (fake *FakeSession) CreateSnapshot(arg1 string, arg2 provider.SnapshotParameters, arg3 map[string]string) (*provider.Snapshot, error) {
 	fake.createSnapshotMutex.Lock()
 	ret, specificReturn := fake.createSnapshotReturnsOnCall[len(fake.createSnapshotArgsForCall)]
 	fake.createSnapshotArgsForCall = append(fake.createSnapshotArgsForCall, struct {
