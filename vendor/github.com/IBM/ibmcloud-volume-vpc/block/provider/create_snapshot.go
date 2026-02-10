@@ -46,7 +46,7 @@ func (vpcs *VPCSession) CreateSnapshot(sourceVolumeID string, snapshotMetadata p
 	snapshotRG := vpcs.Config.VPCConfig.G2ResourceGroupID
 
 	// volumeSnapshotClass defined resource group
-	if rg, ok := snapshotClassParams["resourceGroup"]; ok && rg != "" {
+	if rg, ok := snapshotClassParams["resourceGroupID"]; ok && rg != "" {
 		snapshotRG = rg
 
 		// TODO: add cluster validation condition
