@@ -97,14 +97,14 @@ func areVolumeCapabilitiesSupported(volCaps []*csi.VolumeCapability, driverVolum
 	return allSupported
 }
 
-// getVolumeParameters this function get the parameters from storage class, this also validate
-// all parameters passed in storage class or not which are mandatory.
+// getVolumeParameters gets the parameters from storage class and validates them
 func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, config *config.Config) (*provider.Volume, error) {
 	var encrypt = "undef"
-	var err error
-	volume := &provider.Volume{}
-	volume.Name = &req.Name
+	volume := &provider.Volume{Name: &req.Name}
+
+	// Process storage class parameters
 	for key, value := range req.GetParameters() {
+		var err error
 		switch key {
 		case Profile:
 			if utils.ListContainsSubstr(SupportedProfile, value) {
@@ -112,32 +112,35 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 			} else {
 				err = fmt.Errorf("%s:<%v> unsupported profile. Supported profiles are: %v", key, value, SupportedProfile)
 			}
+
 		case Zone:
 			if len(value) > ZoneNameMaxLen {
 				err = fmt.Errorf("%s:<%v> exceeds %d chars", key, value, ZoneNameMaxLen)
 			} else {
 				volume.Az = value
 			}
+
 		case Region:
 			if len(value) > RegionMaxLen {
 				err = fmt.Errorf("%s:<%v> exceeds %d chars", key, value, RegionMaxLen)
 			} else {
 				volume.Region = value
 			}
+
 		case Tag:
 			if len(value) != 0 {
-				tagstr := strings.TrimSpace(value)
-				volume.Tags = strings.Split(tagstr, ",")
+				volume.Tags = strings.Split(strings.TrimSpace(value), ",")
 			}
 
 		case ResourceGroup:
 			if len(value) > ResourceGroupIDMaxLen {
 				err = fmt.Errorf("%s:<%v> exceeds %d chars", key, value, ResourceGroupIDMaxLen)
+			} else {
+				volume.ResourceGroup = &provider.ResourceGroup{ID: value}
 			}
-			volume.ResourceGroup = &provider.ResourceGroup{ID: value}
 
 		case BillingType:
-			// Its not supported by RIaaS, but this is just information for the user
+			// Not supported by RIaaS, informational only
 
 		case Encrypted:
 			if value != TrueStr && value != FalseStr {
@@ -145,13 +148,12 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 			} else {
 				encrypt = value
 			}
+
 		case EncryptionKey:
 			if len(value) > EncryptionKeyMaxLen {
 				err = fmt.Errorf("%s: exceeds %d bytes", key, EncryptionKeyMaxLen)
-			} else {
-				if len(value) != 0 {
-					volume.VolumeEncryptionKey = &provider.VolumeEncryptionKey{CRN: value}
-				}
+			} else if len(value) != 0 {
+				volume.VolumeEncryptionKey = &provider.VolumeEncryptionKey{CRN: value}
 			}
 
 		case ClassVersion:
@@ -168,35 +170,40 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 				iops := value
 				volume.Iops = &iops
 			}
-		case Throughput: // getting throughput value from storage class if it is provided
+
+		case Throughput:
 			if len(value) != 0 {
-				bandwidth, errParse := strconv.ParseInt(value, 10, 32)
-				if errParse != nil {
+				bandwidth, parseErr := strconv.ParseInt(value, 10, 32)
+				if parseErr != nil {
 					err = fmt.Errorf("'<%v>' is invalid, value of '%s' should be an int32 type", value, key)
 				} else {
 					volume.Bandwidth = int32(bandwidth)
 				}
 			}
+
 		default:
 			err = fmt.Errorf("<%s> is an invalid parameter", key)
 		}
+
 		if err != nil {
 			logger.Error("getVolumeParameters", zap.NamedError("SC Parameters", err))
 			return volume, err
 		}
 	}
-	// If encripted is set to false
+
+	// If encrypted is set to false, clear encryption key
 	if encrypt == FalseStr {
 		volume.VolumeEncryptionKey = nil
 	}
 
+	// Validate required profile
 	if volume.Profile == nil {
-		err = fmt.Errorf("volume profile is empty, you need to pass valid profile name")
+		err := fmt.Errorf("volume profile is empty, you need to pass valid profile name")
 		logger.Error("getVolumeParameters", zap.NamedError("InvalidRequest", err))
 		return volume, err
 	}
 
-	// Get the requested capacity from the request
+	// Get requested capacity
 	capacityRange := req.GetCapacityRange()
 	capBytes, err := getRequestedCapacity(capacityRange, volume.Profile.Name)
 	if err != nil {
@@ -206,23 +213,23 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 	}
 	logger.Info("Volume size in bytes", zap.Any("capacity", capBytes))
 
-	// Convert size/capacity in GiB, as this is needed by RIaaS
+	// Convert capacity to GiB
 	fsSize := utils.BytesToGiB(capBytes)
 	// Assign the size to volume object
 	volume.Capacity = &fsSize
 	logger.Info("Volume size in GiB", zap.Any("capacity", fsSize))
 
-	// volume.Capacity should be set before calling overrideParams
+	// Override with secret parameters (volume.Capacity must be set before this)
 	err = overrideParams(logger, req, config, volume)
 	if err != nil {
 		return volume, err
 	}
 
-	// Check if the provided fstype is supported one
+	// Validate and set filesystem type
 	volumeCapabilities := req.GetVolumeCapabilities()
 	if volumeCapabilities == nil {
 		err = fmt.Errorf("volume capabilities are empty")
-		logger.Error("overrideParams", zap.NamedError("invalid parameter", err))
+		logger.Error("getVolumeParameters", zap.NamedError("invalid parameter", err))
 		return volume, err
 	}
 
@@ -231,28 +238,25 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 		if mnt == nil {
 			continue
 		}
+
 		if len(mnt.FsType) == 0 {
 			volume.VolumeType = provider.VolumeType(defaultFsType)
+		} else if utils.ListContainsSubstr(SupportedFS, mnt.FsType) {
+			volume.VolumeType = provider.VolumeType(mnt.FsType)
 		} else {
-			if utils.ListContainsSubstr(SupportedFS, mnt.FsType) {
-				volume.VolumeType = provider.VolumeType(mnt.FsType)
-			} else {
-				err = fmt.Errorf("unsupported fstype <%s>. Supported types: %v", mnt.FsType, SupportedFS)
-			}
+			err = fmt.Errorf("unsupported fstype <%s>. Supported types: %v", mnt.FsType, SupportedFS)
+			logger.Error("getVolumeParameters", zap.NamedError("InvalidParameter", err))
+			return volume, err
 		}
 		break
 	}
-	if err != nil {
-		logger.Error("getVolumeParameters", zap.NamedError("InvalidParameter", err))
-		return volume, err
-	}
 
-	if volume.Profile != nil && (volume.Profile.Name != CustomProfile && volume.Profile.Name != SDPProfile) {
-		// Specify IOPS only for custom or SDP class
+	// Clear IOPS for non-custom/SDP profiles
+	if volume.Profile != nil && volume.Profile.Name != CustomProfile && volume.Profile.Name != SDPProfile {
 		volume.Iops = nil
 	}
 
-	//If  zone not provided in storage class parameters then we pick from the Topology
+	// Set zone from topology if not specified
 	if len(strings.TrimSpace(volume.Az)) == 0 {
 		zones, err := pickTargetTopologyParams(req.GetAccessibilityRequirements())
 		if err != nil {
@@ -261,28 +265,31 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 			return volume, err
 		}
 		volume.Az = zones[utils.NodeZoneLabel]
-
 	}
 
 	return volume, nil
 }
 
+// overrideParams overrides volume parameters with values from secrets and sets default resource group
 func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *config.Config, volume *provider.Volume) error {
 	var encrypt = "undef"
-	var err error
+
 	if volume == nil {
 		return fmt.Errorf("invalid volume parameter")
 	}
 
+	// Process secret parameters
 	for key, value := range req.GetSecrets() {
+		var err error
 		switch key {
 		case ResourceGroup:
 			if len(value) > ResourceGroupIDMaxLen {
-				err = fmt.Errorf("%s:<%v> exceeds %d bytes ", key, value, ResourceGroupIDMaxLen)
+				err = fmt.Errorf("%s:<%v> exceeds %d bytes", key, value, ResourceGroupIDMaxLen)
 			} else {
 				logger.Info("override", zap.Any(ResourceGroup, value))
 				volume.ResourceGroup = &provider.ResourceGroup{ID: value}
 			}
+
 		case Encrypted:
 			if value != TrueStr && value != FalseStr {
 				err = fmt.Errorf("<%v> is invalid, value for '%s' should be [true|false]", value, key)
@@ -290,20 +297,19 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 				logger.Info("override", zap.Any(Encrypted, value))
 				encrypt = value
 			}
+
 		case EncryptionKey:
 			if len(value) > EncryptionKeyMaxLen {
 				err = fmt.Errorf("%s exceeds %d bytes", key, EncryptionKeyMaxLen)
-			} else {
-				if len(value) != 0 {
-					logger.Info("override", zap.String("parameter", EncryptionKey))
-					volume.VolumeEncryptionKey = &provider.VolumeEncryptionKey{CRN: value}
-				}
+			} else if len(value) != 0 {
+				logger.Info("override", zap.String("parameter", EncryptionKey))
+				volume.VolumeEncryptionKey = &provider.VolumeEncryptionKey{CRN: value}
 			}
+
 		case Tag:
 			if len(value) != 0 {
 				logger.Info("append", zap.Any(Tag, value))
-				tagstr := strings.TrimSpace(value)
-				secretTags := strings.Split(tagstr, ",")
+				secretTags := strings.Split(strings.TrimSpace(value), ",")
 				volume.Tags = append(volume.Tags, secretTags...)
 			}
 
@@ -314,42 +320,54 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 				logger.Info("override", zap.Any(Zone, value))
 				volume.Az = value
 			}
+
 		case Region:
 			if len(value) > RegionMaxLen {
 				err = fmt.Errorf("%s:<%v> exceeds %d chars", key, value, RegionMaxLen)
 			} else {
+				logger.Info("override", zap.Any(Region, value))
 				volume.Region = value
 			}
+
 		case IOPS:
 			// Override IOPS only for custom or sdp class
 			if len(value) != 0 {
+				logger.Info("override", zap.Any(IOPS, value))
 				iops := value
 				volume.Iops = &iops
 			}
-		case Throughput: // getting throughput value from storage class if it is provided
+
+		case Throughput:
 			if len(value) != 0 {
-				bandwidth, errParse := strconv.ParseInt(value, 10, 32)
-				if errParse != nil {
+				bandwidth, parseErr := strconv.ParseInt(value, 10, 32)
+				if parseErr != nil {
 					err = fmt.Errorf("'<%v>' is invalid, value of '%s' should be an int32 type", value, key)
 				} else {
+					logger.Info("override", zap.Any(Throughput, bandwidth))
 					volume.Bandwidth = int32(bandwidth)
 				}
 			}
+
 		default:
 			err = fmt.Errorf("<%s> is an invalid parameter", key)
 		}
+
 		if err != nil {
 			logger.Error("overrideParams", zap.NamedError("Secret Parameters", err))
 			return err
 		}
 	}
-	// Assign ResourceGroupID from config
+
+	// Set cluster's resource group if not specified
 	if volume.ResourceGroup == nil || len(volume.ResourceGroup.ID) < 1 {
 		volume.ResourceGroup = &provider.ResourceGroup{ID: config.VPC.G2ResourceGroupID}
 	}
+
+	// If encrypted is set to false, clear encryption key
 	if encrypt == FalseStr {
 		volume.VolumeEncryptionKey = nil
 	}
+
 	return nil
 }
 
@@ -448,6 +466,31 @@ func getAccountID(input string) string {
 	} else {
 		return ""
 	}
+}
+
+// overrideSnapshotResourceGroupParameter sets the resource group for snapshot, using VolumeSnapshotClass value if provided, otherwise defaults to cluster's resource group
+func overrideSnapshotResourceGroupParameter(logger *zap.Logger, snapshotClassParams map[string]string, config *config.Config) error {
+	// cluster's resource group
+	snapshotRG := config.VPC.G2ResourceGroupID
+
+	// Override with VolumeSnapshotClass resource group if provided
+	if rg, ok := snapshotClassParams[ResourceGroup]; ok {
+		rg = strings.TrimSpace(rg)
+
+		if len(rg) > 0 {
+			if len(rg) > ResourceGroupIDMaxLen {
+				return fmt.Errorf("%s:<%v> exceeds %d chars", ResourceGroup, rg, ResourceGroupIDMaxLen)
+			}
+			snapshotRG = rg
+			logger.Info("Using resource group from VolumeSnapshotClass", zap.String("resourceGroup", snapshotRG))
+		}
+	}
+
+	// Update map with final resource group
+	snapshotClassParams[ResourceGroup] = snapshotRG
+	logger.Info("Final resource group", zap.String("resourceGroup", snapshotRG))
+
+	return nil
 }
 
 // getSnapshotAndAccountIDsFromCRN ...
