@@ -496,14 +496,14 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 		ctxLogger.Info("Snapshot with name already exist for volume", zap.Reflect("SnapshotName", snapshotName), zap.Reflect("VolumeID", sourceVolumeID))
 		return createCSISnapshotResponse(*snapshot), nil
 	}
-	snapshotParameters := provider.SnapshotParameters{}
-	snapshotParameters.Name = snapshotName
+	snapshotMetadata := provider.SnapshotParameters{}
+	snapshotMetadata.Name = snapshotName
 	snapshotTags := map[string]string{
 		"name": snapshotName,
 	}
-	snapshotParameters.SnapshotTags = snapshotTags
+	snapshotMetadata.SnapshotTags = snapshotTags
 
-	snapshot, err = session.CreateSnapshot(sourceVolumeID, snapshotParameters, snapshotClassParams)
+	snapshot, err = session.CreateSnapshot(sourceVolumeID, snapshotMetadata, snapshotClassParams)
 
 	if err != nil {
 		time.Sleep(time.Duration(getMaxDelaySnapshotCreate(ctxLogger)) * time.Second) //To avoid multiple retries from kubernetes to CSI Driver
