@@ -20,7 +20,7 @@ package provider
 // SnapshotManager ...
 type SnapshotManager interface {
 	// Create the snapshot on the volume
-	CreateSnapshot(sourceVolumeID string, snapshotMetadata SnapshotParameters, snapshotClassParams map[string]string) (*Snapshot, error)
+	CreateSnapshot(sourceVolumeID string, snapshotParameters SnapshotParameters) (*Snapshot, error)
 
 	// Delete the snapshot
 	DeleteSnapshot(*Snapshot) error

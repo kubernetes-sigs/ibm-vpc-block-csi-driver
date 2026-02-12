@@ -31,9 +31,9 @@ import (
 const snapshotReadyState = "stable"
 
 // CreateSnapshot creates snapshot
-func (vpcs *VPCSession) CreateSnapshot(sourceVolumeID string, snapshotMetadata provider.SnapshotParameters, snapshotClassParams map[string]string) (*provider.Snapshot, error) {
-	vpcs.Logger.Info("Entry CreateSnapshot", zap.Reflect("snapshotRequest", snapshotMetadata), zap.Reflect("sourceVolumeID", sourceVolumeID))
-	defer vpcs.Logger.Info("Exit CreateSnapshot", zap.Reflect("snapshotRequest", snapshotMetadata), zap.Reflect("sourceVolumeID", sourceVolumeID))
+func (vpcs *VPCSession) CreateSnapshot(sourceVolumeID string, snapshotParameters provider.SnapshotParameters) (*provider.Snapshot, error) {
+	vpcs.Logger.Info("Entry CreateSnapshot", zap.Reflect("snapshotRequest", snapshotParameters), zap.Reflect("sourceVolumeID", sourceVolumeID))
+	defer vpcs.Logger.Info("Exit CreateSnapshot", zap.Reflect("snapshotRequest", snapshotParameters), zap.Reflect("sourceVolumeID", sourceVolumeID))
 	defer metrics.UpdateDurationFromStart(vpcs.Logger, "CreateSnapshot", time.Now())
 
 	err := vpcs.validateSnapshotRequest(sourceVolumeID)
@@ -42,26 +42,13 @@ func (vpcs *VPCSession) CreateSnapshot(sourceVolumeID string, snapshotMetadata p
 	}
 	var snapshotResult *models.Snapshot
 
-	// cluster's resource group
-	snapshotRG := vpcs.Config.VPCConfig.G2ResourceGroupID
-
-	// volumeSnapshotClass defined resource group
-	if rg, ok := snapshotClassParams["resourceGroupID"]; ok && rg != "" {
-		snapshotRG = rg
-
-		// TODO: add cluster validation condition
-		vpcs.Logger.Info("Using snapshot RG from VolumeSnapshotClass", zap.String("snapshotRG", snapshotRG))
-	}
-
-	vpcs.Logger.Info("Final snapshot RG selected", zap.String("snapshotRG", snapshotRG))
-
 	snapshotTemplate := &models.Snapshot{
-		Name: snapshotMetadata.Name,
+		Name: snapshotParameters.Name,
 		SourceVolume: &models.SourceVolume{
 			ID: sourceVolumeID,
 		},
 		ResourceGroup: &models.ResourceGroup{
-			ID: snapshotRG,
+			ID: snapshotParameters.ResourceGroup,
 		},
 	}
 

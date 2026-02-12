@@ -468,29 +468,23 @@ func getAccountID(input string) string {
 	}
 }
 
-// overrideSnapshotResourceGroupParameter sets the resource group for snapshot, using VolumeSnapshotClass value if provided, otherwise defaults to cluster's resource group
-func overrideSnapshotResourceGroupParameter(logger *zap.Logger, snapshotClassParams map[string]string, config *config.Config) error {
-	// cluster's resource group
-	snapshotRG := config.VPC.G2ResourceGroupID
-
-	// Override with VolumeSnapshotClass resource group if provided
-	if rg, ok := snapshotClassParams[ResourceGroup]; ok {
+func getResourceGroup(logger *zap.Logger, snapshotParameters map[string]string, config *config.Config) (string, error) {
+	if rg, ok := snapshotParameters[ResourceGroup]; ok {
 		rg = strings.TrimSpace(rg)
 
 		if len(rg) > 0 {
 			if len(rg) > ResourceGroupIDMaxLen {
-				return fmt.Errorf("%s:<%v> exceeds %d chars", ResourceGroup, rg, ResourceGroupIDMaxLen)
+				return "", fmt.Errorf("%s:<%v> exceeds %d chars", ResourceGroup, rg, ResourceGroupIDMaxLen)
 			}
-			snapshotRG = rg
-			logger.Info("Using resource group from VolumeSnapshotClass", zap.String("resourceGroup", snapshotRG))
+
+			logger.Info("Using resource group from VolumeSnapshotClass", zap.String("resourceGroup", rg))
+			return rg, nil
 		}
 	}
 
-	// Update map with final resource group
-	snapshotClassParams[ResourceGroup] = snapshotRG
-	logger.Info("Final resource group", zap.String("resourceGroup", snapshotRG))
-
-	return nil
+	// return cluster's resource group
+	logger.Info("Using cluster's resource group", zap.String("resourceGroup", config.VPC.G2ResourceGroupID))
+	return config.VPC.G2ResourceGroupID, nil
 }
 
 // getSnapshotAndAccountIDsFromCRN ...

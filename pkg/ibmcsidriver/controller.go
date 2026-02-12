@@ -467,21 +467,7 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 		return nil, commonError.GetCSIError(ctxLogger, commonError.MissingSourceVolumeID, requestID, nil)
 	}
 
-	// SnapshotClassParams refers to the volumeSnapshotClass parameters
-	snapshotClassParams := make(map[string]string)
-	for k, v := range req.GetParameters() {
-		snapshotClassParams[k] = v
-	}
-
-	ctxLogger.Info("CreateSnapshot received CSI parameters",
-		zap.String("snapshotName", snapshotName),
-		zap.String("sourceVolumeID", sourceVolumeID),
-		zap.Any("snapshotClassParameters", snapshotClassParams),
-	)
-
-	if err := overrideSnapshotResourceGroupParameter(ctxLogger, snapshotClassParams, csiCS.CSIProvider.GetConfig()); err != nil {
-		return nil, commonError.GetCSIError(ctxLogger, commonError.InvalidParameters, requestID, err)
-	}
+	resourceGroupID, err := getResourceGroup(ctxLogger, req.GetParameters(), csiCS.CSIProvider.GetConfig())
 
 	// Validate if volume Already Exists
 	session, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
@@ -508,14 +494,15 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 		return createCSISnapshotResponse(*snapshot), nil
 	}
 
-	snapshotMetadata := provider.SnapshotParameters{}
-	snapshotMetadata.Name = snapshotName
+	snapshotParameters := provider.SnapshotParameters{}
+	snapshotParameters.Name = snapshotName
 	snapshotTags := map[string]string{
 		"name": snapshotName,
 	}
-	snapshotMetadata.SnapshotTags = snapshotTags
+	snapshotParameters.SnapshotTags = snapshotTags
+	snapshotParameters.ResourceGroup = resourceGroupID
 
-	snapshot, err = session.CreateSnapshot(sourceVolumeID, snapshotMetadata, snapshotClassParams)
+	snapshot, err = session.CreateSnapshot(sourceVolumeID, snapshotParameters)
 
 	if err != nil {
 		time.Sleep(time.Duration(getMaxDelaySnapshotCreate(ctxLogger)) * time.Second) //To avoid multiple retries from kubernetes to CSI Driver
