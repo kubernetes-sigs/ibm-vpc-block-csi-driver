@@ -807,3 +807,82 @@ func TestGetPrefedTopologyParams(t *testing.T) {
 		})
 	}
 }
+
+func TestGetResourceGroup(t *testing.T) {
+	testCases := []struct {
+		description    string
+		snapShotParams map[string]string
+		expectedRG     string
+		expectedStatus bool
+		expectedError  error
+	}{
+		{
+			description: "Valid resource group passed to snapshot params",
+			snapShotParams: map[string]string{
+				ResourceGroup: "123r2423",
+			},
+			expectedRG:     "123r2423",
+			expectedStatus: true,
+			expectedError:  nil,
+		},
+		{
+			description: "empty resource group passed to snapshot params",
+			snapShotParams: map[string]string{
+				ResourceGroup: "",
+			},
+			expectedRG:     "10000000",
+			expectedStatus: true,
+			expectedError:  nil,
+		},
+		{
+			description: "empty space resource group passed to snapshot params",
+			snapShotParams: map[string]string{
+				ResourceGroup: "   ",
+			},
+			expectedRG:     "10000000",
+			expectedStatus: true,
+			expectedError:  nil,
+		},
+		{
+			description:    "no resource group passed to snapshot params",
+			snapShotParams: nil,
+			expectedRG:     "10000000",
+			expectedStatus: true,
+			expectedError:  nil,
+		},
+	}
+
+	// Set up
+	// Creating test logger
+	logger, teardown := cloudProvider.GetTestLogger(t)
+	defer teardown()
+
+	testConfig := &config.Config{
+		Server: &config.ServerConfig{
+			DebugTrace: true,
+		},
+		VPC: &config.VPCProviderConfig{
+			Enabled:              true,
+			VPCBlockProviderName: "vpc-classic",
+			EndpointURL:          "TestEndpointURL",
+			VPCTimeout:           "30s",
+			MaxRetryAttempt:      5,
+			MaxRetryGap:          10,
+			APIVersion:           "TestAPIVersion",
+			G2ResourceGroupID:    "10000000",
+		},
+		IKS: &config.IKSConfig{
+			Enabled:              true,
+			IKSBlockProviderName: "iks-block",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.description, func(t *testing.T) {
+			RG, err := getResourceGroup(logger, tc.snapShotParams, testConfig)
+
+			assert.Equal(t, tc.expectedRG, RG)
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+}

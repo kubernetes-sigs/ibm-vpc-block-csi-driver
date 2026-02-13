@@ -241,12 +241,12 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 
 		if len(mnt.FsType) == 0 {
 			volume.VolumeType = provider.VolumeType(defaultFsType)
-		} else if utils.ListContainsSubstr(SupportedFS, mnt.FsType) {
-			volume.VolumeType = provider.VolumeType(mnt.FsType)
 		} else {
-			err = fmt.Errorf("unsupported fstype <%s>. Supported types: %v", mnt.FsType, SupportedFS)
-			logger.Error("getVolumeParameters", zap.NamedError("InvalidParameter", err))
-			return volume, err
+			if utils.ListContainsSubstr(SupportedFS, mnt.FsType) {
+				volume.VolumeType = provider.VolumeType(mnt.FsType)
+			} else {
+				err = fmt.Errorf("unsupported fstype <%s>. Supported types: %v", mnt.FsType, SupportedFS)
+			}
 		}
 		break
 	}
@@ -469,17 +469,14 @@ func getAccountID(input string) string {
 }
 
 func getResourceGroup(logger *zap.Logger, snapshotParameters map[string]string, config *config.Config) (string, error) {
-	if rg, ok := snapshotParameters[ResourceGroup]; ok {
-		rg = strings.TrimSpace(rg)
-
-		if len(rg) > 0 {
-			if len(rg) > ResourceGroupIDMaxLen {
-				return "", fmt.Errorf("%s:<%v> exceeds %d chars", ResourceGroup, rg, ResourceGroupIDMaxLen)
-			}
-
-			logger.Info("Using resource group from VolumeSnapshotClass", zap.String("resourceGroup", rg))
-			return rg, nil
+	if rg, ok := snapshotParameters[ResourceGroup]; ok && len(strings.TrimSpace(rg)) > 0 {
+		if len(rg) > ResourceGroupIDMaxLen {
+			return "", fmt.Errorf("%s:<%v> exceeds %d chars", ResourceGroup, rg, ResourceGroupIDMaxLen)
 		}
+
+		logger.Info("Using resource group from VolumeSnapshotClass", zap.String("resourceGroup", rg))
+		return rg, nil
+
 	}
 
 	// return cluster's resource group
