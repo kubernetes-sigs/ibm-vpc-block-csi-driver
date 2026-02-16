@@ -481,7 +481,7 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
 	}
 
-	snapshot, err := session.GetSnapshotByName(snapshotName)
+	snapshot, err := session.GetSnapshotByName(snapshotName, resourceGroupID)
 	if err != nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.ListSnapshotsFailed, requestID, err)
 	}

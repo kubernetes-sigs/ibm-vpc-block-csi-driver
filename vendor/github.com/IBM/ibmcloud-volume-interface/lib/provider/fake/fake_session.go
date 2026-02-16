@@ -189,11 +189,12 @@ type FakeSession struct {
 		result1 *provider.Snapshot
 		result2 error
 	}
-	GetSnapshotByNameStub        func(string, ...string) (*provider.Snapshot, error)
+	GetSnapshotByNameStub        func(string, string, ...string) (*provider.Snapshot, error)
 	getSnapshotByNameMutex       sync.RWMutex
 	getSnapshotByNameArgsForCall []struct {
 		arg1 string
-		arg2 []string
+		arg2 string
+		arg3 []string
 	}
 	getSnapshotByNameReturns struct {
 		result1 *provider.Snapshot
@@ -1310,19 +1311,20 @@ func (fake *FakeSession) GetSnapshotReturnsOnCall(i int, result1 *provider.Snaps
 	}{result1, result2}
 }
 
-func (fake *FakeSession) GetSnapshotByName(arg1 string, arg2 ...string) (*provider.Snapshot, error) {
+func (fake *FakeSession) GetSnapshotByName(arg1 string, arg2 string, arg3 ...string) (*provider.Snapshot, error) {
 	fake.getSnapshotByNameMutex.Lock()
 	ret, specificReturn := fake.getSnapshotByNameReturnsOnCall[len(fake.getSnapshotByNameArgsForCall)]
 	fake.getSnapshotByNameArgsForCall = append(fake.getSnapshotByNameArgsForCall, struct {
 		arg1 string
-		arg2 []string
-	}{arg1, arg2})
+		arg2 string
+		arg3 []string
+	}{arg1, arg2, arg3})
 	stub := fake.GetSnapshotByNameStub
 	fakeReturns := fake.getSnapshotByNameReturns
-	fake.recordInvocation("GetSnapshotByName", []interface{}{arg1, arg2})
+	fake.recordInvocation("GetSnapshotByName", []interface{}{arg1, arg2, arg3})
 	fake.getSnapshotByNameMutex.Unlock()
 	if stub != nil {
-		return stub(arg1, arg2...)
+		return stub(arg1, arg2, arg3...)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
@@ -1336,17 +1338,17 @@ func (fake *FakeSession) GetSnapshotByNameCallCount() int {
 	return len(fake.getSnapshotByNameArgsForCall)
 }
 
-func (fake *FakeSession) GetSnapshotByNameCalls(stub func(string, ...string) (*provider.Snapshot, error)) {
+func (fake *FakeSession) GetSnapshotByNameCalls(stub func(string, string, ...string) (*provider.Snapshot, error)) {
 	fake.getSnapshotByNameMutex.Lock()
 	defer fake.getSnapshotByNameMutex.Unlock()
 	fake.GetSnapshotByNameStub = stub
 }
 
-func (fake *FakeSession) GetSnapshotByNameArgsForCall(i int) (string, []string) {
+func (fake *FakeSession) GetSnapshotByNameArgsForCall(i int) (string, string, []string) {
 	fake.getSnapshotByNameMutex.RLock()
 	defer fake.getSnapshotByNameMutex.RUnlock()
 	argsForCall := fake.getSnapshotByNameArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
 }
 
 func (fake *FakeSession) GetSnapshotByNameReturns(result1 *provider.Snapshot, result2 error) {
