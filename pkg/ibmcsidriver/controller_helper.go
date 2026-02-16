@@ -468,20 +468,16 @@ func getAccountID(input string) string {
 	}
 }
 
-func getResourceGroup(logger *zap.Logger, snapshotParameters map[string]string, config *config.Config) (string, error) {
+func getResourceGroup(logger *zap.Logger, snapshotParameters map[string]string, config *config.Config) string {
 	if rg, ok := snapshotParameters[ResourceGroup]; ok && len(strings.TrimSpace(rg)) > 0 {
-		if len(rg) > ResourceGroupIDMaxLen {
-			return "", fmt.Errorf("%s:<%v> exceeds %d chars", ResourceGroup, rg, ResourceGroupIDMaxLen)
-		}
-
 		logger.Info("Using resource group from VolumeSnapshotClass", zap.String("resourceGroup", rg))
-		return rg, nil
+		return rg
 
 	}
 
 	// return cluster's resource group
 	logger.Info("Using cluster's resource group", zap.String("resourceGroup", config.VPC.G2ResourceGroupID))
-	return config.VPC.G2ResourceGroupID, nil
+	return config.VPC.G2ResourceGroupID
 }
 
 // getSnapshotAndAccountIDsFromCRN ...

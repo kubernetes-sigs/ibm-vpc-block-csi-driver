@@ -467,7 +467,7 @@ func (csiCS *CSIControllerServer) CreateSnapshot(ctx context.Context, req *csi.C
 		return nil, commonError.GetCSIError(ctxLogger, commonError.MissingSourceVolumeID, requestID, nil)
 	}
 
-	resourceGroupID, err := getResourceGroup(ctxLogger, req.GetParameters(), csiCS.CSIProvider.GetConfig())
+	resourceGroupID := getResourceGroup(ctxLogger, req.GetParameters(), csiCS.CSIProvider.GetConfig())
 
 	// Validate if volume Already Exists
 	session, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)

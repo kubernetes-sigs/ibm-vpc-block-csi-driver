@@ -814,7 +814,6 @@ func TestGetResourceGroup(t *testing.T) {
 		snapShotParams map[string]string
 		expectedRG     string
 		expectedStatus bool
-		expectedError  error
 	}{
 		{
 			description: "Valid resource group passed to snapshot params",
@@ -823,7 +822,6 @@ func TestGetResourceGroup(t *testing.T) {
 			},
 			expectedRG:     "123r2423",
 			expectedStatus: true,
-			expectedError:  nil,
 		},
 		{
 			description: "empty resource group passed to snapshot params",
@@ -832,7 +830,6 @@ func TestGetResourceGroup(t *testing.T) {
 			},
 			expectedRG:     "10000000",
 			expectedStatus: true,
-			expectedError:  nil,
 		},
 		{
 			description: "empty space resource group passed to snapshot params",
@@ -841,14 +838,12 @@ func TestGetResourceGroup(t *testing.T) {
 			},
 			expectedRG:     "10000000",
 			expectedStatus: true,
-			expectedError:  nil,
 		},
 		{
 			description:    "no resource group passed to snapshot params",
 			snapShotParams: nil,
 			expectedRG:     "10000000",
 			expectedStatus: true,
-			expectedError:  nil,
 		},
 	}
 
@@ -879,10 +874,9 @@ func TestGetResourceGroup(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
-			RG, err := getResourceGroup(logger, tc.snapShotParams, testConfig)
+			RG := getResourceGroup(logger, tc.snapShotParams, testConfig)
 
 			assert.Equal(t, tc.expectedRG, RG)
-			assert.Equal(t, tc.expectedError, err)
 		})
 	}
 }
