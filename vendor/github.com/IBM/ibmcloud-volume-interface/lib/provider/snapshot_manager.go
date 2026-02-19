@@ -28,8 +28,9 @@ type SnapshotManager interface {
 	// GetSnapshot fetches the snapshot using snapshotID
 	GetSnapshot(snapshotID string, sourceVolumeID ...string) (*Snapshot, error)
 
-	// GetSnapshotByName gets the snapshot by name and resourceGroupID
-	GetSnapshotByName(snapshotName, resourceGroupID string, sourceVolumeID ...string) (*Snapshot, error)
+	// GetSnapshotByName gets the snapshot by name and scoped parameters. scopeID is optional and driver-dependent
+	// Block CSI driver passes resourceGroupID; File CSI driver passes it as sourceVolumeID
+	GetSnapshotByName(snapshotName string, scopeID ...string) (*Snapshot, error)
 
 	// ListSnapshots lists the snapshots by using tags
 	ListSnapshots(limit int, start string, tags map[string]string) (*SnapshotList, error)

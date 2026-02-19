@@ -138,7 +138,7 @@ func (volprov *DefaultVolumeProvider) GetSnapshot(snapshotID string, sourceVolum
 }
 
 // GetSnapshotByName gets the snapshot
-func (volprov *DefaultVolumeProvider) GetSnapshotByName(snapshotName, resourceGroupID string, sourceVolumeID ...string) (*Snapshot, error) {
+func (volprov *DefaultVolumeProvider) GetSnapshotByName(snapshotName string, scopeID ...string) (*Snapshot, error) {
 	return nil, nil
 }
 

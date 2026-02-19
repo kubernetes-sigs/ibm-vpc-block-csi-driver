@@ -36,7 +36,7 @@ type SnapshotManager interface {
 	// Get the snapshot
 	GetSnapshot(snapshotID string, ctxLogger *zap.Logger) (*models.Snapshot, error)
 
-	// GetSnapshotByName lists the snapshot by using snapshot name and resourceGroupID
+	// Lists the snapshot by using snapshot name and resourceGroupID
 	GetSnapshotByName(snapshotName, resourceGroupID string, ctxLogger *zap.Logger) (*models.Snapshot, error)
 
 	// List all the  snapshots for a given volume

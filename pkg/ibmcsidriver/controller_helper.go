@@ -317,7 +317,6 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 			if len(value) > ZoneNameMaxLen {
 				err = fmt.Errorf("%s:<%v> exceeds %d chars", key, value, ZoneNameMaxLen)
 			} else {
-				logger.Info("override", zap.Any(Zone, value))
 				volume.Az = value
 			}
 
@@ -325,14 +324,12 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 			if len(value) > RegionMaxLen {
 				err = fmt.Errorf("%s:<%v> exceeds %d chars", key, value, RegionMaxLen)
 			} else {
-				logger.Info("override", zap.Any(Region, value))
 				volume.Region = value
 			}
 
 		case IOPS:
 			// Override IOPS only for custom or sdp class
 			if len(value) != 0 {
-				logger.Info("override", zap.Any(IOPS, value))
 				iops := value
 				volume.Iops = &iops
 			}
@@ -343,7 +340,6 @@ func overrideParams(logger *zap.Logger, req *csi.CreateVolumeRequest, config *co
 				if parseErr != nil {
 					err = fmt.Errorf("'<%v>' is invalid, value of '%s' should be an int32 type", value, key)
 				} else {
-					logger.Info("override", zap.Any(Throughput, bandwidth))
 					volume.Bandwidth = int32(bandwidth)
 				}
 			}
