@@ -241,12 +241,13 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 
 		if len(mnt.FsType) == 0 {
 			volume.VolumeType = provider.VolumeType(defaultFsType)
+		} else if utils.ListContainsSubstr(SupportedFS, mnt.FsType) {
+			volume.VolumeType = provider.VolumeType(mnt.FsType)
 		} else {
-			if utils.ListContainsSubstr(SupportedFS, mnt.FsType) {
-				volume.VolumeType = provider.VolumeType(mnt.FsType)
-			} else {
-				err = fmt.Errorf("unsupported fstype <%s>. Supported types: %v", mnt.FsType, SupportedFS)
-			}
+			err = fmt.Errorf("unsupported fstype <%s>. Supported types: %v", mnt.FsType, SupportedFS)
+
+			logger.Error("getVolumeParameters", zap.NamedError("InvalidParameter", err))
+			return volume, err
 		}
 		break
 	}
