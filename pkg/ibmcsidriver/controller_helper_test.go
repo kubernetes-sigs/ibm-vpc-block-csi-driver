@@ -453,7 +453,7 @@ func TestOverrideParams(t *testing.T) {
 			},
 			expectedVolume: &provider.Volume{},
 			expectedStatus: true,
-			expectedError:  fmt.Errorf("%s:<%v> exceeds %d bytes ", ResourceGroup, exceededResourceGID, ResourceGroupIDMaxLen),
+			expectedError:  fmt.Errorf("%s:<%v> exceeds %d bytes", ResourceGroup, exceededResourceGID, ResourceGroupIDMaxLen),
 		},
 		{
 			testCaseName: "Encryption key size exceeded",
