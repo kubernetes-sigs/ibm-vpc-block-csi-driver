@@ -29,6 +29,7 @@ Following are the prerequisites to use the IBM VPC Block CSI Driver:
 4. Cluster's worker node should have following labels, if not please apply labels before deploying IBM VPC Block CSI Driver.
 ```
 "ibm-cloud.kubernetes.io/worker-id"
+"ibm-cloud.kubernetes.io/vpc-instance-id"
 "failure-domain.beta.kubernetes.io/region"
 "failure-domain.beta.kubernetes.io/zone"
 "topology.kubernetes.io/region"
@@ -39,9 +40,9 @@ Following are the prerequisites to use the IBM VPC Block CSI Driver:
 
 Please use [`apply-required-setup.sh`](https://github.com/kubernetes-sigs/ibm-vpc-block-csi-driver/blob/master/scripts/apply-required-setup.sh) script for all the nodes in the cluster which will need couple of inputs like 
 
-`instanceID`:  That you can get from `ibmcloud is ins` 
-
 `node-name`: this is as per node name in the kubernetes node check by using `kubectl get nodes`
+
+`instanceID`:  That you can get from `ibmcloud is ins` 
 
 `region-of-instanceID`:  region of the instanceID, this you can get the by using `ibmcloud is in <instanceID>`
 

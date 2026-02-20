@@ -1,5 +1,6 @@
-bases:
+resources:
 - ../../manifests
+
 patches:
-- controller-server-images.yaml
-- node-server-images.yaml
+  - path: controller-server-images.yaml
+  - path: node-server-images.yaml

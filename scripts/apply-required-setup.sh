@@ -9,11 +9,13 @@ function help()
 
 function apply_labels()
 {
-	kubectl label nodes $1 "ibm-cloud.kubernetes.io/worker-id"=$2
-	kubectl label nodes $1 "failure-domain.beta.kubernetes.io/region"=$3
-	kubectl label nodes $1 "failure-domain.beta.kubernetes.io/zone"=$4
-	kubectl label nodes $1 "topology.kubernetes.io/region"=$3
-	kubectl label nodes $1 "topology.kubernetes.io/zone"=$4
+	kubectl label node $1 "ibm-cloud.kubernetes.io/worker-id"=$2 --overwrite
+	kubectl label node $1 "ibm-cloud.kubernetes.io/vpc-instance-id="$2 --overwrite
+	kubectl label node $1 "failure-domain.beta.kubernetes.io/region"=$3 --overwrite
+	kubectl label node $1 "failure-domain.beta.kubernetes.io/zone"=$4 --overwrite
+	kubectl label node $1 "topology.kubernetes.io/region"=$3 --overwrite
+	kubectl label node $1 "topology.kubernetes.io/zone"=$4 --overwrite
+	kubectl label node $1 "ibm-cloud.kubernetes.io/machine-type=upi" --overwrite
 }
 
 function verify_node()
