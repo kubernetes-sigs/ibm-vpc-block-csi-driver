@@ -4,8 +4,8 @@ go 1.25.3
 
 require (
 	github.com/IBM/ibm-csi-common v1.1.24
-	github.com/IBM/ibmcloud-volume-interface v1.2.18
-	github.com/IBM/ibmcloud-volume-vpc v1.1.21
+	github.com/IBM/ibmcloud-volume-interface v1.2.19
+	github.com/IBM/ibmcloud-volume-vpc v1.1.22
 	github.com/IBM/secret-utils-lib v1.1.15
 	github.com/container-storage-interface/spec v1.11.0
 	github.com/golang/glog v1.2.4
@@ -112,8 +112,6 @@ require (
 
 // The below fixes the "go list -mod=readonly -m all" execution
 replace (
-	github.com/IBM/ibmcloud-volume-interface => github.com/MahanteshR12/ibmcloud-volume-interface v0.0.0-20260219092732-50b8d42eb592
-	github.com/IBM/ibmcloud-volume-vpc => github.com/MahanteshR12/ibmcloud-volume-vpc v0.0.0-20260219095706-e13b3b87a880
 	k8s.io/cli-runtime => k8s.io/cli-runtime v0.32.10
 	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.32.10
 	k8s.io/cri-api => k8s.io/cri-api v0.32.10
