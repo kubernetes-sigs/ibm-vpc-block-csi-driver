@@ -1,6 +1,8 @@
 ##### Node Service Account, Roles, RoleBindings
 apiVersion: v1
 kind: ServiceAccount
+imagePullSecrets:
+  - name: icr-io-secret
 metadata:
   name: ibm-vpc-block-node-sa
   namespace: kube-system
@@ -57,6 +59,8 @@ roleRef:
 ##### Controller Service Account, Roles, Rolebindings
 apiVersion: v1
 kind: ServiceAccount
+imagePullSecrets:
+  - name: icr-io-secret
 metadata:
   name: ibm-vpc-block-controller-sa
   namespace: kube-system
