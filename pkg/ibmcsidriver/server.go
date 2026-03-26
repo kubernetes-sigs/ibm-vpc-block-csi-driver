@@ -18,6 +18,7 @@ limitations under the License.
 package ibmcsidriver
 
 import (
+	"context"
 	"errors"
 	"net"
 	"net/url"
@@ -29,7 +30,6 @@ import (
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/glog"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 

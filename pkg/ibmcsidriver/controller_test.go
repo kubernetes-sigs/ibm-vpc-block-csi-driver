@@ -18,6 +18,7 @@ limitations under the License.
 package ibmcsidriver
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -36,7 +37,6 @@ import (
 
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider/fake"
 	cloudProvider "github.com/IBM/ibmcloud-volume-vpc/pkg/ibmcloudprovider"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"

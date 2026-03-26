@@ -18,6 +18,7 @@ limitations under the License.
 package ibmcsidriver
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -30,7 +31,6 @@ import (
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
