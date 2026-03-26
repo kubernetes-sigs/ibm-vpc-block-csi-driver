@@ -18,11 +18,12 @@ limitations under the License.
 package ibmcsidriver
 
 import (
+	"context"
+
 	commonError "github.com/IBM/ibm-csi-common/pkg/messages"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
 // CSIIdentityServer ...
