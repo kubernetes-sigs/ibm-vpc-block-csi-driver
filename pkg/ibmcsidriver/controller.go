@@ -18,6 +18,7 @@ limitations under the License.
 package ibmcsidriver
 
 import (
+	"context"
 	"os"
 	"strings"
 	"time"
@@ -33,7 +34,6 @@ import (
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
 // CSIControllerServer ...
