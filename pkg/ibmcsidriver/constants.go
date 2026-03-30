@@ -131,6 +131,9 @@ const (
 
 	// Throughput ...
 	Throughput = "throughput"
+
+	// MkfsOptions - Custom mkfs options for filesystem formatting
+	MkfsOptions = "mkfsOptions"
 )
 
 // SupportedFS the supported FS types

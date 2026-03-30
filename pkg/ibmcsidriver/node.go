@@ -293,9 +293,20 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 	}
 	options := collectMountOptions(fsType, mnt.MountFlags)
 
+	// Extract mkfsOptions from VolumeContext
+	volumeContext := req.GetVolumeContext()
+	formatOptions := extractFormatOptions(ctxLogger, volumeContext, fsType)
+
 	// FormatAndMount will format only if needed
-	ctxLogger.Info("Formating and mounting ", zap.String("source", source), zap.String("stagingTargetPath", stagingTargetPath), zap.String("fsType", fsType), zap.Reflect("options", options))
-	err = csiNS.Mounter.GetSafeFormatAndMount().FormatAndMount(source, stagingTargetPath, fsType, options)
+	ctxLogger.Info("Formatting and mounting",
+		zap.String("source", source),
+		zap.String("stagingTargetPath", stagingTargetPath),
+		zap.String("fsType", fsType),
+		zap.Reflect("mountOptions", options),
+		zap.Reflect("formatOptions", formatOptions))
+
+	err = csiNS.Mounter.GetSafeFormatAndMount().FormatAndMountSensitiveWithFormatOptions(
+		source, stagingTargetPath, fsType, options, nil, formatOptions)
 	if err != nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.FormatAndMountFailed, requestID, err, source, stagingTargetPath)
 	}
@@ -584,5 +595,30 @@ func collectMountOptions(fsType string, mntFlags []string) []string {
 	if fsType == "xfs" {
 		options = append(options, "nouuid")
 	}
+	return options
+}
+
+// extractFormatOptions extracts and validates mkfs options from VolumeContext
+func extractFormatOptions(ctxLogger *zap.Logger, volumeContext map[string]string, fsType string) []string {
+	mkfsOpts, exists := volumeContext[MkfsOptions]
+	if !exists || mkfsOpts == "" {
+		return nil
+	}
+
+	ctxLogger.Info("Using custom mkfs options",
+		zap.String("fsType", fsType),
+		zap.String("mkfsOptions", mkfsOpts))
+
+	// Parse space-separated options
+	options := strings.Fields(mkfsOpts)
+
+	// Validate again at node level for defense in depth
+	if err := validateMkfsOptions(mkfsOpts, fsType); err != nil {
+		ctxLogger.Warn("Invalid mkfs options detected at node level, ignoring",
+			zap.String("mkfsOptions", mkfsOpts),
+			zap.Error(err))
+		return nil
+	}
+
 	return options
 }

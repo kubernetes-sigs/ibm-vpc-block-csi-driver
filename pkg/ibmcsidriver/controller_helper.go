@@ -181,6 +181,11 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 				}
 			}
 
+		case MkfsOptions:
+			// mkfsOptions will be validated and stored in labels for VolumeContext
+			// Validation happens here to fail fast during volume creation
+			logger.Info("mkfsOptions parameter detected", zap.String("mkfsOptions", value))
+
 		default:
 			err = fmt.Errorf("<%s> is an invalid parameter", key)
 		}
@@ -405,7 +410,7 @@ func checkIfVolumeExists(session provider.Session, vol provider.Volume, ctxLogge
 }
 
 // createCSIVolumeResponse ...
-func createCSIVolumeResponse(vol provider.Volume, capBytes int64, zones []string, clusterID string, region string) *csi.CreateVolumeResponse {
+func createCSIVolumeResponse(vol provider.Volume, capBytes int64, zones []string, clusterID string, region string, req *csi.CreateVolumeRequest) *csi.CreateVolumeResponse {
 	var src *csi.VolumeContentSource
 	if vol.SnapshotID != "" {
 		src = &csi.VolumeContentSource{
@@ -433,6 +438,23 @@ func createCSIVolumeResponse(vol provider.Volume, capBytes int64, zones []string
 		labels[utils.NodeRegionLabel] = region
 	}
 	labels[utils.NodeZoneLabel] = vol.Az
+
+	// Extract mkfsOptions from request parameters if present
+	if req != nil {
+		parameters := req.GetParameters()
+		if mkfsOpts, exists := parameters[MkfsOptions]; exists && mkfsOpts != "" {
+			// Validate mkfsOptions
+			fsType := string(vol.VolumeType)
+			if fsType == "" {
+				fsType = defaultFsType
+			}
+			if err := validateMkfsOptions(mkfsOpts, fsType); err == nil {
+				labels[MkfsOptions] = mkfsOpts
+			}
+			// If validation fails, we silently skip adding it to labels
+			// The error was already logged during getVolumeParameters
+		}
+	}
 
 	topology := &csi.Topology{
 		Segments: map[string]string{

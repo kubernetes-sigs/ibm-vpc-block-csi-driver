@@ -1,0 +1,23 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ibmc-vpc-block-custom-mkfs
+  labels:
+    app.kubernetes.io/name: ibm-vpc-block-csi-driver
+  annotations:
+    description: "Custom StorageClass with mkfs options for optimized formatting"
+provisioner: vpc.block.csi.ibm.io
+parameters:
+  profile: "general-purpose"
+  csi.storage.k8s.io/fstype: "ext4"
+  # Custom mkfs options for faster formatting (skip lazy initialization)
+  # This speeds up initial volume formatting but may increase mount time
+  mkfsOptions: "-E lazy_itable_init=0,lazy_journal_init=0 -m0"
+  billingType: "hourly"
+  encrypted: "false"
+  classVersion: "1"
+reclaimPolicy: "Delete"
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+
+# Made with Bob
