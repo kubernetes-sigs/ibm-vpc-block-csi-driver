@@ -1,0 +1,22 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ibmc-vpc-block-xfs-custom-mkfs
+  labels:
+    app.kubernetes.io/name: ibm-vpc-block-csi-driver
+  annotations:
+    description: "XFS StorageClass with custom mkfs options"
+provisioner: vpc.block.csi.ibm.io
+parameters:
+  profile: "general-purpose"
+  csi.storage.k8s.io/fstype: "xfs"
+  # Custom mkfs options for XFS with 4K block size
+  mkfsOptions: "-b size=4096 -f"
+  billingType: "hourly"
+  encrypted: "false"
+  classVersion: "1"
+reclaimPolicy: "Delete"
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+
+# Made with Bob
