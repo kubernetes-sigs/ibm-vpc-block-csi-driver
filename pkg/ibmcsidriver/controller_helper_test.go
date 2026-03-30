@@ -669,7 +669,7 @@ func TestCreateCSIVolumeResponse(t *testing.T) {
 
 	for _, testcase := range testCases {
 		t.Run(testcase.testCaseName, func(t *testing.T) {
-			actualCSIVolume := createCSIVolumeResponse(testcase.requestVol, testcase.requestCap, testcase.requestZones, testcase.clusterID, icDriver.region)
+			actualCSIVolume := createCSIVolumeResponse(testcase.requestVol, testcase.requestCap, testcase.requestZones, testcase.clusterID, icDriver.region, nil)
 			assert.Equal(t, testcase.expectedStatus, isCSIResponseSame(testcase.expectedVolume, actualCSIVolume))
 		})
 	}

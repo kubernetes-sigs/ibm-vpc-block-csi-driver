@@ -187,13 +187,61 @@ func validateMkfsOptions(mkfsOpts string, fsType string) error {
 
 	// Validate options are appropriate for filesystem type
 	options := strings.Fields(mkfsOpts)
+	expectingValue := false
+
 	for _, opt := range options {
+		// If previous option expects a value, this token is the value
+		if expectingValue {
+			// Value tokens don't need to start with dash
+			expectingValue = false
+			continue
+		}
+
+		// Check if this is a valid option flag
 		if !isValidMkfsOption(opt, fsType) {
 			return fmt.Errorf("invalid mkfs option '%s' for filesystem type '%s'", opt, fsType)
+		}
+
+		// Check if this option expects a separate value (not attached with =)
+		// Options like -b, -i, -m can have separate values: -b 4096
+		// Options like -E, -O typically have attached values: -E lazy_itable_init=0
+		if isOptionExpectingValue(opt) {
+			expectingValue = true
 		}
 	}
 
 	return nil
+}
+
+// isOptionExpectingValue checks if an option expects a separate value argument
+func isOptionExpectingValue(option string) bool {
+	// If option already has a value attached (contains = or other non-dash content after the flag)
+	// then it doesn't expect a separate value
+	// Examples: -Elazy_itable_init=0, -m0, -b4096 don't expect separate values
+	// But -E, -m, -b do expect separate values
+	if strings.Contains(option, "=") {
+		return false
+	}
+
+	// Check if it's a compound option (flag + value without space)
+	// Like -m0, -b4096, -Elazy_itable_init=0
+	if len(option) > 2 {
+		// It's a compound option, doesn't expect separate value
+		return false
+	}
+
+	// Single-letter options that typically take values
+	// -b (block size), -i (inode size), -m (reserved blocks), -T (filesystem type)
+	// -E (extended options), -O (filesystem features), -J (journal options)
+	// -d, -l, -n, -r, -s for xfs
+	valueOptions := []string{"-b", "-i", "-m", "-T", "-E", "-O", "-J", "-I", "-N", "-d", "-l", "-n", "-r", "-s"}
+	for _, vo := range valueOptions {
+		if option == vo {
+			return true
+		}
+	}
+
+	return false
 }
 
 // isValidMkfsOption checks if an option is valid for the given filesystem type
