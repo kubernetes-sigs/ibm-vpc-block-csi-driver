@@ -20,7 +20,7 @@ GIT_COMMIT_SHA="$(shell git rev-parse HEAD 2>/dev/null)"
 GIT_REMOTE_URL="$(shell git config --get remote.origin.url 2>/dev/null)"
 BUILD_DATE="$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")"
 OSS_FILES := go.mod Dockerfile
-GOLANG_VERSION="1.25.3"
+GOLANG_VERSION="1.25.8"
 
 
 STAGING_REGISTRY ?= gcr.io/k8s-staging-cloud-provider-ibm
@@ -44,7 +44,7 @@ BUILD_NUMBER?=unknown
 GO111MODULE_FLAG?=on
 export GO111MODULE=$(GO111MODULE_FLAG)
 
-LINT_VERSION=v2.4.0
+LINT_VERSION=v2.11.4
 
 GOFILES=$(shell find . -type f -name '*.go' -not -path "./vendor/*")
 

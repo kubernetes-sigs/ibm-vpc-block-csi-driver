@@ -18,11 +18,11 @@ limitations under the License.
 package ibmcsidriver
 
 import (
+	"context"
 	"testing"
 
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 func TestGetPluginInfo(t *testing.T) {

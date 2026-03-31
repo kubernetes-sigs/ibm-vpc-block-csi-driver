@@ -19,6 +19,7 @@ limitations under the License.
 package sanity
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -37,7 +38,6 @@ import (
 	"github.com/google/uuid"
 	sanity "github.com/kubernetes-csi/csi-test/v4/pkg/sanity"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
