@@ -68,6 +68,13 @@ func (csiIdentity *CSIIdentityServer) GetPluginCapabilities(ctx context.Context,
 					},
 				},
 			},
+			{
+				Type: &csi.PluginCapability_Service_{
+					Service: &csi.PluginCapability_Service{
+						Type: csi.PluginCapability_Service_GROUP_CONTROLLER_SERVICE,
+					},
+				},
+			},
 			/* TODO Add Volume Expansion {
 				Type: &csi.PluginCapability_Service_{
 					Service: &csi.PluginCapability_Service{

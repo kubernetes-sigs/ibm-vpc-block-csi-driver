@@ -438,6 +438,35 @@ func FromProviderToLibSnapshot(vpcSnapshot *models.Snapshot, logger *zap.Logger)
 	return
 }
 
+// FromProviderToLibGroupSnapshot converting vpc provider snapshot consistency group type to generic lib group snapshot type
+func FromProviderToLibGroupSnapshot(vpcGroup *models.SnapshotConsistencyGroup, logger *zap.Logger) (libGroupSnapshot *provider.GroupSnapshot) {
+	logger.Debug("Entry of FromProviderToLibGroupSnapshot method...")
+	defer logger.Debug("Exit from FromProviderToLibGroupSnapshot method...")
+
+	if vpcGroup == nil {
+		logger.Info("GroupSnapshot details are empty")
+		return
+	}
+
+	logger.Debug("GroupSnapshot details of VPC client", zap.Reflect("models.SnapshotConsistencyGroup", vpcGroup))
+
+	var createdTime time.Time
+	if vpcGroup.CreatedAt != nil {
+		createdTime = *vpcGroup.CreatedAt
+	}
+
+	libGroupSnapshot = &provider.GroupSnapshot{
+		GroupSnapshotID:           vpcGroup.ID,
+		GroupSnapshotCRN:          vpcGroup.CRN,
+		GroupSnapshotCreationTime: createdTime,
+		VPC:                      provider.VPC{Href: vpcGroup.Href},
+	}
+	if vpcGroup.LifecycleState == snapshotReadyState {
+		libGroupSnapshot.ReadyToUse = true
+	}
+	return
+}
+
 // IsValidVolumeIDFormat validating(gc has 5 parts and NG has 6 parts)
 func IsValidVolumeIDFormat(volID string) bool {
 	parts := strings.Split(volID, "-")

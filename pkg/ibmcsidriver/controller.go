@@ -42,6 +42,7 @@ type CSIControllerServer struct {
 	CSIProvider cloudProvider.CloudProviderInterface
 	mutex       utils.LockStore
 	csi.UnimplementedControllerServer
+	csi.UnimplementedGroupControllerServer
 }
 
 const (
@@ -703,4 +704,158 @@ func (csiCS *CSIControllerServer) ControllerGetVolume(ctx context.Context, req *
 func (csiCS *CSIControllerServer) ControllerModifyVolume(ctx context.Context, req *csi.ControllerModifyVolumeRequest) (*csi.ControllerModifyVolumeResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	return nil, commonError.GetCSIError(ctxLogger, commonError.MethodUnimplemented, requestID, nil, "ControllerModifyVolume")
+}
+
+// CreateVolumeGroupSnapshot ...
+func (csiCS *CSIControllerServer) CreateVolumeGroupSnapshot(ctx context.Context, req *csi.CreateVolumeGroupSnapshotRequest) (*csi.CreateVolumeGroupSnapshotResponse, error) {
+	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
+	// populate requestID in the context
+	ctx = context.WithValue(ctx, provider.RequestID, requestID)
+	ctxLogger.Info("CSIControllerServer-CreateVolumeGroupSnapshot... ", zap.Reflect("Request", req))
+	defer metrics.UpdateDurationFromStart(ctxLogger, "CreateVolumeGroupSnapshot", time.Now())
+
+	//Feature flag to enable/disable CreateVolumeGroupSnapshot feature.
+	if strings.ToLower(os.Getenv("IS_GROUP_SNAPSHOT_ENABLED")) == "false" {
+		ctxLogger.Warn("CreateVolumeGroupSnapshot functionality is disabled.")
+		time.Sleep(10 * time.Minute) //To avoid multiple retries from kubernetes to CSI Driver
+		return nil, commonError.GetCSIError(ctxLogger, commonError.MethodUnimplemented, requestID, nil, "CreateVolumeGroupSnapshot functionality is disabled.")
+	}
+
+	snapshotName := req.GetName()
+	if len(snapshotName) == 0 {
+		return nil, commonError.GetCSIError(ctxLogger, commonError.MissingSnapshotName, requestID, nil)
+	}
+
+	sourceVolumeIDs := req.GetSourceVolumeIds()
+	if len(sourceVolumeIDs) == 0 {
+		return nil, commonError.GetCSIError(ctxLogger, commonError.MissingSourceVolumeID, requestID, nil)
+	}
+
+	resourceGroupID := getResourceGroup(ctxLogger, req.GetParameters(), csiCS.CSIProvider.GetConfig())
+
+	session, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
+	if err != nil {
+		if userError.GetUserErrorCode(err) == string(utilReasonCode.EndpointNotReachable) {
+			return nil, commonError.GetCSIError(ctxLogger, commonError.EndpointNotReachable, requestID, err)
+		}
+		if userError.GetUserErrorCode(err) == string(utilReasonCode.Timeout) {
+			return nil, commonError.GetCSIError(ctxLogger, commonError.Timeout, requestID, err)
+		}
+		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
+	}
+
+	// Check if a group snapshot with this name already exists
+	groupSnapshot, err := session.GetGroupSnapshotByName(snapshotName, resourceGroupID)
+	if err != nil {
+		return nil, commonError.GetCSIError(ctxLogger, commonError.ListSnapshotsFailed, requestID, err)
+	}
+
+	if groupSnapshot != nil {
+		ctxLogger.Info("Group snapshot with name already exists", zap.Reflect("SnapshotName", snapshotName), zap.Reflect("GroupSnapshotID", groupSnapshot.GroupSnapshotID))
+		return createCSIVolumeGroupSnapshotResponse(*groupSnapshot), nil
+	}
+
+	// Create the group snapshot
+	groupSnapshotParameters := provider.GroupSnapshotParameters{
+		Name:          snapshotName,
+		ResourceGroup: resourceGroupID,
+	}
+
+	groupSnapshot, err = session.CreateGroupSnapshot(sourceVolumeIDs, groupSnapshotParameters)
+	if err != nil {
+		time.Sleep(time.Duration(getMaxDelaySnapshotCreate(ctxLogger)) * time.Second)
+		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err, "creation")
+	}
+
+	return createCSIVolumeGroupSnapshotResponse(*groupSnapshot), nil
+}
+
+// DeleteVolumeGroupSnapshot ...
+func (csiCS *CSIControllerServer) DeleteVolumeGroupSnapshot(ctx context.Context, req *csi.DeleteVolumeGroupSnapshotRequest) (*csi.DeleteVolumeGroupSnapshotResponse, error) {
+	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
+	ctx = context.WithValue(ctx, provider.RequestID, requestID)
+	defer metrics.UpdateDurationFromStart(ctxLogger, "DeleteVolumeGroupSnapshot", time.Now())
+	ctxLogger.Info("CSIControllerServer-DeleteVolumeGroupSnapshot... ", zap.Reflect("Request", req))
+
+	groupSnapshotID := req.GetGroupSnapshotId()
+	if len(groupSnapshotID) == 0 {
+		return nil, commonError.GetCSIError(ctxLogger, commonError.EmptySnapshotID, requestID, nil)
+	}
+
+	session, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
+	if err != nil {
+		if userError.GetUserErrorCode(err) == string(utilReasonCode.EndpointNotReachable) {
+			return nil, commonError.GetCSIError(ctxLogger, commonError.EndpointNotReachable, requestID, err)
+		}
+		if userError.GetUserErrorCode(err) == string(utilReasonCode.Timeout) {
+			return nil, commonError.GetCSIError(ctxLogger, commonError.Timeout, requestID, err)
+		}
+		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
+	}
+
+	err = session.DeleteGroupSnapshot(groupSnapshotID)
+	if err != nil {
+		if providerError.RetrivalFailed == providerError.GetErrorType(err) {
+			ctxLogger.Info("Group snapshot not found. Returning success without deletion...")
+			return &csi.DeleteVolumeGroupSnapshotResponse{}, nil
+		}
+		return nil, commonError.GetCSIBackendError(ctxLogger, requestID, err)
+	}
+	return &csi.DeleteVolumeGroupSnapshotResponse{}, nil
+}
+
+// GetVolumeGroupSnapshot ...
+func (csiCS *CSIControllerServer) GetVolumeGroupSnapshot(ctx context.Context, req *csi.GetVolumeGroupSnapshotRequest) (*csi.GetVolumeGroupSnapshotResponse, error) {
+	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
+	ctx = context.WithValue(ctx, provider.RequestID, requestID)
+	ctxLogger.Info("CSIControllerServer-GetVolumeGroupSnapshot... ", zap.Reflect("Request", req))
+	defer metrics.UpdateDurationFromStart(ctxLogger, "GetVolumeGroupSnapshot", time.Now())
+
+	groupSnapshotID := req.GetGroupSnapshotId()
+	if len(groupSnapshotID) == 0 {
+		return nil, commonError.GetCSIError(ctxLogger, commonError.EmptySnapshotID, requestID, nil)
+	}
+
+	session, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
+	if err != nil {
+		if userError.GetUserErrorCode(err) == string(utilReasonCode.EndpointNotReachable) {
+			return nil, commonError.GetCSIError(ctxLogger, commonError.EndpointNotReachable, requestID, err)
+		}
+		if userError.GetUserErrorCode(err) == string(utilReasonCode.Timeout) {
+			return nil, commonError.GetCSIError(ctxLogger, commonError.Timeout, requestID, err)
+		}
+		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
+	}
+
+	groupSnapshot, err := session.GetGroupSnapshot(groupSnapshotID)
+	if err != nil {
+		return nil, commonError.GetCSIBackendError(ctxLogger, requestID, err)
+	}
+
+	if groupSnapshot == nil {
+		return nil, commonError.GetCSIError(ctxLogger, commonError.ObjectNotFound, requestID, nil, groupSnapshotID)
+	}
+
+	resp := createCSIVolumeGroupSnapshotResponse(*groupSnapshot)
+	return &csi.GetVolumeGroupSnapshotResponse{
+		GroupSnapshot: resp.GroupSnapshot,
+	}, nil
+}
+
+// GroupControllerGetCapabilities ...
+func (csiCS *CSIControllerServer) GroupControllerGetCapabilities(ctx context.Context, req *csi.GroupControllerGetCapabilitiesRequest) (*csi.GroupControllerGetCapabilitiesResponse, error) {
+	ctxLogger, _ := utils.GetContextLogger(ctx, false)
+	ctxLogger.Info("CSIControllerServer-GroupControllerGetCapabilities...", zap.Reflect("Request", req))
+
+	return &csi.GroupControllerGetCapabilitiesResponse{
+		Capabilities: []*csi.GroupControllerServiceCapability{
+			{
+				Type: &csi.GroupControllerServiceCapability_Rpc{
+					Rpc: &csi.GroupControllerServiceCapability_RPC{
+						Type: csi.GroupControllerServiceCapability_RPC_CREATE_DELETE_GET_VOLUME_GROUP_SNAPSHOT,
+					},
+				},
+			},
+		},
+	}, nil
 }
