@@ -714,13 +714,6 @@ func (csiCS *CSIControllerServer) CreateVolumeGroupSnapshot(ctx context.Context,
 	ctxLogger.Info("CSIControllerServer-CreateVolumeGroupSnapshot... ", zap.Reflect("Request", req))
 	defer metrics.UpdateDurationFromStart(ctxLogger, "CreateVolumeGroupSnapshot", time.Now())
 
-	//Feature flag to enable/disable CreateVolumeGroupSnapshot feature.
-	if strings.ToLower(os.Getenv("IS_GROUP_SNAPSHOT_ENABLED")) == "false" {
-		ctxLogger.Warn("CreateVolumeGroupSnapshot functionality is disabled.")
-		time.Sleep(10 * time.Minute) //To avoid multiple retries from kubernetes to CSI Driver
-		return nil, commonError.GetCSIError(ctxLogger, commonError.MethodUnimplemented, requestID, nil, "CreateVolumeGroupSnapshot functionality is disabled.")
-	}
-
 	snapshotName := req.GetName()
 	if len(snapshotName) == 0 {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.MissingSnapshotName, requestID, nil)
