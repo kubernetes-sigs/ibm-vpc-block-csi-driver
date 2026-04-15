@@ -14,8 +14,8 @@ github.com/IBM/secret-utils-lib v1.1.15 h1:wW6/TdsjQVz/WDg7yQjD8Jmvb2NqYE851pDYx
 github.com/IBM/secret-utils-lib v1.1.15/go.mod h1:Hbslikwj+zwxz4MYKqckSmcGYcxB1w5EkwHJHa+kxgQ=
 github.com/MahanteshR12/ibmcloud-volume-interface v0.0.0-20260410064020-487ef0a375b8 h1:BvZ+ixpiMD/Xudg4Se8WSpk1O3WwZCUoq+fdSuDQ9cc=
 github.com/MahanteshR12/ibmcloud-volume-interface v0.0.0-20260410064020-487ef0a375b8/go.mod h1:Ccr3Jc6laUfAbCY7sVWWKPr9jjOtG1Fqrb59Ev12BOY=
-github.com/MahanteshR12/ibmcloud-volume-vpc v0.0.0-20260414102308-3690a1f1afe7 h1:4emSnpTZNwrboJSbleVBCse/oeZ0V2q70uxR65PmQG4=
-github.com/MahanteshR12/ibmcloud-volume-vpc v0.0.0-20260414102308-3690a1f1afe7/go.mod h1:B0Lbk2IDXOMBVpndqUqTFQ3mW/TwEivfO/PQDij2fGA=
+github.com/MahanteshR12/ibmcloud-volume-vpc v0.0.0-20260415104523-9108d9966e5e h1:+bAQlYPE/dNvcHk61trQpljcV1KRFVdfAPhFqjVbm64=
+github.com/MahanteshR12/ibmcloud-volume-vpc v0.0.0-20260415104523-9108d9966e5e/go.mod h1:B0Lbk2IDXOMBVpndqUqTFQ3mW/TwEivfO/PQDij2fGA=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 h1:DklsrG3dyBCFEj5IhUbnKptjxatkF07cF2ak3yi77so=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2/go.mod h1:WaHUgvxTVq04UNunO+XhnAqY/wQc+bxr74GqbsZ/Jqw=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=

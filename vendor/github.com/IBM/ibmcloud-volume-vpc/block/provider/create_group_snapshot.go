@@ -116,7 +116,23 @@ func (vpcs *VPCSession) GetGroupSnapshot(groupSnapshotID string) (*provider.Grou
 	}
 
 	vpcs.Logger.Info("Successfully retrieved group snapshot details", zap.Reflect("groupSnapshotDetails", result))
-	groupSnapshotResponse := FromProviderToLibGroupSnapshot(result, nil, vpcs.Logger)
+
+	// List all snapshots belonging to this consistency group to get full details (source_volume, etc.)
+	var snapshotList *models.SnapshotList
+	err = retry(vpcs.Logger, func() error {
+		snapshotList, err = vpcs.Apiclient.SnapshotService().ListSnapshots(0, "", &models.LisSnapshotFilters{
+			SnapshotConsistencyGroupID: result.ID,
+		}, vpcs.Logger)
+		return err
+	})
+	var snapshotDetails []*models.Snapshot
+	if err != nil {
+		vpcs.Logger.Warn("Failed to list snapshots for consistency group, falling back to snapshot references", zap.Error(err))
+	} else if snapshotList != nil {
+		snapshotDetails = snapshotList.Snapshots
+	}
+
+	groupSnapshotResponse := FromProviderToLibGroupSnapshot(result, snapshotDetails, vpcs.Logger)
 	return groupSnapshotResponse, nil
 }
 
@@ -146,6 +162,22 @@ func (vpcs *VPCSession) GetGroupSnapshotByName(name string, resourceGroupID stri
 	}
 
 	vpcs.Logger.Info("Successfully retrieved group snapshot details", zap.Reflect("groupSnapshotDetails", result))
-	groupSnapshotResponse := FromProviderToLibGroupSnapshot(result, nil, vpcs.Logger)
+
+	// List all snapshots belonging to this consistency group to get full details (source_volume, etc.)
+	var snapshotList *models.SnapshotList
+	err = retry(vpcs.Logger, func() error {
+		snapshotList, err = vpcs.Apiclient.SnapshotService().ListSnapshots(0, "", &models.LisSnapshotFilters{
+			SnapshotConsistencyGroupID: result.ID,
+		}, vpcs.Logger)
+		return err
+	})
+	var snapshotDetails []*models.Snapshot
+	if err != nil {
+		vpcs.Logger.Warn("Failed to list snapshots for consistency group, falling back to snapshot references", zap.Error(err))
+	} else if snapshotList != nil {
+		snapshotDetails = snapshotList.Snapshots
+	}
+
+	groupSnapshotResponse := FromProviderToLibGroupSnapshot(result, snapshotDetails, vpcs.Logger)
 	return groupSnapshotResponse, nil
 }
