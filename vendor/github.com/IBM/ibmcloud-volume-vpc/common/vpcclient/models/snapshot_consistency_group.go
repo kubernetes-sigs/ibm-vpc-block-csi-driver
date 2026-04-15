@@ -86,3 +86,9 @@ type GroupSnapshotTemplate struct {
 	SourceVolume *SourceVolume `json:"source_volume"`
 	UserTags     []string      `json:"user_tags,omitempty"`
 }
+
+// ListSnapshotConsistencyGroupFilters ...
+type ListSnapshotConsistencyGroupFilters struct {
+	ResourceGroupID string `json:"resource_group.id,omitempty"`
+	Name            string `json:"name,omitempty"`
+}

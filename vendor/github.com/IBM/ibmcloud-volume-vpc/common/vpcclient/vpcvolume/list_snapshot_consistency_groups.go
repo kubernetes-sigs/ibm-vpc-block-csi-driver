@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 IBM Corp.
+ * Copyright 2026 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-// Package vpcvolume ...
 package vpcvolume
 
 import (
@@ -27,26 +26,26 @@ import (
 	"go.uber.org/zap"
 )
 
-// ListSnapshots GETs /snapshots
-func (ss *SnapshotService) ListSnapshots(limit int, start string, filters *models.LisSnapshotFilters, ctxLogger *zap.Logger) (*models.SnapshotList, error) {
-	ctxLogger.Debug("Entry Backend ListSnapshots")
-	defer ctxLogger.Debug("Exit Backend ListSnapshots")
+// ListSnapshotConsistencyGroups GETs /snapshot_consistency_groups
+func (scg *SnapshotConsistencyGroupService) ListSnapshotConsistencyGroups(limit int, start string, filters *models.ListSnapshotConsistencyGroupFilters, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroupList, error) {
+	ctxLogger.Debug("Entry Backend ListSnapshotConsistencyGroups")
+	defer ctxLogger.Debug("Exit Backend ListSnapshotConsistencyGroups")
 
-	defer util.TimeTracker("ListSnapshots", time.Now())
+	defer util.TimeTracker("ListSnapshotConsistencyGroups", time.Now())
 
 	operation := &client.Operation{
-		Name:        "ListSnapshots",
+		Name:        "ListSnapshotConsistencyGroups",
 		Method:      "GET",
-		PathPattern: snapshotsPath,
+		PathPattern: snapshotConsistencyGroupsPath,
 	}
 
-	var snapshots models.SnapshotList
+	var groups models.SnapshotConsistencyGroupList
 	var apiErr models.Error
 
-	request := ss.client.NewRequest(operation)
+	request := scg.client.NewRequest(operation)
 	ctxLogger.Info("Equivalent curl command", zap.Reflect("URL", request.URL()), zap.Reflect("Operation", operation))
 
-	req := request.JSONSuccess(&snapshots).JSONError(&apiErr)
+	req := request.JSONSuccess(&groups).JSONError(&apiErr)
 
 	if limit > 0 {
 		req.AddQueryValue("limit", strconv.Itoa(limit))
@@ -63,12 +62,6 @@ func (ss *SnapshotService) ListSnapshots(limit int, start string, filters *model
 		if filters.Name != "" {
 			req.AddQueryValue("name", filters.Name)
 		}
-		if filters.SourceVolumeID != "" {
-			req.AddQueryValue("source_volume.id", filters.SourceVolumeID)
-		}
-		if filters.SnapshotConsistencyGroupID != "" {
-			req.AddQueryValue("snapshot_consistency_group.id", filters.SnapshotConsistencyGroupID)
-		}
 	}
 
 	_, err := req.Invoke()
@@ -76,5 +69,5 @@ func (ss *SnapshotService) ListSnapshots(limit int, start string, filters *model
 		return nil, err
 	}
 
-	return &snapshots, nil
+	return &groups, nil
 }

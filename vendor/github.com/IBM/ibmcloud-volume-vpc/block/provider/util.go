@@ -438,8 +438,9 @@ func FromProviderToLibSnapshot(vpcSnapshot *models.Snapshot, logger *zap.Logger)
 	return
 }
 
-// FromProviderToLibGroupSnapshot converting vpc provider snapshot consistency group type to generic lib group snapshot type
-func FromProviderToLibGroupSnapshot(vpcGroup *models.SnapshotConsistencyGroup, logger *zap.Logger) (libGroupSnapshot *provider.GroupSnapshot) {
+// FromProviderToLibGroupSnapshot converting vpc provider snapshot consistency group type to generic lib group snapshot type.
+// snapshotDetails contains full snapshot objects (with source_volume) fetched individually; may be nil for Get/GetByName flows.
+func FromProviderToLibGroupSnapshot(vpcGroup *models.SnapshotConsistencyGroup, snapshotDetails []*models.Snapshot, logger *zap.Logger) (libGroupSnapshot *provider.GroupSnapshot) {
 	logger.Debug("Entry of FromProviderToLibGroupSnapshot method...")
 	defer logger.Debug("Exit from FromProviderToLibGroupSnapshot method...")
 
@@ -463,6 +464,23 @@ func FromProviderToLibGroupSnapshot(vpcGroup *models.SnapshotConsistencyGroup, l
 	}
 	if vpcGroup.LifecycleState == snapshotReadyState {
 		libGroupSnapshot.ReadyToUse = true
+	}
+
+	// If full snapshot details are available (from Create flow), use them to populate source_volume_id
+	if len(snapshotDetails) > 0 {
+		for _, snap := range snapshotDetails {
+			libGroupSnapshot.Snapshots = append(libGroupSnapshot.Snapshots, FromProviderToLibSnapshot(snap, logger))
+		}
+	} else {
+		// Fallback: use snapshot references from the consistency group response (no source_volume info)
+		for i := range vpcGroup.Snapshots {
+			ref := &vpcGroup.Snapshots[i]
+			libGroupSnapshot.Snapshots = append(libGroupSnapshot.Snapshots, &provider.Snapshot{
+				SnapshotID:  ref.ID,
+				SnapshotCRN: ref.CRN,
+				VPC:         provider.VPC{Href: ref.Href},
+			})
+		}
 	}
 	return
 }

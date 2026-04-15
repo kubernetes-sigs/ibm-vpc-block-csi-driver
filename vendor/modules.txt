@@ -27,7 +27,7 @@ github.com/IBM/ibmcloud-volume-interface/lib/utils/reasoncode
 github.com/IBM/ibmcloud-volume-interface/provider/auth
 github.com/IBM/ibmcloud-volume-interface/provider/iam
 github.com/IBM/ibmcloud-volume-interface/provider/local
-# github.com/IBM/ibmcloud-volume-vpc v1.1.22 => github.com/MahanteshR12/ibmcloud-volume-vpc v0.0.0-20260410064838-b8733d6b39e5
+# github.com/IBM/ibmcloud-volume-vpc v1.1.22 => github.com/MahanteshR12/ibmcloud-volume-vpc v0.0.0-20260414102308-3690a1f1afe7
 ## explicit; go 1.25.8
 github.com/IBM/ibmcloud-volume-vpc/block/provider
 github.com/IBM/ibmcloud-volume-vpc/block/utils
@@ -931,4 +931,4 @@ sigs.k8s.io/yaml/goyaml.v2
 # k8s.io/metrics => k8s.io/metrics v0.32.10
 # k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.32.10
 # github.com/IBM/ibmcloud-volume-interface => github.com/MahanteshR12/ibmcloud-volume-interface v0.0.0-20260410064020-487ef0a375b8
-# github.com/IBM/ibmcloud-volume-vpc => github.com/MahanteshR12/ibmcloud-volume-vpc v0.0.0-20260410064838-b8733d6b39e5
+# github.com/IBM/ibmcloud-volume-vpc => github.com/MahanteshR12/ibmcloud-volume-vpc v0.0.0-20260414102308-3690a1f1afe7
