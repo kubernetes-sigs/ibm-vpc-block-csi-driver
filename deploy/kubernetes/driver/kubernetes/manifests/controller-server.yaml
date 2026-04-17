@@ -41,6 +41,7 @@ spec:
             - "--csi-address=/csi/csi.sock"
             - "--timeout=900s"
             - "--leader-election=false"
+            - "--feature-gates=CSIVolumeGroupSnapshot=true"
           resources:
             limits:
               cpu: 80m
@@ -133,8 +134,8 @@ spec:
             - "--lock_enabled=false"
             - "--sidecarEndpoint=$(SIDECAREP)"
           envFrom:
-          - configMapRef:
-              name: ibm-vpc-block-csi-configmap
+            - configMapRef:
+                name: ibm-vpc-block-csi-configmap
           env:
             - name: POD_NAME
               valueFrom:
@@ -202,12 +203,11 @@ spec:
         - name: vault-token
           projected:
             sources:
-            - serviceAccountToken:
-                path: vault-token
-                expirationSeconds: 600
+              - serviceAccountToken:
+                  path: vault-token
+                  expirationSeconds: 600
         - name: socket-dir
           emptyDir: {}
         - name: customer-auth
           secret:
             secretName: storage-secret-store
-            
