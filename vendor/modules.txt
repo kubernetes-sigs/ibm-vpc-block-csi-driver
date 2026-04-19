@@ -16,7 +16,7 @@ github.com/IBM/ibm-csi-common/pkg/metadata/fake
 github.com/IBM/ibm-csi-common/pkg/metrics
 github.com/IBM/ibm-csi-common/pkg/mountmanager
 github.com/IBM/ibm-csi-common/pkg/utils
-# github.com/IBM/ibmcloud-volume-interface v1.2.19 => github.com/MahanteshR12/ibmcloud-volume-interface v0.0.0-20260419072848-f3c66ba997da
+# github.com/IBM/ibmcloud-volume-interface v1.2.19 => github.com/MahanteshR12/ibmcloud-volume-interface v0.0.0-20260419080545-d6c097cf4371
 ## explicit; go 1.25.8
 github.com/IBM/ibmcloud-volume-interface/config
 github.com/IBM/ibmcloud-volume-interface/lib/metrics
@@ -27,7 +27,7 @@ github.com/IBM/ibmcloud-volume-interface/lib/utils/reasoncode
 github.com/IBM/ibmcloud-volume-interface/provider/auth
 github.com/IBM/ibmcloud-volume-interface/provider/iam
 github.com/IBM/ibmcloud-volume-interface/provider/local
-# github.com/IBM/ibmcloud-volume-vpc v1.1.22 => github.com/MahanteshR12/ibmcloud-volume-vpc v0.0.0-20260419073051-d16490258b26
+# github.com/IBM/ibmcloud-volume-vpc v1.1.22 => github.com/MahanteshR12/ibmcloud-volume-vpc v0.0.0-20260419080857-364ff7d20f68
 ## explicit; go 1.25.8
 github.com/IBM/ibmcloud-volume-vpc/block/provider
 github.com/IBM/ibmcloud-volume-vpc/block/utils
@@ -930,5 +930,5 @@ sigs.k8s.io/yaml/goyaml.v2
 # k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.32.10
 # k8s.io/metrics => k8s.io/metrics v0.32.10
 # k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.32.10
-# github.com/IBM/ibmcloud-volume-interface => github.com/MahanteshR12/ibmcloud-volume-interface v0.0.0-20260419072848-f3c66ba997da
-# github.com/IBM/ibmcloud-volume-vpc => github.com/MahanteshR12/ibmcloud-volume-vpc v0.0.0-20260419073051-d16490258b26
+# github.com/IBM/ibmcloud-volume-interface => github.com/MahanteshR12/ibmcloud-volume-interface v0.0.0-20260419080545-d6c097cf4371
+# github.com/IBM/ibmcloud-volume-vpc => github.com/MahanteshR12/ibmcloud-volume-vpc v0.0.0-20260419080857-364ff7d20f68
