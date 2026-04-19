@@ -153,7 +153,7 @@ func (volprov *DefaultVolumeProvider) CreateGroupSnapshot(sourceVolumeIDs []stri
 }
 
 // DeleteGroupSnapshot deletes the group snapshot
-func (volprov *DefaultVolumeProvider) DeleteGroupSnapshot(groupSnapshotID string) error {
+func (volprov *DefaultVolumeProvider) DeleteGroupSnapshot(groupSnapshotID string, snapshotIDs []string) error {
 	return nil
 }
 

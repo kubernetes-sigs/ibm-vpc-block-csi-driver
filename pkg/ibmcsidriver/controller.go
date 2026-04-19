@@ -775,6 +775,10 @@ func (csiCS *CSIControllerServer) DeleteVolumeGroupSnapshot(ctx context.Context,
 		return nil, commonError.GetCSIError(ctxLogger, commonError.EmptySnapshotID, requestID, nil)
 	}
 
+	// Extract snapshot IDs from the request (required by CSI spec)
+	snapshotIDs := req.GetSnapshotIds()
+	ctxLogger.Info("DeleteVolumeGroupSnapshot snapshot IDs", zap.Reflect("snapshotIDs", snapshotIDs))
+
 	session, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
 	if err != nil {
 		if userError.GetUserErrorCode(err) == string(utilReasonCode.EndpointNotReachable) {
@@ -786,7 +790,7 @@ func (csiCS *CSIControllerServer) DeleteVolumeGroupSnapshot(ctx context.Context,
 		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
 	}
 
-	err = session.DeleteGroupSnapshot(groupSnapshotID)
+	err = session.DeleteGroupSnapshot(groupSnapshotID, snapshotIDs)
 	if err != nil {
 		if providerError.RetrivalFailed == providerError.GetErrorType(err) {
 			ctxLogger.Info("Group snapshot not found. Returning success without deletion...")

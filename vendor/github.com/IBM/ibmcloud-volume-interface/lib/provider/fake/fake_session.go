@@ -105,10 +105,11 @@ type FakeSession struct {
 		result1 *provider.Volume
 		result2 error
 	}
-	DeleteGroupSnapshotStub        func(string) error
+	DeleteGroupSnapshotStub        func(string, []string) error
 	deleteGroupSnapshotMutex       sync.RWMutex
 	deleteGroupSnapshotArgsForCall []struct {
 		arg1 string
+		arg2 []string
 	}
 	deleteGroupSnapshotReturns struct {
 		result1 error
@@ -936,18 +937,19 @@ func (fake *FakeSession) CreateVolumeFromSnapshotReturnsOnCall(i int, result1 *p
 	}{result1, result2}
 }
 
-func (fake *FakeSession) DeleteGroupSnapshot(arg1 string) error {
+func (fake *FakeSession) DeleteGroupSnapshot(arg1 string, arg2 []string) error {
 	fake.deleteGroupSnapshotMutex.Lock()
 	ret, specificReturn := fake.deleteGroupSnapshotReturnsOnCall[len(fake.deleteGroupSnapshotArgsForCall)]
 	fake.deleteGroupSnapshotArgsForCall = append(fake.deleteGroupSnapshotArgsForCall, struct {
 		arg1 string
-	}{arg1})
+		arg2 []string
+	}{arg1, arg2})
 	stub := fake.DeleteGroupSnapshotStub
 	fakeReturns := fake.deleteGroupSnapshotReturns
-	fake.recordInvocation("DeleteGroupSnapshot", []interface{}{arg1})
+	fake.recordInvocation("DeleteGroupSnapshot", []interface{}{arg1, arg2})
 	fake.deleteGroupSnapshotMutex.Unlock()
 	if stub != nil {
-		return stub(arg1)
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
@@ -961,17 +963,17 @@ func (fake *FakeSession) DeleteGroupSnapshotCallCount() int {
 	return len(fake.deleteGroupSnapshotArgsForCall)
 }
 
-func (fake *FakeSession) DeleteGroupSnapshotCalls(stub func(string) error) {
+func (fake *FakeSession) DeleteGroupSnapshotCalls(stub func(string, []string) error) {
 	fake.deleteGroupSnapshotMutex.Lock()
 	defer fake.deleteGroupSnapshotMutex.Unlock()
 	fake.DeleteGroupSnapshotStub = stub
 }
 
-func (fake *FakeSession) DeleteGroupSnapshotArgsForCall(i int) string {
+func (fake *FakeSession) DeleteGroupSnapshotArgsForCall(i int) (string, []string) {
 	fake.deleteGroupSnapshotMutex.RLock()
 	defer fake.deleteGroupSnapshotMutex.RUnlock()
 	argsForCall := fake.deleteGroupSnapshotArgsForCall[i]
-	return argsForCall.arg1
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeSession) DeleteGroupSnapshotReturns(result1 error) {

@@ -23,7 +23,8 @@ type GroupSnapshotManager interface {
 	CreateGroupSnapshot(sourceVolumeIDs []string, groupSnapshotParameters GroupSnapshotParameters) (*GroupSnapshot, error)
 
 	// DeleteGroupSnapshot deletes the group snapshot
-	DeleteGroupSnapshot(groupSnapshotID string) error
+	// snapshotIDs contains the list of individual snapshot IDs within the group snapshot
+	DeleteGroupSnapshot(groupSnapshotID string, snapshotIDs []string) error
 
 	// GetGroupSnapshot fetches the group snapshot by ID
 	GetGroupSnapshot(groupSnapshotID string) (*GroupSnapshot, error)
