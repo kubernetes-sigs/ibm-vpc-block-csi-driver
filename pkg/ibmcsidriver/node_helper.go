@@ -31,27 +31,70 @@ import (
 
 // findDevicePath finds path of device and verifies its existence
 func (csiNS *CSINodeServer) findDevicePathSource(ctxLogger *zap.Logger, devicePath string, volumeID string /*TODO may be required in future*/) (string, error) {
-	ctxLogger.Info("CSINodeServer-findDevicePathSource...")
-	exists, err := csiNS.Mounter.PathExists(devicePath)
-	if err != nil || !exists {
-		ctxLogger.Warn("Device path not found, trying to fix by udevadm trigger", zap.String("DevicePath", devicePath))
-		if err = csiNS.udevadmTrigger(ctxLogger); err != nil {
-			ctxLogger.Error("Failed to execute udevadm trigger, will try to check device path again", zap.Error(err))
-		}
-		// Re-verifying device path and returning error accordingly
-		exists, err = csiNS.Mounter.PathExists(devicePath)
-		if err != nil {
-			return "", err
-		}
+	ctxLogger.Info("CSINodeServer-findDevicePathSource...", zap.String("devicePath", devicePath), zap.String("volumeID", volumeID))
+
+	// Validate input parameters
+	if devicePath == "" {
+		ctxLogger.Error("Device path cannot be empty")
+		return "", fmt.Errorf("device path cannot be empty")
 	}
-	// If the path exists, assume it is not nvme device
+
+	// First attempt: Check if device path exists
+	exists, err := csiNS.Mounter.PathExists(devicePath)
+	if err != nil {
+		// Real error occurred while checking path (permissions, I/O error, etc.)
+		ctxLogger.Error("Failed to check device path existence",
+			zap.String("devicePath", devicePath),
+			zap.Error(err))
+		return "", fmt.Errorf("failed to check device path existence: %w", err)
+	}
+
 	if exists {
+		ctxLogger.Info("Device path found successfully", zap.String("devicePath", devicePath))
 		return devicePath, nil
 	}
-	ctxLogger.Warn("Device Path is nvme. Try to find nvme device")
-	return devicePath, nil
-	// TODO  Find NVMe path. Currently volume provider instance does not have NVMe
-	//For example, /dev/disk/by-uuid/e75b09ee-27d5-491a-85cd-c380f0e8ef5e -> ../../nvme2n1
+
+	// Device path doesn't exist - try udevadm trigger to refresh device nodes
+	ctxLogger.Warn("Device path not found on first attempt, triggering udevadm to refresh device nodes",
+		zap.String("devicePath", devicePath))
+
+	if err = csiNS.udevadmTrigger(ctxLogger); err != nil {
+		// udevadm trigger failed - this is critical as device won't appear
+		ctxLogger.Error("Failed to execute udevadm trigger - device path cannot be recovered",
+			zap.String("devicePath", devicePath),
+			zap.Error(err),
+			zap.String("recommendation", "Ensure udevadm is installed and accessible"))
+		return "", fmt.Errorf("device path not found and udevadm trigger failed (device: %s): %w", devicePath, err)
+	}
+
+	// Re-verify device path after successful udevadm trigger
+	ctxLogger.Info("udevadm trigger completed successfully, re-checking device path",
+		zap.String("devicePath", devicePath))
+
+	exists, err = csiNS.Mounter.PathExists(devicePath)
+	if err != nil {
+		ctxLogger.Error("Failed to re-check device path after udevadm trigger",
+			zap.String("devicePath", devicePath),
+			zap.Error(err))
+		return "", fmt.Errorf("failed to verify device path after udevadm trigger: %w", err)
+	}
+
+	if exists {
+		ctxLogger.Info("Device path found after udevadm trigger", zap.String("devicePath", devicePath))
+		return devicePath, nil
+	}
+
+	// Device path still doesn't exist after udevadm trigger
+	// This could be an NVMe device or the device is not attached properly
+	ctxLogger.Error("Device path not found even after udevadm trigger - refusing to proceed",
+		zap.String("devicePath", devicePath),
+		zap.String("volumeID", volumeID),
+		zap.String("possibleCause", "Device may be NVMe (not yet supported) or not properly attached"),
+		zap.String("action", "Verify volume attachment and device path"))
+
+	return "", fmt.Errorf("device path not found: %s (volume: %s). Possible causes: NVMe device (not supported), device not attached, or incorrect device path", devicePath, volumeID)
+	// TODO: Implement NVMe device path resolution when NVMe support is added
+	// For example, /dev/disk/by-uuid/e75b09ee-27d5-491a-85cd-c380f0e8ef5e -> ../../nvme2n1
 }
 
 func (csiNS *CSINodeServer) processMount(ctxLogger *zap.Logger, requestID, stagingTargetPath, targetPath, fsType string, options []string) (*csi.NodePublishVolumeResponse, error) {
