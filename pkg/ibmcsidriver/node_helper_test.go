@@ -32,7 +32,13 @@ func TestFindDevicePathSource(t *testing.T) {
 		expectError bool
 	}{
 		{
-			name:        "Device path not found",
+			name:        "Empty device path",
+			req:         "",
+			expResponse: "",
+			expectError: true,
+		},
+		{
+			name:        "Device path not found after udevadm",
 			req:         "/dev/nonexistent",
 			expResponse: "",
 			expectError: true,
@@ -63,9 +69,10 @@ func TestFindDevicePathSource(t *testing.T) {
 	icDriver := initIBMCSIDriver(t, actionList...)
 	for _, tc := range testCases {
 		t.Logf("Test case: %s", tc.name)
-		response, err := icDriver.ns.findDevicePathSource(logger, tc.req, "")
+		response, err := icDriver.ns.findDevicePathSource(logger, tc.req, "test-volume-id")
 		if tc.expectError {
 			assert.NotNil(t, err)
+			assert.Contains(t, err.Error(), "device path")
 		} else {
 			assert.Nil(t, err)
 			assert.Equal(t, tc.expResponse, response)
