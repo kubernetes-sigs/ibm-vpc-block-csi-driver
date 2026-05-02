@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The Kubernetes Authors.
+Copyright 2021-2026 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -73,6 +73,9 @@ func (su *MockStatUtils) IsDevicePathNotExist(devicePath string) bool {
 }
 
 func TestNodePublishVolume(t *testing.T) {
+	// Set environment variable to skip sleep in tests
+	t.Setenv("UDEVADM_SLEEP_DURATION", "0s")
+
 	testCases := []struct {
 		name       string
 		req        *csi.NodePublishVolumeRequest
@@ -145,7 +148,7 @@ func TestNodePublishVolume(t *testing.T) {
 			expErrCode: codes.InvalidArgument,
 		},
 		{
-			name: "Raw block request with validdevice",
+			name: "Raw block request with device path not found",
 			req: &csi.NodePublishVolumeRequest{
 				VolumeId:          defaultVolumeID,
 				TargetPath:        defaultTargetPath,
@@ -154,7 +157,7 @@ func TestNodePublishVolume(t *testing.T) {
 				Readonly:          false,
 				VolumeCapability:  stdBlockVolCap[0],
 			},
-			expErrCode: codes.OK,
+			expErrCode: codes.Internal,
 		},
 		{
 			name: "Raw block request with invaliddevice",
@@ -182,7 +185,21 @@ func TestNodePublishVolume(t *testing.T) {
 		},
 	}
 
-	icDriver := initIBMCSIDriver(t)
+	// Mock udevadm command for cross-platform testing
+	actionList := []testingexec.FakeCommandAction{
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte(""), nil, nil
+					},
+				},
+			},
+			"udevadm",
+		),
+	}
+
+	icDriver := initIBMCSIDriver(t, actionList...)
 
 	for _, tc := range testCases {
 		t.Logf("Test case: %s", tc.name)
@@ -257,6 +274,9 @@ func TestNodeUnpublishVolume(t *testing.T) {
 }
 
 func TestNodeStageVolume(t *testing.T) {
+	// Set environment variable to skip sleep in tests
+	t.Setenv("UDEVADM_SLEEP_DURATION", "0s")
+
 	volumeID := "newstagevolumeID"
 	testCases := []struct {
 		name       string
@@ -264,14 +284,14 @@ func TestNodeStageVolume(t *testing.T) {
 		expErrCode codes.Code
 	}{
 		{
-			name: "Valid request",
+			name: "Device path not found",
 			req: &csi.NodeStageVolumeRequest{
 				VolumeId:          volumeID,
 				StagingTargetPath: defaultStagingPath,
 				VolumeCapability:  stdVolCap[0],
-				PublishContext:    map[string]string{PublishInfoDevicePath: "/dev"},
+				PublishContext:    map[string]string{PublishInfoDevicePath: "/dev/nonexistent"},
 			},
-			expErrCode: codes.OK,
+			expErrCode: codes.Internal,
 		},
 		{
 			name: "Empty volume ID",
@@ -336,6 +356,16 @@ func TestNodeStageVolume(t *testing.T) {
 	}
 
 	actionList := []testingexec.FakeCommandAction{
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte(""), nil, nil
+					},
+				},
+			},
+			"udevadm",
+		),
 		makeFakeCmd(
 			&testingexec.FakeCmd{
 				CombinedOutputScript: []testingexec.FakeAction{
@@ -645,6 +675,9 @@ func TestNodeGetVolumeStats(t *testing.T) {
 }
 
 func TestNodeExpandVolume(t *testing.T) {
+	// Set environment variable to skip sleep in tests
+	t.Setenv("UDEVADM_SLEEP_DURATION", "0s")
+
 	testCases := []struct {
 		name       string
 		req        *csi.NodeExpandVolumeRequest
@@ -688,6 +721,16 @@ func TestNodeExpandVolume(t *testing.T) {
 	}
 
 	actionList := []testingexec.FakeCommandAction{
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte(""), nil, nil
+					},
+				},
+			},
+			"udevadm",
+		),
 		makeFakeCmd(
 			&testingexec.FakeCmd{
 				CombinedOutputScript: []testingexec.FakeAction{

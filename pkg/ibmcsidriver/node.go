@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The Kubernetes Authors.
+Copyright 2025-2026 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -322,39 +322,7 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 	}
 	options := collectMountOptions(fsType, mnt.MountFlags)
 
-	// SAFETY CHECK: Detect existing filesystem before formatting
-	// This helps prevent accidental data loss from reformatting volumes with existing data
-	// GetDiskFormat() is only for linux
-	existingFS, err := csiNS.Mounter.GetSafeFormatAndMount().GetDiskFormat(source)
-	if err != nil {
-		ctxLogger.Warn("Failed to detect existing filesystem on device - proceeding with caution",
-			zap.String("source", source),
-			zap.String("volumeID", volumeID),
-			zap.Error(err))
-	} else if existingFS != "" {
-		ctxLogger.Info("Existing filesystem detected on device",
-			zap.String("source", source),
-			zap.String("existingFS", existingFS),
-			zap.String("requestedFS", fsType),
-			zap.String("volumeID", volumeID))
-
-		// Warn if filesystem types don't match - this could indicate a problem
-		if existingFS != fsType && existingFS != "unknown" {
-			ctxLogger.Warn("Filesystem type mismatch detected - potential data loss risk",
-				zap.String("source", source),
-				zap.String("existingFS", existingFS),
-				zap.String("requestedFS", fsType),
-				zap.String("volumeID", volumeID),
-				zap.String("action", "FormatAndMount will handle this, but verify if this is expected"))
-		}
-	} else {
-		ctxLogger.Info("No existing filesystem detected on device - will format as needed",
-			zap.String("source", source),
-			zap.String("fsType", fsType),
-			zap.String("volumeID", volumeID))
-	}
-
-	// FormatAndMount will format only if needed
+	// FormatAndMount will check for existing filesystem and format only if needed
 	ctxLogger.Info("Formatting and mounting device",
 		zap.String("source", source),
 		zap.String("stagingTargetPath", stagingTargetPath),

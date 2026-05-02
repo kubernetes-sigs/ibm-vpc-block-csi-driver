@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The Kubernetes Authors.
+Copyright 2021-2026 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ package ibmcsidriver
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -191,17 +190,26 @@ func (csiNS *CSINodeServer) processMountForBlock(ctxLogger *zap.Logger, requestI
 
 func (csiNS *CSINodeServer) udevadmTrigger(ctxLogger *zap.Logger) error {
 	ctxLogger.Info("CSINodeServer-udevadmTrigger refreshing all devices...")
-	out, err := exec.Command(
-		"udevadm",
-		"trigger").CombinedOutput()
+
+	// Use the mounter's executor for better testability
+	executor := csiNS.Mounter.GetSafeFormatAndMount().Exec
+	cmd := executor.Command("udevadm", "trigger")
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("udevadmTrigger: udevadm trigger failed, output %s, error: %v", string(out), err)
 	}
 
 	// Sleep for 20 seconds so that udevadm trigger will do its magic
-	duration, err := time.ParseDuration("20s")
+	// In test environments, this can be reduced via environment variable
+	sleepDuration := "20s"
+	if testSleep := os.Getenv("UDEVADM_SLEEP_DURATION"); testSleep != "" {
+		sleepDuration = testSleep
+	}
+
+	duration, err := time.ParseDuration(sleepDuration)
 	if err != nil {
 		ctxLogger.Warn("udevadmTrigger: time.ParseDuration failed", zap.Error(err))
+		duration = 20 * time.Second
 	}
 	time.Sleep(duration)
 

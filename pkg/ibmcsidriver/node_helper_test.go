@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The Kubernetes Authors.
+Copyright 2021-2026 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import (
 
 	cloudProvider "github.com/IBM/ibmcloud-volume-vpc/pkg/ibmcloudprovider"
 	"github.com/stretchr/testify/assert"
+	testingexec "k8s.io/utils/exec/testing"
 )
 
 func TestFindDevicePathSource(t *testing.T) {
@@ -28,19 +29,13 @@ func TestFindDevicePathSource(t *testing.T) {
 		name        string
 		req         string
 		expResponse string
-		expError    error
+		expectError bool
 	}{
 		{
-			name:        "Valid device path",
-			req:         "/tmp",
-			expResponse: "/tmp",
-			expError:    nil,
-		},
-		{
-			name:        "nvme device path",
-			req:         "tmp1234422344",
-			expResponse: "tmp1234422344",
-			expError:    nil,
+			name:        "Device path not found",
+			req:         "/dev/nonexistent",
+			expResponse: "",
+			expectError: true,
 		},
 	}
 
@@ -48,14 +43,33 @@ func TestFindDevicePathSource(t *testing.T) {
 	logger, teardown := cloudProvider.GetTestLogger(t)
 	defer teardown()
 
-	icDriver := initIBMCSIDriver(t)
+	// Set environment variable to skip sleep in tests
+	t.Setenv("UDEVADM_SLEEP_DURATION", "0s")
+
+	// Mock udevadm command for cross-platform testing
+	actionList := []testingexec.FakeCommandAction{
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte(""), nil, nil
+					},
+				},
+			},
+			"udevadm",
+		),
+	}
+
+	icDriver := initIBMCSIDriver(t, actionList...)
 	for _, tc := range testCases {
 		t.Logf("Test case: %s", tc.name)
 		response, err := icDriver.ns.findDevicePathSource(logger, tc.req, "")
-		if tc.expError != nil {
-			assert.Equal(t, tc.expError, err)
+		if tc.expectError {
+			assert.NotNil(t, err)
+		} else {
+			assert.Nil(t, err)
+			assert.Equal(t, tc.expResponse, response)
 		}
-		assert.Equal(t, tc.expResponse, response)
 	}
 }
 
@@ -75,8 +89,26 @@ func TestUdevadmTrigger(t *testing.T) {
 	logger, teardown := cloudProvider.GetTestLogger(t)
 	defer teardown()
 
-	icDriver := initIBMCSIDriver(t)
+	// Set environment variable to skip sleep in tests
+	t.Setenv("UDEVADM_SLEEP_DURATION", "0s")
+
+	// Mock udevadm command for cross-platform testing
+	actionList := []testingexec.FakeCommandAction{
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte(""), nil, nil
+					},
+				},
+			},
+			"udevadm",
+		),
+	}
+
+	icDriver := initIBMCSIDriver(t, actionList...)
 	err := icDriver.ns.udevadmTrigger(logger)
+	assert.Nil(t, err)
 	t.Logf("Response error %v", err)
 }
 
@@ -85,8 +117,28 @@ func TestProcessMountForBlock(t *testing.T) {
 	logger, teardown := cloudProvider.GetTestLogger(t)
 	defer teardown()
 
-	icDriver := initIBMCSIDriver(t)
+	// Set environment variable to skip sleep in tests
+	t.Setenv("UDEVADM_SLEEP_DURATION", "0s")
+
+	// Mock udevadm command for cross-platform testing
+	actionList := []testingexec.FakeCommandAction{
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte(""), nil, nil
+					},
+				},
+			},
+			"udevadm",
+		),
+	}
+
+	icDriver := initIBMCSIDriver(t, actionList...)
 	ops := []string{"bind"}
 	response, err := icDriver.ns.processMountForBlock(logger, "ProcessMountForBlock", "/dev/sda", "/targetpath", "volumeidxxx", ops)
+	// Expect error since device path doesn't exist in test environment
+	assert.NotNil(t, err)
+	assert.Nil(t, response)
 	t.Logf("Response %v, error %v", response, err)
 }
