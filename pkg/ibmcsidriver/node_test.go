@@ -884,3 +884,95 @@ func makeFakeCmd(fakeCmd *testingexec.FakeCmd, cmd string, args ...string) testi
 		return command
 	}
 }
+
+func TestCollectMountOptions(t *testing.T) {
+	testCases := []struct {
+		name           string
+		fsType         string
+		mntFlags       []string
+		expectedResult []string
+	}{
+		{
+			name:           "XFS filesystem with nouuid",
+			fsType:         "xfs",
+			mntFlags:       []string{"rw", "relatime"},
+			expectedResult: []string{"rw", "relatime", "nouuid"},
+		},
+		{
+			name:           "XFS filesystem with empty flags",
+			fsType:         "xfs",
+			mntFlags:       []string{},
+			expectedResult: []string{"nouuid"},
+		},
+		{
+			name:           "EXT4 filesystem without nouuid",
+			fsType:         "ext4",
+			mntFlags:       []string{"rw", "relatime"},
+			expectedResult: []string{"rw", "relatime"},
+		},
+		{
+			name:           "EXT4 filesystem with empty flags",
+			fsType:         "ext4",
+			mntFlags:       []string{},
+			expectedResult: nil,
+		},
+		{
+			name:           "EXT3 filesystem",
+			fsType:         "ext3",
+			mntFlags:       []string{"rw"},
+			expectedResult: []string{"rw"},
+		},
+		{
+			name:           "EXT2 filesystem",
+			fsType:         "ext2",
+			mntFlags:       []string{"ro"},
+			expectedResult: []string{"ro"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := collectMountOptions(tc.fsType, tc.mntFlags)
+			assert.Equal(t, tc.expectedResult, result, "Mount options should match expected result")
+		})
+	}
+}
+
+func TestFSInfo(t *testing.T) {
+	testCases := []struct {
+		name        string
+		path        string
+		expectError bool
+	}{
+		{
+			name:        "Valid path - current directory",
+			path:        ".",
+			expectError: false,
+		},
+		{
+			name:        "Invalid path",
+			path:        "/nonexistent/path/that/does/not/exist",
+			expectError: true,
+		},
+	}
+
+	statUtils := &VolumeStatUtils{}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			available, capacity, usage, inodes, inodesFree, inodesUsed, err := statUtils.FSInfo(tc.path)
+
+			if tc.expectError {
+				assert.NotNil(t, err, "Expected error for invalid path")
+			} else {
+				assert.Nil(t, err, "Should not return error for valid path")
+				assert.True(t, available >= 0, "Available space should be non-negative")
+				assert.True(t, capacity >= 0, "Capacity should be non-negative")
+				assert.True(t, usage >= 0, "Usage should be non-negative")
+				assert.True(t, inodes >= 0, "Inodes should be non-negative")
+				assert.True(t, inodesFree >= 0, "Free inodes should be non-negative")
+				assert.True(t, inodesUsed >= 0, "Used inodes should be non-negative")
+			}
+		})
+	}
+}
