@@ -17,7 +17,6 @@ limitations under the License.
 package ibmcsidriver
 
 import (
-	"os"
 	"testing"
 	"time"
 
@@ -295,7 +294,7 @@ func TestFindDevicePathSourceWithRetry(t *testing.T) {
 			actionList := tc.setupMock()
 
 			var icDriver *IBMCSIDriver
-			if actionList != nil && len(actionList) > 0 {
+			if len(actionList) > 0 {
 				icDriver = initIBMCSIDriver(t, actionList...)
 			} else {
 				icDriver = initIBMCSIDriver(t)
@@ -359,13 +358,9 @@ func TestWaitForDevicePathEnvironmentVariables(t *testing.T) {
 			// Set environment variables
 			if tc.maxRetriesEnv != "" {
 				t.Setenv("UDEVADM_MAX_RETRIES", tc.maxRetriesEnv)
-			} else {
-				os.Unsetenv("UDEVADM_MAX_RETRIES")
 			}
 			if tc.retryIntervalEnv != "" {
 				t.Setenv("UDEVADM_RETRY_INTERVAL", tc.retryIntervalEnv)
-			} else {
-				os.Unsetenv("UDEVADM_RETRY_INTERVAL")
 			}
 
 			// Mock udevadm command
