@@ -204,13 +204,36 @@ func (csiNS *CSINodeServer) udevadmTrigger(ctxLogger *zap.Logger) error {
 
 	// Use the mounter's executor for better testability
 	executor := csiNS.Mounter.GetSafeFormatAndMount().Exec
-	cmd := executor.Command("udevadm", "trigger")
-	out, err := cmd.CombinedOutput()
+
+	// Step 1: Trigger udev to refresh device nodes
+	triggerCmd := executor.Command("udevadm", "trigger")
+	out, err := triggerCmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("udevadmTrigger: udevadm trigger failed, output %s, error: %v", string(out), err)
 	}
+	ctxLogger.Info("udevadm trigger executed successfully")
 
-	ctxLogger.Info("udevadmTrigger: Successfully executed udevadm trigger to refresh all devices.")
+	// Step 2: Wait for udev event queue to settle
+	// This is more efficient than polling - waits for udev to finish processing events
+	settleTimeout := "30" // Default 30 seconds timeout
+	if envTimeout := os.Getenv("UDEVADM_SETTLE_TIMEOUT"); envTimeout != "" {
+		settleTimeout = envTimeout
+	}
+
+	ctxLogger.Info("Waiting for udev event queue to settle",
+		zap.String("timeout", settleTimeout+"s"))
+
+	settleCmd := executor.Command("udevadm", "settle", "--timeout="+settleTimeout)
+	settleOut, settleErr := settleCmd.CombinedOutput()
+	if settleErr != nil {
+		// udevadm settle failure is not critical - we'll fall back to retry logic
+		ctxLogger.Warn("udevadm settle failed, will use retry fallback",
+			zap.Error(settleErr),
+			zap.String("output", string(settleOut)))
+	} else {
+		ctxLogger.Info("udev event queue settled successfully")
+	}
+
 	return nil
 }
 

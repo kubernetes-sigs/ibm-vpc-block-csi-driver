@@ -50,11 +50,22 @@ func TestFindDevicePathSource(t *testing.T) {
 	logger, teardown := cloudProvider.GetTestLogger(t)
 	defer teardown()
 
-	// Set environment variable to skip sleep in tests
-	t.Setenv("UDEVADM_SLEEP_DURATION", "0s")
+	// Set environment variables for fast retry in tests
+	t.Setenv("UDEVADM_MAX_RETRIES", "2")
+	t.Setenv("UDEVADM_RETRY_INTERVAL", "10ms")
 
-	// Mock udevadm command for cross-platform testing
+	// Mock udevadm command for cross-platform testing (trigger + settle)
 	actionList := []testingexec.FakeCommandAction{
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte(""), nil, nil
+					},
+				},
+			},
+			"udevadm",
+		),
 		makeFakeCmd(
 			&testingexec.FakeCmd{
 				CombinedOutputScript: []testingexec.FakeAction{
@@ -103,10 +114,22 @@ func TestUdevadmTrigger(t *testing.T) {
 		setupMock   func() []testingexec.FakeCommandAction
 	}{
 		{
-			name:        "Successful udevadm trigger",
+			name:        "Successful udevadm trigger and settle",
 			expectError: false,
 			setupMock: func() []testingexec.FakeCommandAction {
 				return []testingexec.FakeCommandAction{
+					// First call: udevadm trigger
+					makeFakeCmd(
+						&testingexec.FakeCmd{
+							CombinedOutputScript: []testingexec.FakeAction{
+								func() ([]byte, []byte, error) {
+									return []byte(""), nil, nil
+								},
+							},
+						},
+						"udevadm",
+					),
+					// Second call: udevadm settle
 					makeFakeCmd(
 						&testingexec.FakeCmd{
 							CombinedOutputScript: []testingexec.FakeAction{
@@ -130,6 +153,36 @@ func TestUdevadmTrigger(t *testing.T) {
 							CombinedOutputScript: []testingexec.FakeAction{
 								func() ([]byte, []byte, error) {
 									return []byte("udevadm error"), nil, assert.AnError
+								},
+							},
+						},
+						"udevadm",
+					),
+				}
+			},
+		},
+		{
+			name:        "Successful trigger but settle fails (non-critical)",
+			expectError: false,
+			setupMock: func() []testingexec.FakeCommandAction {
+				return []testingexec.FakeCommandAction{
+					// First call: udevadm trigger (success)
+					makeFakeCmd(
+						&testingexec.FakeCmd{
+							CombinedOutputScript: []testingexec.FakeAction{
+								func() ([]byte, []byte, error) {
+									return []byte(""), nil, nil
+								},
+							},
+						},
+						"udevadm",
+					),
+					// Second call: udevadm settle (fails but non-critical)
+					makeFakeCmd(
+						&testingexec.FakeCmd{
+							CombinedOutputScript: []testingexec.FakeAction{
+								func() ([]byte, []byte, error) {
+									return []byte("settle timeout"), nil, assert.AnError
 								},
 							},
 						},
@@ -249,6 +302,16 @@ func TestFindDevicePathSourceWithRetry(t *testing.T) {
 						},
 						"udevadm",
 					),
+					makeFakeCmd(
+						&testingexec.FakeCmd{
+							CombinedOutputScript: []testingexec.FakeAction{
+								func() ([]byte, []byte, error) {
+									return []byte(""), nil, nil
+								},
+							},
+						},
+						"udevadm",
+					),
 				}
 			},
 		},
@@ -273,6 +336,16 @@ func TestFindDevicePathSourceWithRetry(t *testing.T) {
 			expectError: true,
 			setupMock: func() []testingexec.FakeCommandAction {
 				return []testingexec.FakeCommandAction{
+					makeFakeCmd(
+						&testingexec.FakeCmd{
+							CombinedOutputScript: []testingexec.FakeAction{
+								func() ([]byte, []byte, error) {
+									return []byte(""), nil, nil
+								},
+							},
+						},
+						"udevadm",
+					),
 					makeFakeCmd(
 						&testingexec.FakeCmd{
 							CombinedOutputScript: []testingexec.FakeAction{
@@ -363,8 +436,18 @@ func TestWaitForDevicePathEnvironmentVariables(t *testing.T) {
 				t.Setenv("UDEVADM_RETRY_INTERVAL", tc.retryIntervalEnv)
 			}
 
-			// Mock udevadm command
+			// Mock udevadm command (trigger + settle)
 			actionList := []testingexec.FakeCommandAction{
+				makeFakeCmd(
+					&testingexec.FakeCmd{
+						CombinedOutputScript: []testingexec.FakeAction{
+							func() ([]byte, []byte, error) {
+								return []byte(""), nil, nil
+							},
+						},
+					},
+					"udevadm",
+				),
 				makeFakeCmd(
 					&testingexec.FakeCmd{
 						CombinedOutputScript: []testingexec.FakeAction{
@@ -411,8 +494,18 @@ func TestProcessMountForBlock(t *testing.T) {
 	t.Setenv("UDEVADM_MAX_RETRIES", "2")
 	t.Setenv("UDEVADM_RETRY_INTERVAL", "10ms")
 
-	// Mock udevadm command for cross-platform testing
+	// Mock udevadm command for cross-platform testing (trigger + settle)
 	actionList := []testingexec.FakeCommandAction{
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte(""), nil, nil
+					},
+				},
+			},
+			"udevadm",
+		),
 		makeFakeCmd(
 			&testingexec.FakeCmd{
 				CombinedOutputScript: []testingexec.FakeAction{

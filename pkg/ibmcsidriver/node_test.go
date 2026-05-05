@@ -73,8 +73,9 @@ func (su *MockStatUtils) IsDevicePathNotExist(devicePath string) bool {
 }
 
 func TestNodePublishVolume(t *testing.T) {
-	// Set environment variable to skip sleep in tests
-	t.Setenv("UDEVADM_SLEEP_DURATION", "0s")
+	// Set environment variables for fast retry in tests
+	t.Setenv("UDEVADM_MAX_RETRIES", "2")
+	t.Setenv("UDEVADM_RETRY_INTERVAL", "10ms")
 
 	testCases := []struct {
 		name       string
@@ -185,8 +186,18 @@ func TestNodePublishVolume(t *testing.T) {
 		},
 	}
 
-	// Mock udevadm command for cross-platform testing
+	// Mock udevadm command for cross-platform testing (trigger + settle)
 	actionList := []testingexec.FakeCommandAction{
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte(""), nil, nil
+					},
+				},
+			},
+			"udevadm",
+		),
 		makeFakeCmd(
 			&testingexec.FakeCmd{
 				CombinedOutputScript: []testingexec.FakeAction{
