@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The Kubernetes Authors.
+Copyright 2021-2026 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ package ibmcsidriver
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	commonError "github.com/IBM/ibm-csi-common/pkg/messages"
@@ -31,27 +31,80 @@ import (
 
 // findDevicePath finds path of device and verifies its existence
 func (csiNS *CSINodeServer) findDevicePathSource(ctxLogger *zap.Logger, devicePath string, volumeID string /*TODO may be required in future*/) (string, error) {
-	ctxLogger.Info("CSINodeServer-findDevicePathSource...")
-	exists, err := csiNS.Mounter.PathExists(devicePath)
-	if err != nil || !exists {
-		ctxLogger.Warn("Device path not found, trying to fix by udevadm trigger", zap.String("DevicePath", devicePath))
-		if err = csiNS.udevadmTrigger(ctxLogger); err != nil {
-			ctxLogger.Error("Failed to execute udevadm trigger, will try to check device path again", zap.Error(err))
-		}
-		// Re-verifying device path and returning error accordingly
-		exists, err = csiNS.Mounter.PathExists(devicePath)
-		if err != nil {
-			return "", err
-		}
+	ctxLogger.Info("CSINodeServer-findDevicePathSource...", zap.String("devicePath", devicePath), zap.String("volumeID", volumeID))
+
+	// Validate input parameters
+	if devicePath == "" {
+		ctxLogger.Error("Device path cannot be empty")
+		return "", fmt.Errorf("device path cannot be empty")
 	}
-	// If the path exists, assume it is not nvme device
+
+	// First attempt: Check if device path exists
+	exists, err := csiNS.Mounter.PathExists(devicePath)
+	if err != nil {
+		// Real error occurred while checking path (permissions, I/O error, etc.)
+		ctxLogger.Error("Failed to check device path existence",
+			zap.String("devicePath", devicePath),
+			zap.Error(err))
+		return "", fmt.Errorf("failed to check device path existence: %w", err)
+	}
+
 	if exists {
+		ctxLogger.Info("Device path found successfully", zap.String("devicePath", devicePath))
 		return devicePath, nil
 	}
-	ctxLogger.Warn("Device Path is nvme. Try to find nvme device")
+
+	// Device path doesn't exist - try udevadm trigger to refresh device nodes
+	ctxLogger.Warn("Device path not found on first attempt, triggering udevadm to refresh device nodes",
+		zap.String("devicePath", devicePath))
+
+	if err = csiNS.udevadmTrigger(ctxLogger); err != nil {
+		// udevadm trigger failed - this is critical as device won't appear
+		ctxLogger.Error("Failed to execute udevadm trigger - device path cannot be recovered",
+			zap.String("devicePath", devicePath),
+			zap.Error(err),
+			zap.String("recommendation", "Ensure udevadm is installed and accessible"))
+		return "", fmt.Errorf("device path not found and udevadm trigger failed (device: %s): %w", devicePath, err)
+	}
+
+	// Wait for device path to appear with retry logic
+	maxRetries := 15                 // Default: 15 retries
+	retryInterval := 2 * time.Second // Default: 2 seconds between retries
+
+	// Allow configuration via environment variables
+	if retriesEnv := os.Getenv("UDEVADM_MAX_RETRIES"); retriesEnv != "" {
+		if retries, err := strconv.Atoi(retriesEnv); err == nil && retries > 0 {
+			maxRetries = retries
+		}
+	}
+	if intervalEnv := os.Getenv("UDEVADM_RETRY_INTERVAL"); intervalEnv != "" {
+		if interval, err := time.ParseDuration(intervalEnv); err == nil {
+			retryInterval = interval
+		}
+	}
+
+	ctxLogger.Info("Waiting for device path to appear after udevadm trigger",
+		zap.String("devicePath", devicePath),
+		zap.Int("maxRetries", maxRetries),
+		zap.Duration("retryInterval", retryInterval))
+
+	if err := csiNS.waitForDevicePath(ctxLogger, devicePath, maxRetries, retryInterval); err != nil {
+		// Device path still doesn't exist after retries
+		// This could be an NVMe device or the device is not attached properly
+		ctxLogger.Error("Device path not found even after udevadm trigger and retries - refusing to proceed",
+			zap.String("devicePath", devicePath),
+			zap.String("volumeID", volumeID),
+			zap.String("possibleCause", "Device may be NVMe (not yet supported) or not properly attached"),
+			zap.String("action", "Verify volume attachment and device path"),
+			zap.Error(err))
+		return "", fmt.Errorf("device path not found: %s (volume: %s). Possible causes: NVMe device (not supported), device not attached, or incorrect device path: %w", devicePath, volumeID, err)
+	}
+
+	ctxLogger.Info("Device path found after udevadm trigger and retry",
+		zap.String("devicePath", devicePath))
 	return devicePath, nil
-	// TODO  Find NVMe path. Currently volume provider instance does not have NVMe
-	//For example, /dev/disk/by-uuid/e75b09ee-27d5-491a-85cd-c380f0e8ef5e -> ../../nvme2n1
+	// TODO: Implement NVMe device path resolution when NVMe support is added
+	// For example, /dev/disk/by-uuid/e75b09ee-27d5-491a-85cd-c380f0e8ef5e -> ../../nvme2n1
 }
 
 func (csiNS *CSINodeServer) processMount(ctxLogger *zap.Logger, requestID, stagingTargetPath, targetPath, fsType string, options []string) (*csi.NodePublishVolumeResponse, error) {
@@ -148,20 +201,76 @@ func (csiNS *CSINodeServer) processMountForBlock(ctxLogger *zap.Logger, requestI
 
 func (csiNS *CSINodeServer) udevadmTrigger(ctxLogger *zap.Logger) error {
 	ctxLogger.Info("CSINodeServer-udevadmTrigger refreshing all devices...")
-	out, err := exec.Command(
-		"udevadm",
-		"trigger").CombinedOutput()
+
+	// Use the mounter's executor for better testability
+	executor := csiNS.Mounter.GetSafeFormatAndMount().Exec
+
+	// Step 1: Trigger udev to refresh device nodes
+	triggerCmd := executor.Command("udevadm", "trigger")
+	out, err := triggerCmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("udevadmTrigger: udevadm trigger failed, output %s, error: %v", string(out), err)
 	}
+	ctxLogger.Info("udevadm trigger executed successfully")
 
-	// Sleep for 20 seconds so that udevadm trigger will do its magic
-	duration, err := time.ParseDuration("20s")
-	if err != nil {
-		ctxLogger.Warn("udevadmTrigger: time.ParseDuration failed", zap.Error(err))
+	// Step 2: Wait for udev event queue to settle
+	// This is more efficient than polling - waits for udev to finish processing events
+	settleTimeout := "30" // Default 30 seconds timeout
+	if envTimeout := os.Getenv("UDEVADM_SETTLE_TIMEOUT"); envTimeout != "" {
+		settleTimeout = envTimeout
 	}
-	time.Sleep(duration)
 
-	ctxLogger.Info("udevadmTrigger: Successfully executed udevadm trigger to referesh all devices.")
+	ctxLogger.Info("Waiting for udev event queue to settle",
+		zap.String("timeout", settleTimeout+"s"))
+
+	settleCmd := executor.Command("udevadm", "settle", "--timeout="+settleTimeout)
+	settleOut, settleErr := settleCmd.CombinedOutput()
+	if settleErr != nil {
+		// udevadm settle failure is not critical - we'll fall back to retry logic
+		ctxLogger.Warn("udevadm settle failed, will use retry fallback",
+			zap.Error(settleErr),
+			zap.String("output", string(settleOut)))
+	} else {
+		ctxLogger.Info("udev event queue settled successfully")
+	}
+
 	return nil
+}
+
+// waitForDevicePath polls for device path existence with retry logic
+func (csiNS *CSINodeServer) waitForDevicePath(ctxLogger *zap.Logger, devicePath string, maxRetries int, retryInterval time.Duration) error {
+	ctxLogger.Info("Waiting for device path to appear",
+		zap.String("devicePath", devicePath),
+		zap.Int("maxRetries", maxRetries),
+		zap.Duration("retryInterval", retryInterval))
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		exists, err := csiNS.Mounter.PathExists(devicePath)
+		if err != nil {
+			ctxLogger.Warn("Error checking device path existence",
+				zap.Int("attempt", attempt),
+				zap.Int("maxRetries", maxRetries),
+				zap.String("devicePath", devicePath),
+				zap.Error(err))
+			// Continue retrying even on errors as they might be transient
+		} else if exists {
+			ctxLogger.Info("Device path found successfully",
+				zap.String("devicePath", devicePath),
+				zap.Int("attempt", attempt),
+				zap.Duration("totalWaitTime", time.Duration(attempt-1)*retryInterval))
+			return nil
+		}
+
+		if attempt < maxRetries {
+			ctxLogger.Debug("Device path not found yet, retrying",
+				zap.Int("attempt", attempt),
+				zap.Int("maxRetries", maxRetries),
+				zap.String("devicePath", devicePath))
+			time.Sleep(retryInterval)
+		}
+	}
+
+	totalWaitTime := time.Duration(maxRetries) * retryInterval
+	return fmt.Errorf("device path %s did not appear after %d attempts over %v",
+		devicePath, maxRetries, totalWaitTime)
 }
