@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The Kubernetes Authors.
+Copyright 2025-2026 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -146,7 +146,7 @@ func TestNodePublishVolume(t *testing.T) {
 			expErrCode: codes.InvalidArgument,
 		},
 		{
-			name: "Raw block request with validdevice",
+			name: "Raw block request with device path not found",
 			req: &csi.NodePublishVolumeRequest{
 				VolumeId:          defaultVolumeID,
 				TargetPath:        defaultTargetPath,
@@ -155,7 +155,7 @@ func TestNodePublishVolume(t *testing.T) {
 				Readonly:          false,
 				VolumeCapability:  stdBlockVolCap[0],
 			},
-			expErrCode: codes.OK,
+			expErrCode: codes.Internal,
 		},
 		{
 			name: "Raw block request with invaliddevice",
@@ -183,7 +183,31 @@ func TestNodePublishVolume(t *testing.T) {
 		},
 	}
 
-	icDriver := initIBMCSIDriver(t)
+	// Mock udevadm command for cross-platform testing (trigger + settle)
+	actionList := []testingexec.FakeCommandAction{
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte(""), nil, nil
+					},
+				},
+			},
+			"udevadm",
+		),
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte(""), nil, nil
+					},
+				},
+			},
+			"udevadm",
+		),
+	}
+
+	icDriver := initIBMCSIDriver(t, actionList...)
 
 	for _, tc := range testCases {
 		t.Logf("Test case: %s", tc.name)
@@ -270,9 +294,9 @@ func TestNodeStageVolume(t *testing.T) {
 				VolumeId:          volumeID,
 				StagingTargetPath: defaultStagingPath,
 				VolumeCapability:  stdVolCap[0],
-				PublishContext:    map[string]string{PublishInfoDevicePath: "/dev"},
+				PublishContext:    map[string]string{PublishInfoDevicePath: "/dev/nonexistent"},
 			},
-			expErrCode: codes.OK,
+			expErrCode: codes.Internal,
 		},
 		{
 			name: "Empty volume ID",
@@ -337,6 +361,16 @@ func TestNodeStageVolume(t *testing.T) {
 	}
 
 	actionList := []testingexec.FakeCommandAction{
+		makeFakeCmd(
+			&testingexec.FakeCmd{
+				CombinedOutputScript: []testingexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte("DEVNAME=/dev/sdb\nTYPE=ext4"), nil, nil
+					},
+				},
+			},
+			"blkid",
+		),
 		makeFakeCmd(
 			&testingexec.FakeCmd{
 				CombinedOutputScript: []testingexec.FakeAction{
