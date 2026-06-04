@@ -96,8 +96,8 @@ type Volume struct {
 	// Only for VPC volume provider
 	VPCVolume
 
-	// volume to be restored from snapshot.
-	Snapshot
+	// ID of snapshot to be restored
+	SnapshotID string `json:"snapshotID,omitempty"`
 }
 
 // Snapshot ...
@@ -105,10 +105,7 @@ type Snapshot struct {
 	VolumeID string `json:"volumeID"`
 
 	// a unique Snapshot ID which created by the provider
-	SnapshotID string `json:"snapshotID,omitempty"`
-
-	// a unique Snapshot CRN assigned by cloud provider to snapshot
-	SnapshotCRN string `json:"snapshotCRN,omitempty"`
+	SnapshotID string `json:"snapshotID"`
 
 	// The size of the snapshot, in bytes
 	SnapshotSize int64 `json:"snapshotSize"`
@@ -168,21 +165,4 @@ type SnapshotParameters struct {
 
 	// tags for the snapshot
 	SnapshotTags SnapshotTags `json:"tags,omitempty"`
-
-	// ResourceGroup is the resourceGroupID
-	ResourceGroup string `json:"resourceGroup,omitempty"`
-}
-
-// UpdatePVC ...
-type UpdatePVC struct {
-	ID         string   `json:"id,omitempty"`
-	CRN        string   `json:"crn,omitempty"`
-	Name       string   `json:"name,omitempty"`
-	Capacity   int64    `json:"capacity,omitempty"`
-	Iops       int64    `json:"iops,omitempty"`
-	Tags       []string `json:"tags,omitempty"`
-	Cluster    string   `json:"cluster,omitempty"`
-	Provider   string   `json:"provider,omitempty"`
-	Status     string   `json:"status,omitempty"`
-	VolumeType string   `json:"volume_type,omitempty"`
 }

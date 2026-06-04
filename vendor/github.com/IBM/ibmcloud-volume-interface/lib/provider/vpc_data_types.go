@@ -26,15 +26,13 @@ type VPCVolume struct {
 	VolumeEncryptionKey *VolumeEncryptionKey `json:"encryption_key,omitempty"`
 	Profile             *Profile             `json:"profile,omitempty"`
 	CRN                 string               `json:"crn,omitempty"`
-	Status              string               `json:"status,omitempty"`
-	Tags                []string             `json:"volume_tags,omitempty"`
-	Bandwidth           int32                `json:"bandwidth,omitempty"`
 	VPCBlockVolume
 	VPCFileVolume
 }
 
 // VPCBlockVolume specific parameters
 type VPCBlockVolume struct {
+	Tags              []string            `json:"volume_tags,omitempty"`
 	VolumeAttachments *[]VolumeAttachment `json:"volume_attachments,omitempty"`
 }
 
@@ -124,23 +122,9 @@ type ResourceGroup struct {
 
 // Profile ...
 type Profile struct {
-	CRN          string  `json:"crn,omitempty"`
-	Href         string  `json:"href,omitempty"`
-	Name         string  `json:"name,omitempty"`
-	Capacity     CapIops `json:"capacity,omitempty"`
-	Family       string  `json:"family,omitempty"`
-	Iops         CapIops `json:"iops,omitempty"`
-	ResourceType string  `json:"resource_type,omitempty"`
-}
-
-// CapIops
-type CapIops struct {
-	Default int32  `json:"default,omitempty"`
-	Max     int32  `json:"max,omitempty"`
-	Min     int32  `json:"min,omitempty"`
-	Step    int32  `json:"step,omitempty"`
-	Type    string `json:"type,omitempty"`
-	Value   int32  `json:"value,omitempty"`
+	Href string `json:"href,omitempty"`
+	Name string `json:"name,omitempty"`
+	CRN  string `json:"crn,omitempty"`
 }
 
 // VolumeAttachment ...
