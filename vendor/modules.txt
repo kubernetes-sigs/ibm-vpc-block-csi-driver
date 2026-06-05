@@ -16,8 +16,8 @@ github.com/IBM/ibm-csi-common/pkg/metadata/fake
 github.com/IBM/ibm-csi-common/pkg/metrics
 github.com/IBM/ibm-csi-common/pkg/mountmanager
 github.com/IBM/ibm-csi-common/pkg/utils
-# github.com/IBM/ibmcloud-volume-interface v1.2.20
-## explicit; go 1.20
+# github.com/IBM/ibmcloud-volume-interface v1.2.20 => github.com/MahanteshR12/ibmcloud-volume-interface v0.0.0-20260605050556-986eac2b9404
+## explicit; go 1.25.10
 github.com/IBM/ibmcloud-volume-interface/config
 github.com/IBM/ibmcloud-volume-interface/lib/metrics
 github.com/IBM/ibmcloud-volume-interface/lib/provider
@@ -45,8 +45,8 @@ github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/vpcvolume
 github.com/IBM/ibmcloud-volume-vpc/iks/provider
 github.com/IBM/ibmcloud-volume-vpc/pkg/ibmcloudprovider
 github.com/IBM/ibmcloud-volume-vpc/pkg/watcher
-# github.com/IBM/secret-common-lib v1.1.14
-## explicit; go 1.23.10
+# github.com/IBM/secret-common-lib v1.1.15
+## explicit; go 1.25.10
 github.com/IBM/secret-common-lib/pkg/secret_provider
 github.com/IBM/secret-common-lib/pkg/utils
 # github.com/IBM/secret-utils-lib v1.1.16
@@ -321,7 +321,7 @@ go.yaml.in/yaml/v2
 # go.yaml.in/yaml/v3 v3.0.4
 ## explicit; go 1.16
 go.yaml.in/yaml/v3
-# golang.org/x/crypto v0.51.0
+# golang.org/x/crypto v0.52.0
 ## explicit; go 1.25.0
 golang.org/x/crypto/sha3
 # golang.org/x/net v0.54.0
@@ -342,7 +342,7 @@ golang.org/x/net/trace
 ## explicit; go 1.25.0
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.44.0
+# golang.org/x/sys v0.45.0
 ## explicit; go 1.25.0
 golang.org/x/sys/cpu
 golang.org/x/sys/plan9
@@ -376,10 +376,10 @@ golang.org/x/text/unicode/norm
 # golang.org/x/time v0.15.0
 ## explicit; go 1.25.0
 golang.org/x/time/rate
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20260504160031-60b97b32f348
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20260523011958-0a33c5d7ca68
 ## explicit; go 1.25.0
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.81.0
+# google.golang.org/grpc v1.81.1
 ## explicit; go 1.25.0
 google.golang.org/grpc
 google.golang.org/grpc/attributes
@@ -921,3 +921,4 @@ sigs.k8s.io/yaml
 # k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.32.10
 # k8s.io/metrics => k8s.io/metrics v0.32.10
 # k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.32.10
+# github.com/IBM/ibmcloud-volume-interface => github.com/MahanteshR12/ibmcloud-volume-interface v0.0.0-20260605050556-986eac2b9404

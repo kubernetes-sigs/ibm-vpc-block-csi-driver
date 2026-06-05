@@ -36,6 +36,11 @@ func (volprov *DefaultVolumeProvider) Type() VolumeType {
 	return ""
 }
 
+// GetVolumeProfileByName gets volume profile by name,
+func (volprov *DefaultVolumeProvider) GetVolumeProfileByName(profileName string) (*Profile, error) {
+	return nil, nil
+}
+
 // CreateVolume creates a volume
 func (volprov *DefaultVolumeProvider) CreateVolume(VolumeRequest Volume) (*Volume, error) {
 	return nil, nil
@@ -128,12 +133,12 @@ func (volprov *DefaultVolumeProvider) DeleteSnapshot(*Snapshot) error {
 }
 
 // GetSnapshot gets the snapshot
-func (volprov *DefaultVolumeProvider) GetSnapshot(snapshotID string) (*Snapshot, error) {
+func (volprov *DefaultVolumeProvider) GetSnapshot(snapshotID string, sourceVolumeID ...string) (*Snapshot, error) {
 	return nil, nil
 }
 
 // GetSnapshotByName gets the snapshot
-func (volprov *DefaultVolumeProvider) GetSnapshotByName(snapshotName string) (*Snapshot, error) {
+func (volprov *DefaultVolumeProvider) GetSnapshotByName(snapshotName string, scopeID ...string) (*Snapshot, error) {
 	return nil, nil
 }
 

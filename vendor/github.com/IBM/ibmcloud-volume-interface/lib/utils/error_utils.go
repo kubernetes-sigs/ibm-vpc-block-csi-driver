@@ -124,7 +124,7 @@ func SetFaultResponse(fault error, response interface{}) error {
 // the standard zap.Error is used.
 func ZapError(err error) zapcore.Field {
 	if perr, isPerr := err.(provider.Error); isPerr {
-		// Use zap.Relfect() to format all fields of struct
+		// Use zap.Reflect() to format all fields of struct
 		// zap.Any() would select standard error formatting
 		return zap.Reflect("error", perr)
 	}
