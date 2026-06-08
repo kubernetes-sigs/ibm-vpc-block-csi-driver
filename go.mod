@@ -1,10 +1,10 @@
 module github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
 
-go 1.25.10
+go 1.26.3
 
 require (
-	github.com/IBM/ibm-csi-common v1.1.25
-	github.com/IBM/ibmcloud-volume-interface v1.2.20
+	github.com/IBM/ibm-csi-common v1.1.26
+	github.com/IBM/ibmcloud-volume-interface v1.2.21
 	github.com/IBM/ibmcloud-volume-vpc v1.1.22
 	github.com/IBM/secret-utils-lib v1.1.16
 	github.com/container-storage-interface/spec v1.12.0
@@ -25,7 +25,7 @@ require (
 
 require (
 	github.com/BurntSushi/toml v1.0.0 // indirect
-	github.com/IBM-Cloud/ibm-cloud-cli-sdk v0.6.7 // indirect
+	github.com/IBM-Cloud/ibm-cloud-cli-sdk v1.10.5 // indirect
 	github.com/IBM/go-sdk-core/v5 v5.17.4 // indirect
 	github.com/IBM/secret-common-lib v1.1.15 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
@@ -67,7 +67,7 @@ require (
 	github.com/nxadm/tail v1.4.11 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
-	github.com/onsi/gomega v1.38.2 // indirect
+	github.com/onsi/gomega v1.38.3 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.66.1 // indirect
@@ -81,12 +81,12 @@ require (
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.52.0 // indirect
-	golang.org/x/net v0.54.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/term v0.43.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260523011958-0a33c5d7ca68 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
@@ -108,6 +108,7 @@ require (
 
 // The below fixes the "go list -mod=readonly -m all" execution
 replace (
+	github.com/IBM/ibmcloud-volume-vpc => github.com/MahanteshR12/ibmcloud-volume-vpc v0.0.0-20260605095950-19433073bbdd
 	k8s.io/cli-runtime => k8s.io/cli-runtime v0.32.10
 	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.32.10
 	k8s.io/cri-api => k8s.io/cri-api v0.32.10
@@ -123,5 +124,3 @@ replace (
 	k8s.io/metrics => k8s.io/metrics v0.32.10
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.32.10
 )
-
-replace github.com/IBM/ibmcloud-volume-interface => github.com/MahanteshR12/ibmcloud-volume-interface v0.0.0-20260605050556-986eac2b9404

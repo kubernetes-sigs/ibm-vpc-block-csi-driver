@@ -19,6 +19,7 @@ package ibmcloudprovider
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/IBM/ibmcloud-volume-interface/config"
@@ -27,7 +28,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"golang.org/x/net/context"
 )
 
 const (

@@ -18,6 +18,7 @@
 package watcher
 
 import (
+	"context"
 	"flag"
 	"os"
 	"strings"
@@ -34,7 +35,6 @@ import (
 	cloudprovider "github.com/IBM/ibmcloud-volume-vpc/pkg/ibmcloudprovider"
 
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -155,14 +155,17 @@ func New(logger *zap.Logger, provisionerName string, volumeType string, cloudPro
 // Start start pv watcher
 func (pvw *PVWatcher) Start() {
 	watchlist := cache.NewListWatchFromClient(pvw.kclient.CoreV1().RESTClient(), "persistentvolumes", "", fields.Everything())
-	_, controller := cache.NewInformer(watchlist, &v1.PersistentVolume{}, time.Second*0,
-		cache.FilteringResourceEventHandler{
+	_, controller := cache.NewInformerWithOptions(cache.InformerOptions{
+		ListerWatcher: watchlist,
+		ObjectType:    &v1.PersistentVolume{},
+		ResyncPeriod:  time.Second * 0,
+		Handler: cache.FilteringResourceEventHandler{
 			Handler: cache.ResourceEventHandlerFuncs{
 				UpdateFunc: pvw.updateVolume,
 			},
 			FilterFunc: pvw.filter,
 		},
-	)
+	})
 	pvw.logger.Info("PVWatcher starting")
 	stopch := wait.NeverStop
 	go controller.Run(stopch)

@@ -2,16 +2,21 @@
 package rest
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
+
+	"go.yaml.in/yaml/v2"
+
+	. "github.com/IBM-Cloud/ibm-cloud-cli-sdk/common/rest/helpers"
 )
 
 // ErrEmptyResponseBody means the client receives an unexpected empty response from server
 var ErrEmptyResponseBody = errors.New("empty response body")
+var bufferSize = 1024
 
 // ErrorResponse is the status code and response received from the server when an error occurs.
 type ErrorResponse struct {
@@ -37,8 +42,8 @@ func NewClient() *Client {
 	}
 }
 
-// Do sends a request and returns a HTTP response whose body is consumed and
-// closed.
+// DoWithContext sends a request and returns a HTTP response whose body is consumed and
+// closed. The context controls the lifetime of the outgoing request and its response.
 //
 // If respV is not nil, the value it points to is JSON decoded when server
 // returns a successful response.
@@ -46,8 +51,8 @@ func NewClient() *Client {
 // If errV is not nil, the value it points to is JSON decoded when server
 // returns an unsuccessfully response. If the response text is not a JSON
 // string, a more generic ErrorResponse error is returned.
-func (c *Client) Do(r *Request, respV interface{}, errV interface{}) (*http.Response, error) {
-	req, err := c.makeRequest(r)
+func (c *Client) DoWithContext(ctx context.Context, r *Request, respV interface{}, errV interface{}) (*http.Response, error) {
+	req, err := c.makeRequest(ctx, r)
 	if err != nil {
 		return nil, err
 	}
@@ -57,14 +62,20 @@ func (c *Client) Do(r *Request, respV interface{}, errV interface{}) (*http.Resp
 		client = http.DefaultClient
 	}
 
+	req.Close = true
 	resp, err := client.Do(req)
 	if err != nil {
 		return resp, err
 	}
-	defer resp.Body.Close()
+	defer func() error {
+		if err := resp.Body.Close(); err != nil {
+			return err
+		}
+		return nil
+	}()
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		raw, err := ioutil.ReadAll(resp.Body)
+		raw, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return resp, fmt.Errorf("Error reading response: %v", err)
 		}
@@ -83,8 +94,20 @@ func (c *Client) Do(r *Request, respV interface{}, errV interface{}) (*http.Resp
 		case io.Writer:
 			_, err = io.Copy(respV.(io.Writer), resp.Body)
 		default:
-			err = json.NewDecoder(resp.Body).Decode(respV)
-			if err == io.EOF {
+			// Determine the response type and the decoder that should be used.
+			// If buffer is identified as json, use JSON decoder, otherwise
+			// assume the buffer contains yaml bytes
+			body, isJSON := IsJSONStream(resp.Body, bufferSize)
+			if isJSON {
+				err = json.NewDecoder(body).Decode(respV)
+			} else {
+				err = yaml.NewDecoder(body).Decode(respV)
+			}
+			// For 204 No Content we should not throw an error
+			// if there is an empty response body
+			if err == io.EOF && resp.StatusCode == http.StatusNoContent {
+				err = nil
+			} else if err == io.EOF {
 				err = ErrEmptyResponseBody
 			}
 		}
@@ -93,10 +116,19 @@ func (c *Client) Do(r *Request, respV interface{}, errV interface{}) (*http.Resp
 	return resp, err
 }
 
-func (c *Client) makeRequest(r *Request) (*http.Request, error) {
+// Do wraps DoWithContext using the background context.
+func (c *Client) Do(r *Request, respV interface{}, errV interface{}) (*http.Response, error) {
+	return c.DoWithContext(context.Background(), r, respV, errV)
+}
+
+func (c *Client) makeRequest(ctx context.Context, r *Request) (*http.Request, error) {
 	req, err := r.Build()
 	if err != nil {
 		return nil, err
+	}
+
+	if ctx != nil {
+		req = req.WithContext(ctx)
 	}
 
 	c.applyDefaultHeader(req)
