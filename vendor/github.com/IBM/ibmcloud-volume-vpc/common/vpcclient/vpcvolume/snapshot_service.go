@@ -24,6 +24,8 @@ import (
 )
 
 // SnapshotManager operations
+//
+//go:generate counterfeiter -o fakes/snapshot.go --fake-name SnapshotManager . SnapshotManager
 type SnapshotManager interface {
 	// Create the snapshot on the volume
 	CreateSnapshot(snapshotTemplate *models.Snapshot, ctxLogger *zap.Logger) (*models.Snapshot, error)
@@ -34,8 +36,8 @@ type SnapshotManager interface {
 	// Get the snapshot
 	GetSnapshot(snapshotID string, ctxLogger *zap.Logger) (*models.Snapshot, error)
 
-	// Get the snapshot by using snapshot name
-	GetSnapshotByName(snapshotName string, ctxLogger *zap.Logger) (*models.Snapshot, error)
+	// Lists the snapshot by using snapshot name and resourceGroupID
+	GetSnapshotByName(snapshotName, resourceGroupID string, ctxLogger *zap.Logger) (*models.Snapshot, error)
 
 	// List all the  snapshots for a given volume
 	ListSnapshots(limit int, start string, filters *models.LisSnapshotFilters, ctxLogger *zap.Logger) (*models.SnapshotList, error)

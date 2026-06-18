@@ -47,7 +47,7 @@ func (vpcs *VPCSession) GetSnapshot(snapshotID string, _ ...string) (*provider.S
 }
 
 // GetSnapshotByName ...
-func (vpcs *VPCSession) GetSnapshotByName(name string, _ ...string) (respSnap *provider.Snapshot, err error) {
+func (vpcs *VPCSession) GetSnapshotByName(name string, scopeID ...string) (respSnap *provider.Snapshot, err error) {
 	vpcs.Logger.Debug("Entry of GetSnapshotByName method...")
 	defer vpcs.Logger.Debug("Exit from GetSnapshotByName method...")
 
@@ -59,9 +59,17 @@ func (vpcs *VPCSession) GetSnapshotByName(name string, _ ...string) (respSnap *p
 
 	vpcs.Logger.Info("Getting snapshot details from VPC provider...", zap.Reflect("SnapshotName", name))
 
-	var snapshot *models.Snapshot
+	var (
+		snapshot        *models.Snapshot
+		resourceGroupID string
+	)
+
+	if len(scopeID) > 0 {
+		resourceGroupID = scopeID[0]
+	}
+
 	err = retry(vpcs.Logger, func() error {
-		snapshot, err = vpcs.Apiclient.SnapshotService().GetSnapshotByName(name, vpcs.Logger)
+		snapshot, err = vpcs.Apiclient.SnapshotService().GetSnapshotByName(name, resourceGroupID, vpcs.Logger)
 		return err
 	})
 	if err != nil {
