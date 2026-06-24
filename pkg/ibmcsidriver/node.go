@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The Kubernetes Authors.
+Copyright 2025-2026 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -252,9 +252,38 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 	// Check source Path
 	source, err := csiNS.findDevicePathSource(ctxLogger, devicePath, volumeID)
 	if err != nil {
-		return nil, commonError.GetCSIError(ctxLogger, commonError.DevicePathFindFailed, requestID, nil, devicePath)
+		ctxLogger.Error("Failed to find device path source",
+			zap.String("devicePath", devicePath),
+			zap.String("volumeID", volumeID),
+			zap.Error(err))
+		return nil, commonError.GetCSIError(ctxLogger, commonError.DevicePathFindFailed, requestID, err, devicePath)
 	}
-	ctxLogger.Info("Found device path ", zap.String("devicePath", devicePath), zap.String("source", source))
+	ctxLogger.Info("Found device path", zap.String("devicePath", devicePath), zap.String("source", source))
+
+	// CRITICAL SAFETY CHECK: Verify source device actually exists before proceeding
+	// This prevents data loss from formatting operations on non-existent or wrong devices
+	sourceExists, err := csiNS.Mounter.PathExists(source)
+	if err != nil {
+		ctxLogger.Error("Failed to verify source device path existence",
+			zap.String("source", source),
+			zap.String("volumeID", volumeID),
+			zap.Error(err))
+		return nil, commonError.GetCSIError(ctxLogger, commonError.TargetPathCheckFailed, requestID, err, source)
+	}
+
+	if !sourceExists {
+		ctxLogger.Error("Source device path does not exist - refusing to proceed with format operation",
+			zap.String("source", source),
+			zap.String("devicePath", devicePath),
+			zap.String("volumeID", volumeID),
+			zap.String("reason", "Formatting non-existent device would cause data loss"))
+		return nil, commonError.GetCSIError(ctxLogger, commonError.DevicePathFindFailed, requestID,
+			fmt.Errorf("source device path does not exist: %s", source), source)
+	}
+
+	ctxLogger.Info("Verified source device exists - safe to proceed",
+		zap.String("source", source),
+		zap.String("volumeID", volumeID))
 
 	// Check target path
 	exists, err := csiNS.Mounter.PathExists(stagingTargetPath)
@@ -293,8 +322,14 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 	}
 	options := collectMountOptions(fsType, mnt.MountFlags)
 
-	// FormatAndMount will format only if needed
-	ctxLogger.Info("Formating and mounting ", zap.String("source", source), zap.String("stagingTargetPath", stagingTargetPath), zap.String("fsType", fsType), zap.Reflect("options", options))
+	// FormatAndMount will check for existing filesystem and format only if needed
+	ctxLogger.Info("Formatting and mounting device",
+		zap.String("source", source),
+		zap.String("stagingTargetPath", stagingTargetPath),
+		zap.String("fsType", fsType),
+		zap.String("volumeID", volumeID),
+		zap.Reflect("options", options))
+
 	err = csiNS.Mounter.GetSafeFormatAndMount().FormatAndMount(source, stagingTargetPath, fsType, options)
 	if err != nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.FormatAndMountFailed, requestID, err, source, stagingTargetPath)

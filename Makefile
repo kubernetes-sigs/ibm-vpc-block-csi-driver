@@ -20,7 +20,7 @@ GIT_COMMIT_SHA="$(shell git rev-parse HEAD 2>/dev/null)"
 GIT_REMOTE_URL="$(shell git config --get remote.origin.url 2>/dev/null)"
 BUILD_DATE="$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")"
 OSS_FILES := go.mod Dockerfile
-GOLANG_VERSION="1.25.8"
+GOLANG_VERSION="1.25.10"
 
 
 
@@ -77,7 +77,11 @@ lint: deps
 
 .PHONY: build
 build:
-	CGO_ENABLED=0 GOOS=$(shell go env GOOS) GOARCH=$(shell go env GOARCH) go build -mod=vendor -a -ldflags '-X main.vendorVersion='"${DRIVER_NAME}-${GIT_COMMIT_SHA}"' -extldflags "-static"' -o ${GOPATH}/bin/${EXE_DRIVER_NAME} ./cmd/
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -a -ldflags '-X main.vendorVersion='"${DRIVER_NAME}-${GIT_COMMIT_SHA}"' -extldflags "-static"' -o ${GOPATH}/bin/${EXE_DRIVER_NAME} ./cmd/
+
+.PHONY: buildmac
+buildmac:
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -mod=vendor -a -ldflags '-X main.vendorVersion='"${DRIVER_NAME}-${GIT_COMMIT_SHA}"' -extldflags "-static"' -o ${GOPATH}/bin/${EXE_DRIVER_NAME} ./cmd/
 
 .PHONY: verify
 verify: deps

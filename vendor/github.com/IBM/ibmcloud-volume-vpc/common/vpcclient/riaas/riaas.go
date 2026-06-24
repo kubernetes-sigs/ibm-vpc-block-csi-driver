@@ -39,7 +39,6 @@ type RegionalAPI interface {
 	VolumeAttachService() instances.VolumeAttachManager
 	IKSVolumeAttachService() instances.VolumeAttachManager
 	SnapshotService() vpcvolume.SnapshotManager
-	SnapshotConsistencyGroupService() vpcvolume.SnapshotConsistencyGroupManager
 }
 
 var _ RegionalAPI = &Session{}
@@ -112,11 +111,6 @@ func (s *Session) IKSVolumeAttachService() instances.VolumeAttachManager {
 // SnapshotService returns the Snapshot service for managing snapshot
 func (s *Session) SnapshotService() vpcvolume.SnapshotManager {
 	return vpcvolume.NewSnapshotManager(s.client)
-}
-
-// SnapshotConsistencyGroupService returns the service for managing snapshot consistency groups
-func (s *Session) SnapshotConsistencyGroupService() vpcvolume.SnapshotConsistencyGroupManager {
-	return vpcvolume.NewSnapshotConsistencyGroupManager(s.client)
 }
 
 // RegionalAPIClientProvider declares an interface for a provider that can supply a new

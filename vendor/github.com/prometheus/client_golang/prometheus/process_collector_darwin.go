@@ -11,8 +11,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:build darwin && !ios
-
 package prometheus
 
 import (
@@ -25,9 +23,9 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// errNotImplemented is returned by stub functions that replace cgo functions, when cgo
+// notImplementedErr is returned by stub functions that replace cgo functions, when cgo
 // isn't available.
-var errNotImplemented = errors.New("not implemented")
+var notImplementedErr = errors.New("not implemented")
 
 type memoryInfo struct {
 	vsize uint64 // Virtual memory size in bytes
@@ -101,7 +99,7 @@ func (c *processCollector) processCollect(ch chan<- Metric) {
 	if memInfo, err := getMemory(); err == nil {
 		ch <- MustNewConstMetric(c.rss, GaugeValue, float64(memInfo.rss))
 		ch <- MustNewConstMetric(c.vsize, GaugeValue, float64(memInfo.vsize))
-	} else if !errors.Is(err, errNotImplemented) {
+	} else if !errors.Is(err, notImplementedErr) {
 		// Don't report an error when support is not compiled in.
 		c.reportError(ch, c.rss, err)
 		c.reportError(ch, c.vsize, err)

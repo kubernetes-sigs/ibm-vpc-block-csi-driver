@@ -82,6 +82,12 @@ spec:
               value: "true"
             - name: SIDECAR_GROUP_ID
               value: "2121"
+            - name: UDEVADM_SETTLE_TIMEOUT
+              value: "30"
+            - name: UDEVADM_MAX_RETRIES
+              value: "15"
+            - name: UDEVADM_RETRY_INTERVAL
+              value: "2s"
           envFrom:
           - configMapRef:
               name: ibm-vpc-block-csi-configmap

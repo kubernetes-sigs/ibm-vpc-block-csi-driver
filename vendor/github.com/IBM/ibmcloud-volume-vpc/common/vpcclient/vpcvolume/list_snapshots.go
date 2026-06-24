@@ -66,9 +66,6 @@ func (ss *SnapshotService) ListSnapshots(limit int, start string, filters *model
 		if filters.SourceVolumeID != "" {
 			req.AddQueryValue("source_volume.id", filters.SourceVolumeID)
 		}
-		if filters.SnapshotConsistencyGroupID != "" {
-			req.AddQueryValue("snapshot_consistency_group.id", filters.SnapshotConsistencyGroupID)
-		}
 	}
 
 	_, err := req.Invoke()

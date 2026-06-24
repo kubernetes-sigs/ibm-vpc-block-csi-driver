@@ -36,8 +36,4 @@ const (
 	snapshotTagParam    = "tag-name"
 	snapshotTagNamePath = snapshotTagsPath + "/{" + snapshotTagParam + "}"
 	updateVolume        = "updateVolume"
-
-	snapshotConsistencyGroupsPath   = Version + "/snapshot_consistency_groups"
-	snapshotConsistencyGroupIDParam = "snapshot-consistency-group-id"
-	snapshotConsistencyGroupIDPath  = snapshotConsistencyGroupsPath + "/{" + snapshotConsistencyGroupIDParam + "}"
 )
