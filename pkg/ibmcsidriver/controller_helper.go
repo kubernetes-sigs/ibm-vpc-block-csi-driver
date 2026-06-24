@@ -517,13 +517,13 @@ func createCSIVolumeGroupSnapshotResponse(groupSnapshot provider.GroupSnapshot) 
 			SizeBytes:       snap.SnapshotSize,
 			CreationTime:    snapTs,
 			ReadyToUse:      snap.ReadyToUse,
-			GroupSnapshotId: groupSnapshot.GroupSnapshotCRN,
+			GroupSnapshotId: groupSnapshot.GroupSnapshotID,
 		})
 	}
 
 	return &csi.CreateVolumeGroupSnapshotResponse{
 		GroupSnapshot: &csi.VolumeGroupSnapshot{
-			GroupSnapshotId: groupSnapshot.GroupSnapshotCRN,
+			GroupSnapshotId: groupSnapshot.GroupSnapshotID,
 			Snapshots:       snapshots,
 			CreationTime:    ts,
 			ReadyToUse:      groupSnapshot.ReadyToUse,
