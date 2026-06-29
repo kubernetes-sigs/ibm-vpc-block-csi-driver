@@ -1555,3 +1555,138 @@ func TestListSnapshots(t *testing.T) {
 		}
 	}
 }
+
+func TestCreateVolumeGroupSnapshot(t *testing.T) {
+	logger, teardown := cloudProvider.GetTestLogger(t)
+	defer teardown()
+
+	icDriver := initIBMCSIDriver(t)
+	fakeSession, err := icDriver.cs.CSIProvider.GetProviderSession(context.Background(), logger)
+	assert.Nil(t, err)
+	fakeStructSession, ok := fakeSession.(*fake.FakeSession)
+	assert.Equal(t, true, ok)
+
+	timeNow := time.Now()
+	fakeStructSession.GetGroupSnapshotByNameReturns(nil, nil)
+	fakeStructSession.CreateGroupSnapshotReturns(&provider.GroupSnapshot{
+		GroupSnapshotID:           "group-snapshot-id",
+		GroupSnapshotCRN:          "group-snapshot-crn",
+		GroupSnapshotCreationTime: timeNow,
+		ReadyToUse:                true,
+		Snapshots: []*provider.Snapshot{
+			{
+				SnapshotID:           "snapshot-id-1",
+				SnapshotCRN:          "snapshot-crn-1",
+				VolumeID:             "volume-id-1",
+				SnapshotSize:         10,
+				SnapshotCreationTime: timeNow,
+				ReadyToUse:           true,
+			},
+			{
+				SnapshotID:           "snapshot-id-2",
+				SnapshotCRN:          "snapshot-crn-2",
+				VolumeID:             "volume-id-2",
+				SnapshotSize:         20,
+				SnapshotCreationTime: timeNow,
+				ReadyToUse:           true,
+			},
+		},
+	}, nil)
+
+	response, err := icDriver.cs.CreateVolumeGroupSnapshot(context.Background(), &csi.CreateVolumeGroupSnapshotRequest{
+		Name:            "group-snapshot-name",
+		SourceVolumeIds: []string{"volume-id-1", "volume-id-2"},
+		Parameters:      map[string]string{ResourceGroup: "resource-group-id"},
+	})
+
+	assert.Nil(t, err)
+	assert.NotNil(t, response)
+	assert.Equal(t, "group-snapshot-id", response.GroupSnapshot.GroupSnapshotId)
+	assert.True(t, response.GroupSnapshot.ReadyToUse)
+	assert.Len(t, response.GroupSnapshot.Snapshots, 2)
+	assert.Equal(t, "snapshot-crn-1", response.GroupSnapshot.Snapshots[0].SnapshotId)
+	assert.Equal(t, "volume-id-1", response.GroupSnapshot.Snapshots[0].SourceVolumeId)
+	assert.Equal(t, "group-snapshot-id", response.GroupSnapshot.Snapshots[0].GroupSnapshotId)
+
+	name, resourceGroupID := fakeStructSession.GetGroupSnapshotByNameArgsForCall(0)
+	assert.Equal(t, "group-snapshot-name", name)
+	assert.Equal(t, "resource-group-id", resourceGroupID)
+	sourceVolumeIDs, groupSnapshotParameters := fakeStructSession.CreateGroupSnapshotArgsForCall(0)
+	assert.Equal(t, []string{"volume-id-1", "volume-id-2"}, sourceVolumeIDs)
+	assert.Equal(t, "group-snapshot-name", groupSnapshotParameters.Name)
+	assert.Equal(t, "resource-group-id", groupSnapshotParameters.ResourceGroup)
+}
+
+func TestDeleteVolumeGroupSnapshotPassesMemberSnapshotIDs(t *testing.T) {
+	logger, teardown := cloudProvider.GetTestLogger(t)
+	defer teardown()
+
+	icDriver := initIBMCSIDriver(t)
+	fakeSession, err := icDriver.cs.CSIProvider.GetProviderSession(context.Background(), logger)
+	assert.Nil(t, err)
+	fakeStructSession, ok := fakeSession.(*fake.FakeSession)
+	assert.Equal(t, true, ok)
+	fakeStructSession.DeleteGroupSnapshotReturns(nil)
+
+	response, err := icDriver.cs.DeleteVolumeGroupSnapshot(context.Background(), &csi.DeleteVolumeGroupSnapshotRequest{
+		GroupSnapshotId: "group-snapshot-id",
+		SnapshotIds:     []string{"snapshot-id-1", "snapshot-id-2"},
+	})
+
+	assert.Nil(t, err)
+	assert.Equal(t, &csi.DeleteVolumeGroupSnapshotResponse{}, response)
+	groupSnapshotID, snapshotIDs := fakeStructSession.DeleteGroupSnapshotArgsForCall(0)
+	assert.Equal(t, "group-snapshot-id", groupSnapshotID)
+	assert.Equal(t, []string{"snapshot-id-1", "snapshot-id-2"}, snapshotIDs)
+}
+
+func TestGetVolumeGroupSnapshot(t *testing.T) {
+	logger, teardown := cloudProvider.GetTestLogger(t)
+	defer teardown()
+
+	icDriver := initIBMCSIDriver(t)
+	fakeSession, err := icDriver.cs.CSIProvider.GetProviderSession(context.Background(), logger)
+	assert.Nil(t, err)
+	fakeStructSession, ok := fakeSession.(*fake.FakeSession)
+	assert.Equal(t, true, ok)
+
+	timeNow := time.Now()
+	fakeStructSession.GetGroupSnapshotReturns(&provider.GroupSnapshot{
+		GroupSnapshotID:           "group-snapshot-id",
+		GroupSnapshotCreationTime: timeNow,
+		ReadyToUse:                true,
+		Snapshots: []*provider.Snapshot{
+			{
+				SnapshotCRN:          "snapshot-crn-1",
+				VolumeID:             "volume-id-1",
+				SnapshotSize:         10,
+				SnapshotCreationTime: timeNow,
+				ReadyToUse:           true,
+			},
+		},
+	}, nil)
+
+	response, err := icDriver.cs.GetVolumeGroupSnapshot(context.Background(), &csi.GetVolumeGroupSnapshotRequest{
+		GroupSnapshotId: "group-snapshot-id",
+	})
+
+	assert.Nil(t, err)
+	assert.NotNil(t, response)
+	assert.Equal(t, "group-snapshot-id", fakeStructSession.GetGroupSnapshotArgsForCall(0))
+	assert.Equal(t, "group-snapshot-id", response.GroupSnapshot.GroupSnapshotId)
+	assert.True(t, response.GroupSnapshot.ReadyToUse)
+	assert.Len(t, response.GroupSnapshot.Snapshots, 1)
+	assert.Equal(t, "snapshot-crn-1", response.GroupSnapshot.Snapshots[0].SnapshotId)
+	assert.Equal(t, "group-snapshot-id", response.GroupSnapshot.Snapshots[0].GroupSnapshotId)
+}
+
+func TestGroupControllerGetCapabilities(t *testing.T) {
+	icDriver := initIBMCSIDriver(t)
+
+	response, err := icDriver.cs.GroupControllerGetCapabilities(context.Background(), &csi.GroupControllerGetCapabilitiesRequest{})
+
+	assert.Nil(t, err)
+	assert.NotNil(t, response)
+	assert.Len(t, response.Capabilities, 1)
+	assert.Equal(t, csi.GroupControllerServiceCapability_RPC_CREATE_DELETE_GET_VOLUME_GROUP_SNAPSHOT, response.Capabilities[0].GetRpc().GetType())
+}
