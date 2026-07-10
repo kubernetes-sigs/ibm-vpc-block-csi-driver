@@ -18,10 +18,11 @@
 package ibmcloudprovider
 
 import (
+	"context"
+
 	"github.com/IBM/ibmcloud-volume-interface/config"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
 // CloudProviderInterface ...
