@@ -880,3 +880,62 @@ func TestGetResourceGroup(t *testing.T) {
 		})
 	}
 }
+func TestGetMaxDelaySnapshotCreate(t *testing.T) {
+	logger, teardown := cloudProvider.GetTestLogger(t)
+	defer teardown()
+
+	testCases := []struct {
+		name          string
+		envValue      string
+		setEnv        bool
+		expectedValue int
+	}{
+		{
+			name:          "Empty env var returns default",
+			setEnv:        false,
+			expectedValue: DEFAULT_SNAPSHOT_CREATE_DELAY,
+		},
+		{
+			name:          "Valid integer within bounds",
+			envValue:      "500",
+			setEnv:        true,
+			expectedValue: 500,
+		},
+		{
+			name:          "Integer exceeding max returns max",
+			envValue:      "1000",
+			setEnv:        true,
+			expectedValue: MAX_SNAPSHOT_CREATE_DELAY,
+		},
+		{
+			name:          "Non-integer string returns default",
+			envValue:      "not-a-number",
+			setEnv:        true,
+			expectedValue: DEFAULT_SNAPSHOT_CREATE_DELAY,
+		},
+		{
+			name:          "Integer equal to max is accepted",
+			envValue:      "900",
+			setEnv:        true,
+			expectedValue: MAX_SNAPSHOT_CREATE_DELAY,
+		},
+		{
+			name:          "Integer equal to default is accepted",
+			envValue:      "300",
+			setEnv:        true,
+			expectedValue: DEFAULT_SNAPSHOT_CREATE_DELAY,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.setEnv {
+				t.Setenv("CUSTOM_SNAPSHOT_CREATE_DELAY", tc.envValue)
+			} else {
+				t.Setenv("CUSTOM_SNAPSHOT_CREATE_DELAY", "")
+			}
+			result := getMaxDelaySnapshotCreate(logger)
+			assert.Equal(t, tc.expectedValue, result)
+		})
+	}
+}

@@ -1555,3 +1555,24 @@ func TestListSnapshots(t *testing.T) {
 		}
 	}
 }
+func TestControllerGetVolume(t *testing.T) {
+	// Setup new driver each time so no interference
+	icDriver := initIBMCSIDriver(t)
+
+	resp, err := icDriver.cs.ControllerGetVolume(context.Background(), &csi.ControllerGetVolumeRequest{})
+
+	assert.Nil(t, resp)
+	assert.NotNil(t, err)
+	assert.Equal(t, codes.Unimplemented, status.Code(err))
+}
+
+func TestControllerModifyVolume(t *testing.T) {
+	// Setup new driver each time so no interference
+	icDriver := initIBMCSIDriver(t)
+
+	resp, err := icDriver.cs.ControllerModifyVolume(context.Background(), &csi.ControllerModifyVolumeRequest{})
+
+	assert.Nil(t, resp)
+	assert.NotNil(t, err)
+	assert.Equal(t, codes.Unimplemented, status.Code(err))
+}
