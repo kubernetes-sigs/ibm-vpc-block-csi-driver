@@ -979,6 +979,8 @@ func TestControllerGetCapabilities(t *testing.T) {
 }
 
 func TestCreateSnapshot(t *testing.T) {
+	// Set delay to 0 so the error-path sleep in CreateSnapshot doesn't stall tests
+	t.Setenv("CUSTOM_SNAPSHOT_CREATE_DELAY", "0")
 	timeNow := time.Now()
 	creationTime := timestamppb.New(timeNow)
 	// test cases
@@ -1162,6 +1164,23 @@ func TestDeleteSnapshot(t *testing.T) {
 			expErrCode:                     codes.Internal,
 			libGetSnapshotResponseErr:      nil,
 			libDeleteSnapshotResponseError: providerError.Message{Code: "FailedToDeleteSnapshot", Description: "Snapshot deletion failed", Type: providerError.DeletionFailed},
+		},
+		{
+			name: "Delete snapshot - retrival failed treated as already deleted",
+			req: &csi.DeleteSnapshotRequest{
+				SnapshotId: "snap-id",
+			},
+			expResponse:                    &csi.DeleteSnapshotResponse{},
+			expErrCode:                     codes.OK,
+			libDeleteSnapshotResponseError: providerError.Message{Code: "StorageFindFailedWithSnapshotId", Description: "Snapshot not found", Type: providerError.RetrivalFailed},
+		},
+		{
+			name: "Delete snapshot - non-retrival delete error returns internal",
+			req: &csi.DeleteSnapshotRequest{
+				SnapshotId: "snap-id",
+			},
+			expErrCode:                     codes.Internal,
+			libDeleteSnapshotResponseError: providerError.Message{Code: "InternalError", Description: "unexpected error", Type: providerError.PermissionDenied},
 		},
 	}
 

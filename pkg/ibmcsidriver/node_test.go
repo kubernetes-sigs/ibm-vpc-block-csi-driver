@@ -364,6 +364,33 @@ func TestNodeStageVolume(t *testing.T) {
 			},
 			expErrCode: codes.OK,
 		},
+		{
+			name: "Unsupported volume capabilities",
+			req: &csi.NodeStageVolumeRequest{
+				VolumeId:          volumeID,
+				StagingTargetPath: defaultStagingPath,
+				VolumeCapability:  stdVolCapNotSupported[0],
+				PublishContext:    map[string]string{PublishInfoDevicePath: "/dev/sda"},
+			},
+			expErrCode: codes.InvalidArgument,
+		},
+		{
+			name: "Unknown volume capability access mode",
+			req: &csi.NodeStageVolumeRequest{
+				VolumeId:          volumeID,
+				StagingTargetPath: defaultStagingPath,
+				VolumeCapability: &csi.VolumeCapability{
+					AccessType: &csi.VolumeCapability_Mount{
+						Mount: &csi.VolumeCapability_MountVolume{FsType: "ext4"},
+					},
+					AccessMode: &csi.VolumeCapability_AccessMode{
+						Mode: csi.VolumeCapability_AccessMode_UNKNOWN,
+					},
+				},
+				PublishContext: map[string]string{PublishInfoDevicePath: "/dev/sda"},
+			},
+			expErrCode: codes.InvalidArgument,
+		},
 	}
 
 	actionList := []testingexec.FakeCommandAction{
@@ -695,6 +722,14 @@ func TestNodeExpandVolume(t *testing.T) {
 		expErrCode codes.Code
 	}{
 		{
+			name: "Empty volume ID",
+			req: &csi.NodeExpandVolumeRequest{
+				VolumeId:   "",
+				VolumePath: defaultVolumePath,
+			},
+			expErrCode: codes.InvalidArgument,
+		},
+		{
 			name: "Empty volume Path",
 			req: &csi.NodeExpandVolumeRequest{
 				VolumeId:   defaultVolumeID,
@@ -703,7 +738,44 @@ func TestNodeExpandVolume(t *testing.T) {
 			expErrCode: codes.InvalidArgument,
 		},
 		{
-			name: "Invalid volumePath",
+			name: "Unsupported volume capability",
+			req: &csi.NodeExpandVolumeRequest{
+				VolumeId:   defaultVolumeID,
+				VolumePath: defaultVolumePath,
+				VolumeCapability: &csi.VolumeCapability{
+					AccessMode: &csi.VolumeCapability_AccessMode{
+						Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER,
+					},
+				},
+			},
+			expErrCode: codes.InvalidArgument,
+		},
+		{
+			name: "Block device path - IsBlockDevice error",
+			req: &csi.NodeExpandVolumeRequest{
+				VolumeId:   defaultVolumeID,
+				VolumePath: errorBlockDevice,
+			},
+			expErrCode: codes.Internal,
+		},
+		{
+			name: "Block device path - DeviceInfo success",
+			req: &csi.NodeExpandVolumeRequest{
+				VolumeId:   defaultVolumeID,
+				VolumePath: defaultVolumePath, // MockStatUtils returns true for non-errorblock/notblock paths
+			},
+			expErrCode: codes.OK,
+		},
+		{
+			name: "Block device path - DeviceInfo error",
+			req: &csi.NodeExpandVolumeRequest{
+				VolumeId:   defaultVolumeID,
+				VolumePath: errorDeviceInfo,
+			},
+			expErrCode: codes.Internal,
+		},
+		{
+			name: "Non-block invalid volume path - IsLikelyNotMountPoint error",
 			req: &csi.NodeExpandVolumeRequest{
 				VolumeId:   defaultVolumeID,
 				VolumePath: "/invalid-volPath_notblock",

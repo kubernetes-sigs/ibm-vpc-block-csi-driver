@@ -97,10 +97,53 @@ func TestProcessMount(t *testing.T) {
 	logger, teardown := cloudProvider.GetTestLogger(t)
 	defer teardown()
 
+	tests := []struct {
+		name              string
+		stagingTargetPath string
+		targetPath        string
+		fsType            string
+		options           []string
+		expErrCode        bool // true = expect error
+	}{
+		{
+			name:              "Success - mount to new target path",
+			stagingTargetPath: "/staging",
+			targetPath:        "/targetpath",
+			fsType:            "ext4",
+			options:           []string{"a", "b"},
+			expErrCode:        false,
+		},
+		{
+			name:              "Success - mount with no options",
+			stagingTargetPath: "/staging",
+			targetPath:        "/targetpath2",
+			fsType:            "ext4",
+			options:           []string{},
+			expErrCode:        false,
+		},
+		{
+			name:              "MakeDir fails for invalid path",
+			stagingTargetPath: "/staging",
+			targetPath:        "invalid-volPath-dir", // FakeNodeMounter.MakeDir returns error for this path
+			fsType:            "ext4",
+			options:           []string{},
+			expErrCode:        true,
+		},
+	}
+
 	icDriver := initIBMCSIDriver(t)
-	ops := []string{"a", "b"}
-	response, err := icDriver.ns.processMount(logger, "processMount", "/staging", "/targetpath", "ext4", ops)
-	t.Logf("Response %v, error %v", response, err)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			response, err := icDriver.ns.processMount(logger, "test-request-id", tc.stagingTargetPath, tc.targetPath, tc.fsType, tc.options)
+			if tc.expErrCode {
+				assert.NotNil(t, err)
+				assert.Nil(t, response)
+			} else {
+				assert.Nil(t, err)
+				assert.NotNil(t, response)
+			}
+		})
+	}
 }
 
 func TestUdevadmTrigger(t *testing.T) {
@@ -494,35 +537,68 @@ func TestProcessMountForBlock(t *testing.T) {
 	t.Setenv("UDEVADM_MAX_RETRIES", "2")
 	t.Setenv("UDEVADM_RETRY_INTERVAL", "10ms")
 
-	// Mock udevadm command for cross-platform testing (trigger + settle)
-	actionList := []testingexec.FakeCommandAction{
-		makeFakeCmd(
-			&testingexec.FakeCmd{
-				CombinedOutputScript: []testingexec.FakeAction{
-					func() ([]byte, []byte, error) {
-						return []byte(""), nil, nil
-					},
-				},
+	tests := []struct {
+		name       string
+		devicePath string
+		target     string
+		volumeID   string
+		options    []string
+		expErr     bool
+		setupMock  func() []testingexec.FakeCommandAction
+	}{
+		{
+			name:       "Empty device path returns error",
+			devicePath: "",
+			target:     "/targetpath",
+			volumeID:   "vol-id",
+			options:    []string{"bind"},
+			expErr:     true,
+			setupMock: func() []testingexec.FakeCommandAction {
+				return []testingexec.FakeCommandAction{}
 			},
-			"udevadm",
-		),
-		makeFakeCmd(
-			&testingexec.FakeCmd{
-				CombinedOutputScript: []testingexec.FakeAction{
-					func() ([]byte, []byte, error) {
-						return []byte(""), nil, nil
-					},
-				},
+		},
+		{
+			name:       "Device path not found after udevadm",
+			devicePath: "/dev/nonexistent",
+			target:     "/targetpath",
+			volumeID:   "vol-id",
+			options:    []string{"bind"},
+			expErr:     true,
+			setupMock: func() []testingexec.FakeCommandAction {
+				return []testingexec.FakeCommandAction{
+					makeFakeCmd(
+						&testingexec.FakeCmd{
+							CombinedOutputScript: []testingexec.FakeAction{
+								func() ([]byte, []byte, error) { return []byte(""), nil, nil },
+							},
+						},
+						"udevadm",
+					),
+					makeFakeCmd(
+						&testingexec.FakeCmd{
+							CombinedOutputScript: []testingexec.FakeAction{
+								func() ([]byte, []byte, error) { return []byte(""), nil, nil },
+							},
+						},
+						"udevadm",
+					),
+				}
 			},
-			"udevadm",
-		),
+		},
 	}
 
-	icDriver := initIBMCSIDriver(t, actionList...)
-	ops := []string{"bind"}
-	response, err := icDriver.ns.processMountForBlock(logger, "ProcessMountForBlock", "/dev/sda", "/targetpath", "volumeidxxx", ops)
-	// Expect error since device path doesn't exist in test environment
-	assert.NotNil(t, err)
-	assert.Nil(t, response)
-	t.Logf("Response %v, error %v", response, err)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			actionList := tc.setupMock()
+			icDriver := initIBMCSIDriver(t, actionList...)
+			response, err := icDriver.ns.processMountForBlock(logger, "test-request-id", tc.devicePath, tc.target, tc.volumeID, tc.options)
+			if tc.expErr {
+				assert.NotNil(t, err)
+				assert.Nil(t, response)
+			} else {
+				assert.Nil(t, err)
+				assert.NotNil(t, response)
+			}
+		})
+	}
 }
