@@ -933,29 +933,31 @@ func TestDeviceInfo(t *testing.T) {
 	testCases := []struct {
 		name          string
 		reqDevicePath string
-		respError     error
+		expectError   bool
 	}{
 		{
-			name:          "Success device info",
-			reqDevicePath: "/tmp",
-			respError:     nil,
+			name:          "Non-existent device path returns error",
+			reqDevicePath: "/dev/nonexistent-block-device-xyzabc",
+			expectError:   true,
 		},
 		{
-			name:          "Failed device info",
-			reqDevicePath: "/tmp11111111111",
-			respError:     fmt.Errorf("any error is fine"),
+			name:          "Non-block path (directory) returns error",
+			reqDevicePath: "/tmp",
+			expectError:   true, // blockdev fails on non-block-device paths
 		},
 	}
 
 	statUtils := &VolumeStatUtils{}
 	for _, tc := range testCases {
 		t.Logf("test case: %s", tc.name)
-		_, _ = statUtils.DeviceInfo(tc.reqDevicePath)
-		/*if tc.respError != nil {
-			assert.NotNil(t, err)
-		} else {
-			assert.Nil(t, err)
-		}*/
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := statUtils.DeviceInfo(tc.reqDevicePath)
+			if tc.expectError {
+				assert.NotNil(t, err, "expected error for path %s", tc.reqDevicePath)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
 	}
 }
 
