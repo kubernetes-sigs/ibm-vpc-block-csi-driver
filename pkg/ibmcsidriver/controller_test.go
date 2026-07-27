@@ -1737,6 +1737,14 @@ func TestDeleteVolumeGroupSnapshotValidation(t *testing.T) {
 	assert.Nil(t, response)
 	assert.Equal(t, codes.InvalidArgument, status.Code(err))
 	assert.Equal(t, 0, fakeStructSession.DeleteGroupSnapshotCallCount())
+
+	response, err = icDriver.cs.DeleteVolumeGroupSnapshot(context.Background(), &csi.DeleteVolumeGroupSnapshotRequest{
+		GroupSnapshotId: "group-snapshot-id",
+	})
+
+	assert.Nil(t, response)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	assert.Equal(t, 0, fakeStructSession.DeleteGroupSnapshotCallCount())
 }
 
 func TestDeleteVolumeGroupSnapshotNotFoundIsIdempotent(t *testing.T) {

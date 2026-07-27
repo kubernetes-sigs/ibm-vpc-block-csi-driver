@@ -777,6 +777,9 @@ func (csiCS *CSIControllerServer) DeleteVolumeGroupSnapshot(ctx context.Context,
 
 	// Extract snapshot IDs from the request (required by CSI spec)
 	snapshotIDs := req.GetSnapshotIds()
+	if len(snapshotIDs) == 0 {
+		return nil, commonError.GetCSIError(ctxLogger, commonError.EmptySnapshotID, requestID, nil)
+	}
 	ctxLogger.Info("DeleteVolumeGroupSnapshot snapshot IDs", zap.Reflect("snapshotIDs", snapshotIDs))
 
 	session, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
