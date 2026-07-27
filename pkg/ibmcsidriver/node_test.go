@@ -391,6 +391,16 @@ func TestNodeStageVolume(t *testing.T) {
 			},
 			expErrCode: codes.InvalidArgument,
 		},
+		{
+			name: "Block access type - early return with OK",
+			req: &csi.NodeStageVolumeRequest{
+				VolumeId:          volumeID,
+				StagingTargetPath: "/staging/block",
+				VolumeCapability:  stdBlockVolCap[0],
+				PublishContext:    map[string]string{PublishInfoDevicePath: "fake"},
+			},
+			expErrCode: codes.OK,
+		},
 	}
 
 	actionList := []testingexec.FakeCommandAction{

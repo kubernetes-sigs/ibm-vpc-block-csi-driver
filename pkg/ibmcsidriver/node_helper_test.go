@@ -585,6 +585,17 @@ func TestProcessMountForBlock(t *testing.T) {
 				}
 			},
 		},
+		{
+			name:       "Success - device found, targetDir created, bind mount succeeds",
+			devicePath: "fake",
+			target:     "/fake/target/file",
+			volumeID:   "vol-success",
+			options:    []string{"bind"},
+			expErr:     false,
+			setupMock: func() []testingexec.FakeCommandAction {
+				return []testingexec.FakeCommandAction{}
+			},
+		},
 	}
 
 	for _, tc := range tests {
