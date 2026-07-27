@@ -19,18 +19,19 @@ package provider
 
 // SnapshotManager ...
 type SnapshotManager interface {
-	// Create the snapshot on the volume
+	// CreateSnapshot creates the snapshot on the volume
 	CreateSnapshot(sourceVolumeID string, snapshotParameters SnapshotParameters) (*Snapshot, error)
 
-	// Delete the snapshot
+	// DeleteSnapshot deletes the snapshot
 	DeleteSnapshot(*Snapshot) error
 
-	// Get the snapshot
+	// GetSnapshot fetches the snapshot using snapshotID
 	GetSnapshot(snapshotID string, sourceVolumeID ...string) (*Snapshot, error)
 
-	// Get the snapshot By name
-	GetSnapshotByName(snapshotName string, sourceVolumeID ...string) (*Snapshot, error)
+	// GetSnapshotByName gets the snapshot by name and scoped parameters. scopeID is optional and driver-dependent
+	// Block CSI driver passes resourceGroupID; File CSI driver passes it as sourceVolumeID
+	GetSnapshotByName(snapshotName string, scopeID ...string) (*Snapshot, error)
 
-	// Snapshot list by using tags
+	// ListSnapshots lists the snapshots by using tags
 	ListSnapshots(limit int, start string, tags map[string]string) (*SnapshotList, error)
 }

@@ -56,14 +56,14 @@ func (ss *SnapshotService) GetSnapshot(snapshotID string, ctxLogger *zap.Logger)
 }
 
 // GetSnapshotByName GETs /snapshots
-func (ss *SnapshotService) GetSnapshotByName(snapshotName string, ctxLogger *zap.Logger) (*models.Snapshot, error) {
+func (ss *SnapshotService) GetSnapshotByName(snapshotName, resourceGroupID string, ctxLogger *zap.Logger) (*models.Snapshot, error) {
 	ctxLogger.Debug("Entry Backend GetSnapshotByName")
 	defer ctxLogger.Debug("Exit Backend GetSnapshotByName")
 
 	defer util.TimeTracker("GetSnapshotByName", time.Now())
 
 	// Get the snapshot details for a single snapshot, ListSnapshotFilters will return only 1 snapshot in list
-	filters := &models.LisSnapshotFilters{Name: snapshotName}
+	filters := &models.LisSnapshotFilters{Name: snapshotName, ResourceGroupID: resourceGroupID}
 	snapshots, err := ss.ListSnapshots(1, "", filters, ctxLogger)
 	if err != nil {
 		return nil, err

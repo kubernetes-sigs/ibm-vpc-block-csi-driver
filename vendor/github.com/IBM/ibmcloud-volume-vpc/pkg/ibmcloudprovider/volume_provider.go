@@ -18,6 +18,7 @@
 package ibmcloudprovider
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -32,7 +33,6 @@ import (
 	utilsConfig "github.com/IBM/secret-utils-lib/pkg/config"
 	"github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
 // IBMCloudStorageProvider Provider

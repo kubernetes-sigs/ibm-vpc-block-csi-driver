@@ -18,6 +18,7 @@
 package utils
 
 import (
+	"context"
 	"errors"
 
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
@@ -29,7 +30,6 @@ import (
 	iks_vpc_provider "github.com/IBM/ibmcloud-volume-vpc/iks/provider"
 	"github.com/IBM/secret-utils-lib/pkg/k8s_utils"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
 // InitProviders initialization for all providers as per configurations
