@@ -232,8 +232,14 @@ func TestRemoveCSISocket(t *testing.T) {
 		t.Fatalf("failed to create temp socket file: %v", err)
 	}
 	socketPath := f.Name()
-	f.Close()
-	defer os.Remove(socketPath)
+	if err := f.Close(); err != nil {
+		t.Fatalf("failed to close temp socket file: %v", err)
+	}
+	defer func() {
+		if err := os.Remove(socketPath); err != nil {
+			t.Errorf("failed to remove temp socket file: %v", err)
+		}
+	}()
 
 	// Build the subprocess command: re-run this test binary targeting the helper
 	testBinary, err := exec.LookPath(os.Args[0])

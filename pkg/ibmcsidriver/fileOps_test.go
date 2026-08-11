@@ -131,8 +131,14 @@ func TestOpsSocketPermissionChown(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
-	defer os.Remove(f.Name())
-	f.Close()
+	defer func() {
+		if err := os.Remove(f.Name()); err != nil {
+			t.Errorf("failed to remove temp file: %v", err)
+		}
+	}()
+	if err := f.Close(); err != nil {
+		t.Fatalf("failed to close temp file: %v", err)
+	}
 
 	tests := []struct {
 		name        string
@@ -144,8 +150,8 @@ func TestOpsSocketPermissionChown(t *testing.T) {
 		{
 			name:        "Success - valid file with current GID",
 			path:        f.Name(),
-			uid:         -1,            // -1 means do not change owner
-			gid:         os.Getgid(),   // use current process GID to avoid permission errors
+			uid:         -1,          // -1 means do not change owner
+			gid:         os.Getgid(), // use current process GID to avoid permission errors
 			expectedErr: false,
 		},
 		{
@@ -177,8 +183,14 @@ func TestOpsSocketPermissionChmod(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
-	defer os.Remove(f.Name())
-	f.Close()
+	defer func() {
+		if err := os.Remove(f.Name()); err != nil {
+			t.Errorf("failed to remove temp file: %v", err)
+		}
+	}()
+	if err := f.Close(); err != nil {
+		t.Fatalf("failed to close temp file: %v", err)
+	}
 
 	tests := []struct {
 		name        string
