@@ -236,7 +236,7 @@ func TestRemoveCSISocket(t *testing.T) {
 		t.Fatalf("failed to close temp socket file: %v", err)
 	}
 	defer func() {
-		if err := os.Remove(socketPath); err != nil {
+		if err := os.Remove(socketPath); err != nil && !os.IsNotExist(err) {
 			t.Errorf("failed to remove temp socket file: %v", err)
 		}
 	}()
