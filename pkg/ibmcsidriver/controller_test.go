@@ -1289,9 +1289,19 @@ func TestControllerExpandVolume(t *testing.T) {
 		libVolumeError       error
 	}{
 		{
-			name:                 "Success controller expand volume",
-			req:                  &csi.ControllerExpandVolumeRequest{VolumeId: "volumeid", CapacityRange: stdCapRange},
+			name:                 "Success controller expand volume - filesystem mode",
+			req:                  &csi.ControllerExpandVolumeRequest{VolumeId: "volumeid", CapacityRange: stdCapRange, VolumeCapability: &csi.VolumeCapability{AccessType: &csi.VolumeCapability_Mount{Mount: &csi.VolumeCapability_MountVolume{}}}},
 			expResponse:          &csi.ControllerExpandVolumeResponse{CapacityBytes: stdCapRange.RequiredBytes, NodeExpansionRequired: true},
+			expErrCode:           codes.OK,
+			libExpandResponse:    &http.Response{StatusCode: http.StatusOK},
+			libVolumeResponse:    &provider.Volume{Capacity: &cap, Name: &volName, VolumeID: "volumeid", Iops: &iopsStr, Az: "myzone", Region: "myregion"},
+			libExpandResponseErr: nil,
+			libVolumeError:       nil,
+		},
+		{
+			name:                 "Success controller expand volume - block mode, no node expansion required",
+			req:                  &csi.ControllerExpandVolumeRequest{VolumeId: "volumeid", CapacityRange: stdCapRange, VolumeCapability: &csi.VolumeCapability{AccessType: &csi.VolumeCapability_Block{Block: &csi.VolumeCapability_BlockVolume{}}}},
+			expResponse:          &csi.ControllerExpandVolumeResponse{CapacityBytes: stdCapRange.RequiredBytes, NodeExpansionRequired: false},
 			expErrCode:           codes.OK,
 			libExpandResponse:    &http.Response{StatusCode: http.StatusOK},
 			libVolumeResponse:    &provider.Volume{Capacity: &cap, Name: &volName, VolumeID: "volumeid", Iops: &iopsStr, Az: "myzone", Region: "myregion"},
