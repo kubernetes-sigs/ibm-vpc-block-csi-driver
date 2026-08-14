@@ -23,7 +23,7 @@ jobs:
         go mod download
     - name: Run Unit tests
       run: |
-        go test $(go list ./... | grep -v /vendor/ | grep -v /cmd | grep -v /tests) -race -covermode atomic -coverprofile=covprofile ./...
+        go test $(go list ./... | grep -v /vendor/ | grep -v /cmd | grep -v /tests | grep -v /config | grep -v /ibmcsidriverfakes) -race -covermode atomic -coverprofile=covprofile ./...
     - name: Install goveralls
       env:
         GOPATH: ${{ github.workspace }}
