@@ -659,7 +659,18 @@ func (csiCS *CSIControllerServer) ControllerExpandVolume(ctx context.Context, re
 	if err != nil {
 		return nil, commonError.GetCSIBackendError(ctxLogger, requestID, err)
 	}
-	return &csi.ControllerExpandVolumeResponse{CapacityBytes: capacity, NodeExpansionRequired: true}, nil
+
+	// Raw block volumes have no filesystem; node-side expansion is not needed.
+	// VolumeCapability is optional in the CSI spec; default to requiring node expansion
+	// when it is not set so that filesystem volumes are handled correctly.
+	nodeExpansionRequired := true
+	if vc := req.GetVolumeCapability(); vc != nil {
+		if _, ok := vc.GetAccessType().(*csi.VolumeCapability_Block); ok {
+			nodeExpansionRequired = false
+			ctxLogger.Info("CSIControllerServer-ControllerExpandVolume: raw block volume detected, skipping node expansion", zap.String("volumeID", volumeID))
+		}
+	}
+	return &csi.ControllerExpandVolumeResponse{CapacityBytes: capacity, NodeExpansionRequired: nodeExpansionRequired}, nil
 }
 
 // ControllerGetVolume ...
