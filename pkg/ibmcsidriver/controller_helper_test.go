@@ -312,6 +312,29 @@ func TestGetVolumeParameters(t *testing.T) {
 			expectedError:  fmt.Errorf("volume capabilities are empty"),
 		},
 		{
+			testCaseName: "Throughput invalid integer value",
+			request: &csi.CreateVolumeRequest{Parameters: map[string]string{
+				Throughput: "not-an-int",
+			},
+			},
+			expectedVolume: &provider.Volume{},
+			expectedStatus: true,
+			expectedError:  fmt.Errorf("'<%v>' is invalid, value of '%s' should be an int32 type", "not-an-int", Throughput),
+		},
+		{
+			testCaseName: "Unsupported fstype in volume capabilities",
+			request: &csi.CreateVolumeRequest{Name: volumeName, CapacityRange: &csi.CapacityRange{RequiredBytes: 11811160064, LimitBytes: utils.MinimumVolumeSizeInBytes + utils.MinimumVolumeSizeInBytes},
+				VolumeCapabilities: []*csi.VolumeCapability{{
+					AccessType: &csi.VolumeCapability_Mount{Mount: &csi.VolumeCapability_MountVolume{FsType: "unsupportedfs"}},
+					AccessMode: &csi.VolumeCapability_AccessMode{Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
+				}},
+				Parameters: map[string]string{Profile: "general-purpose", Zone: "testzone"},
+			},
+			expectedVolume: &provider.Volume{},
+			expectedStatus: true,
+			expectedError:  fmt.Errorf("unsupported fstype <%s>. Supported types: %v", "unsupportedfs", SupportedFS),
+		},
+		{
 			testCaseName: "Region and Zone not given as parameter from SC",
 			request: &csi.CreateVolumeRequest{Name: volumeName, CapacityRange: &csi.CapacityRange{RequiredBytes: 11811160064, LimitBytes: utils.MinimumVolumeSizeInBytes + utils.MinimumVolumeSizeInBytes},
 				VolumeCapabilities: []*csi.VolumeCapability{{AccessMode: &csi.VolumeCapability_AccessMode{Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}}},
@@ -528,6 +551,17 @@ func TestOverrideParams(t *testing.T) {
 			expectedVolume: nil,
 			expectedStatus: true,
 			expectedError:  fmt.Errorf("invalid volume parameter"),
+		},
+		{
+			testCaseName: "Throughput secret invalid integer value",
+			request: &csi.CreateVolumeRequest{Name: volumeName,
+				Secrets: map[string]string{
+					Throughput: "not-a-number",
+				},
+			},
+			expectedVolume: &provider.Volume{},
+			expectedStatus: true,
+			expectedError:  fmt.Errorf("'<%v>' is invalid, value of '%s' should be an int32 type", "not-a-number", Throughput),
 		},
 	}
 
@@ -877,6 +911,101 @@ func TestGetResourceGroup(t *testing.T) {
 			RG := getResourceGroup(logger, tc.snapShotParams, testConfig)
 
 			assert.Equal(t, tc.expectedRG, RG)
+		})
+	}
+}
+func TestGetMaxDelaySnapshotCreate(t *testing.T) {
+	logger, teardown := cloudProvider.GetTestLogger(t)
+	defer teardown()
+
+	testCases := []struct {
+		name          string
+		envValue      string
+		setEnv        bool
+		expectedValue int
+	}{
+		{
+			name:          "Empty env var returns default",
+			setEnv:        false,
+			expectedValue: DEFAULT_SNAPSHOT_CREATE_DELAY,
+		},
+		{
+			name:          "Valid integer within bounds",
+			envValue:      "500",
+			setEnv:        true,
+			expectedValue: 500,
+		},
+		{
+			name:          "Integer exceeding max returns max",
+			envValue:      "1000",
+			setEnv:        true,
+			expectedValue: MAX_SNAPSHOT_CREATE_DELAY,
+		},
+		{
+			name:          "Non-integer string returns default",
+			envValue:      "not-a-number",
+			setEnv:        true,
+			expectedValue: DEFAULT_SNAPSHOT_CREATE_DELAY,
+		},
+		{
+			name:          "Integer equal to max is accepted",
+			envValue:      "900",
+			setEnv:        true,
+			expectedValue: MAX_SNAPSHOT_CREATE_DELAY,
+		},
+		{
+			name:          "Integer equal to default is accepted",
+			envValue:      "300",
+			setEnv:        true,
+			expectedValue: DEFAULT_SNAPSHOT_CREATE_DELAY,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.setEnv {
+				t.Setenv("CUSTOM_SNAPSHOT_CREATE_DELAY", tc.envValue)
+			} else {
+				t.Setenv("CUSTOM_SNAPSHOT_CREATE_DELAY", "")
+			}
+			result := getMaxDelaySnapshotCreate(logger)
+			assert.Equal(t, tc.expectedValue, result)
+		})
+	}
+}
+
+func TestGetAccountID(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "CRN-style input returns second token after slash",
+			input:    "a/c468d8642937fecd8a0860fe0f379bf9",
+			expected: "c468d8642937fecd8a0860fe0f379bf9",
+		},
+		{
+			name:     "Multiple slashes - returns second token",
+			input:    "crn:v1:bluemix:public:is:us-south:a/abc123::snapshot:snap-001",
+			expected: "abc123::snapshot:snap-001",
+		},
+		{
+			name:     "No slash - returns empty string",
+			input:    "noslashstring",
+			expected: "",
+		},
+		{
+			name:     "Empty string - returns empty string",
+			input:    "",
+			expected: "",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := getAccountID(tc.input)
+			assert.Equal(t, tc.expected, result)
 		})
 	}
 }

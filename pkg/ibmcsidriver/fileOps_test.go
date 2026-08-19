@@ -124,3 +124,110 @@ func TestSetupSidecar(t *testing.T) {
 		})
 	}
 }
+
+func TestOpsSocketPermissionChown(t *testing.T) {
+	// Create a temp file shared across test cases that need a valid path
+	f, err := os.CreateTemp("", "chown-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+	defer func() {
+		if err := os.Remove(f.Name()); err != nil {
+			t.Errorf("failed to remove temp file: %v", err)
+		}
+	}()
+	if err := f.Close(); err != nil {
+		t.Fatalf("failed to close temp file: %v", err)
+	}
+
+	tests := []struct {
+		name        string
+		path        string
+		uid         int
+		gid         int
+		expectedErr bool
+	}{
+		{
+			name:        "Success - valid file with current GID",
+			path:        f.Name(),
+			uid:         -1,          // -1 means do not change owner
+			gid:         os.Getgid(), // use current process GID to avoid permission errors
+			expectedErr: false,
+		},
+		{
+			name:        "Error - non-existent path",
+			path:        "/nonexistent/path/chown-test",
+			uid:         -1,
+			gid:         0,
+			expectedErr: true,
+		},
+	}
+
+	ops := &opsSocketPermission{}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ops.Chown(tc.path, tc.uid, tc.gid)
+			if tc.expectedErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestOpsSocketPermissionChmod(t *testing.T) {
+	// Create a temp file shared across test cases that need a valid path
+	f, err := os.CreateTemp("", "chmod-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+	defer func() {
+		if err := os.Remove(f.Name()); err != nil {
+			t.Errorf("failed to remove temp file: %v", err)
+		}
+	}()
+	if err := f.Close(); err != nil {
+		t.Fatalf("failed to close temp file: %v", err)
+	}
+
+	tests := []struct {
+		name        string
+		path        string
+		mode        os.FileMode
+		expectedErr bool
+	}{
+		{
+			name:        "Success - valid file with read-write mode",
+			path:        f.Name(),
+			mode:        0600,
+			expectedErr: false,
+		},
+		{
+			name:        "Success - valid file with read-only mode",
+			path:        f.Name(),
+			mode:        0444,
+			expectedErr: false,
+		},
+		{
+			name:        "Error - non-existent path",
+			path:        "/nonexistent/path/chmod-test",
+			mode:        0600,
+			expectedErr: true,
+		},
+	}
+
+	ops := &opsSocketPermission{}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ops.Chmod(tc.path, tc.mode)
+			if tc.expectedErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
