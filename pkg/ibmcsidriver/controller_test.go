@@ -1632,7 +1632,6 @@ func TestListSnapshots(t *testing.T) {
 		}
 	}
 }
-
 func TestControllerGetVolume(t *testing.T) {
 	// Setup new driver each time so no interference
 	icDriver := initIBMCSIDriver(t)

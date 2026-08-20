@@ -364,6 +364,43 @@ func TestNodeStageVolume(t *testing.T) {
 			},
 			expErrCode: codes.OK,
 		},
+		{
+			name: "Unsupported volume capabilities",
+			req: &csi.NodeStageVolumeRequest{
+				VolumeId:          volumeID,
+				StagingTargetPath: defaultStagingPath,
+				VolumeCapability:  stdVolCapNotSupported[0],
+				PublishContext:    map[string]string{PublishInfoDevicePath: "/dev/sda"},
+			},
+			expErrCode: codes.InvalidArgument,
+		},
+		{
+			name: "Unknown volume capability access mode",
+			req: &csi.NodeStageVolumeRequest{
+				VolumeId:          volumeID,
+				StagingTargetPath: defaultStagingPath,
+				VolumeCapability: &csi.VolumeCapability{
+					AccessType: &csi.VolumeCapability_Mount{
+						Mount: &csi.VolumeCapability_MountVolume{FsType: "ext4"},
+					},
+					AccessMode: &csi.VolumeCapability_AccessMode{
+						Mode: csi.VolumeCapability_AccessMode_UNKNOWN,
+					},
+				},
+				PublishContext: map[string]string{PublishInfoDevicePath: "/dev/sda"},
+			},
+			expErrCode: codes.InvalidArgument,
+		},
+		{
+			name: "Block access type - early return with OK",
+			req: &csi.NodeStageVolumeRequest{
+				VolumeId:          volumeID,
+				StagingTargetPath: "/staging/block",
+				VolumeCapability:  stdBlockVolCap[0],
+				PublishContext:    map[string]string{PublishInfoDevicePath: "fake"},
+			},
+			expErrCode: codes.OK,
+		},
 	}
 
 	actionList := []testingexec.FakeCommandAction{
@@ -695,6 +732,14 @@ func TestNodeExpandVolume(t *testing.T) {
 		expErrCode codes.Code
 	}{
 		{
+			name: "Empty volume ID",
+			req: &csi.NodeExpandVolumeRequest{
+				VolumeId:   "",
+				VolumePath: defaultVolumePath,
+			},
+			expErrCode: codes.InvalidArgument,
+		},
+		{
 			name: "Empty volume Path",
 			req: &csi.NodeExpandVolumeRequest{
 				VolumeId:   defaultVolumeID,
@@ -703,7 +748,44 @@ func TestNodeExpandVolume(t *testing.T) {
 			expErrCode: codes.InvalidArgument,
 		},
 		{
-			name: "Invalid volumePath",
+			name: "Unsupported volume capability",
+			req: &csi.NodeExpandVolumeRequest{
+				VolumeId:   defaultVolumeID,
+				VolumePath: defaultVolumePath,
+				VolumeCapability: &csi.VolumeCapability{
+					AccessMode: &csi.VolumeCapability_AccessMode{
+						Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER,
+					},
+				},
+			},
+			expErrCode: codes.InvalidArgument,
+		},
+		{
+			name: "Block device path - IsBlockDevice error",
+			req: &csi.NodeExpandVolumeRequest{
+				VolumeId:   defaultVolumeID,
+				VolumePath: errorBlockDevice,
+			},
+			expErrCode: codes.Internal,
+		},
+		{
+			name: "Block device path - DeviceInfo success",
+			req: &csi.NodeExpandVolumeRequest{
+				VolumeId:   defaultVolumeID,
+				VolumePath: defaultVolumePath, // MockStatUtils returns true for non-errorblock/notblock paths
+			},
+			expErrCode: codes.OK,
+		},
+		{
+			name: "Block device path - DeviceInfo error",
+			req: &csi.NodeExpandVolumeRequest{
+				VolumeId:   defaultVolumeID,
+				VolumePath: errorDeviceInfo,
+			},
+			expErrCode: codes.Internal,
+		},
+		{
+			name: "Non-block invalid volume path - IsLikelyNotMountPoint error",
 			req: &csi.NodeExpandVolumeRequest{
 				VolumeId:   defaultVolumeID,
 				VolumePath: "/invalid-volPath_notblock",
@@ -861,29 +943,31 @@ func TestDeviceInfo(t *testing.T) {
 	testCases := []struct {
 		name          string
 		reqDevicePath string
-		respError     error
+		expectError   bool
 	}{
 		{
-			name:          "Success device info",
-			reqDevicePath: "/tmp",
-			respError:     nil,
+			name:          "Non-existent device path returns error",
+			reqDevicePath: "/dev/nonexistent-block-device-xyzabc",
+			expectError:   true,
 		},
 		{
-			name:          "Failed device info",
-			reqDevicePath: "/tmp11111111111",
-			respError:     fmt.Errorf("any error is fine"),
+			name:          "Non-block path (directory) returns error",
+			reqDevicePath: "/tmp",
+			expectError:   true, // blockdev fails on non-block-device paths
 		},
 	}
 
 	statUtils := &VolumeStatUtils{}
 	for _, tc := range testCases {
 		t.Logf("test case: %s", tc.name)
-		_, _ = statUtils.DeviceInfo(tc.reqDevicePath)
-		/*if tc.respError != nil {
-			assert.NotNil(t, err)
-		} else {
-			assert.Nil(t, err)
-		}*/
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := statUtils.DeviceInfo(tc.reqDevicePath)
+			if tc.expectError {
+				assert.NotNil(t, err, "expected error for path %s", tc.reqDevicePath)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
 	}
 }
 
