@@ -78,6 +78,26 @@ func TestGetPluginCapabilities(t *testing.T) {
 	}
 }
 
+func TestGetPluginCapabilitiesVGSDisabled(t *testing.T) {
+	t.Setenv("IS_VGS_ENABLED", "false")
+
+	icDriver := initIBMCSIDriver(t)
+	if icDriver == nil {
+		t.Fatalf("Failed to setup IBM CSI Driver")
+	}
+
+	resp, err := icDriver.ids.GetPluginCapabilities(context.Background(), &csi.GetPluginCapabilitiesRequest{})
+	if err != nil {
+		t.Fatalf("GetPluginCapabilities returned unexpected error: %v", err)
+	}
+
+	for _, capability := range resp.GetCapabilities() {
+		if capability.GetService().GetType() == csi.PluginCapability_Service_GROUP_CONTROLLER_SERVICE {
+			t.Fatalf("GROUP_CONTROLLER_SERVICE must not be advertised when IS_VGS_ENABLED=false")
+		}
+	}
+}
+
 func TestProbe(t *testing.T) {
 	icDriver := initIBMCSIDriver(t)
 	if icDriver == nil {

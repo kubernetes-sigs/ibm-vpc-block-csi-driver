@@ -1960,3 +1960,52 @@ func TestCreateCSIVolumeGroupSnapshotResponse(t *testing.T) {
 	assert.Equal(t, "group-snapshot-id", response.GroupSnapshot.Snapshots[1].GroupSnapshotId)
 	assert.False(t, response.GroupSnapshot.Snapshots[1].ReadyToUse)
 }
+
+func TestCreateVolumeGroupSnapshotDisabledByFeatureFlag(t *testing.T) {
+	t.Setenv("IS_VGS_ENABLED", "false")
+
+	icDriver := initIBMCSIDriver(t)
+	response, err := icDriver.cs.CreateVolumeGroupSnapshot(context.Background(), &csi.CreateVolumeGroupSnapshotRequest{
+		Name:            "group-snapshot-name",
+		SourceVolumeIds: []string{"volume-id-1"},
+	})
+
+	assert.Nil(t, response)
+	assert.Equal(t, codes.Unimplemented, status.Code(err))
+}
+
+func TestDeleteVolumeGroupSnapshotDisabledByFeatureFlag(t *testing.T) {
+	t.Setenv("IS_VGS_ENABLED", "false")
+
+	icDriver := initIBMCSIDriver(t)
+	response, err := icDriver.cs.DeleteVolumeGroupSnapshot(context.Background(), &csi.DeleteVolumeGroupSnapshotRequest{
+		GroupSnapshotId: "group-snapshot-id",
+		SnapshotIds:     []string{"snapshot-id-1"},
+	})
+
+	assert.Nil(t, response)
+	assert.Equal(t, codes.Unimplemented, status.Code(err))
+}
+
+func TestGetVolumeGroupSnapshotDisabledByFeatureFlag(t *testing.T) {
+	t.Setenv("IS_VGS_ENABLED", "false")
+
+	icDriver := initIBMCSIDriver(t)
+	response, err := icDriver.cs.GetVolumeGroupSnapshot(context.Background(), &csi.GetVolumeGroupSnapshotRequest{
+		GroupSnapshotId: "group-snapshot-id",
+	})
+
+	assert.Nil(t, response)
+	assert.Equal(t, codes.Unimplemented, status.Code(err))
+}
+
+func TestGroupControllerGetCapabilitiesDisabledByFeatureFlag(t *testing.T) {
+	t.Setenv("IS_VGS_ENABLED", "false")
+
+	icDriver := initIBMCSIDriver(t)
+	response, err := icDriver.cs.GroupControllerGetCapabilities(context.Background(), &csi.GroupControllerGetCapabilitiesRequest{})
+
+	assert.Nil(t, err)
+	assert.NotNil(t, response)
+	assert.Empty(t, response.Capabilities)
+}

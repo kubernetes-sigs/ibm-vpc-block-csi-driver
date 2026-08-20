@@ -19,6 +19,8 @@ package ibmcsidriver
 
 import (
 	"context"
+	"os"
+	"strings"
 
 	commonError "github.com/IBM/ibm-csi-common/pkg/messages"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
@@ -52,38 +54,42 @@ func (csiIdentity *CSIIdentityServer) GetPluginCapabilities(ctx context.Context,
 	ctxLogger, _ := utils.GetContextLogger(ctx, false)
 	ctxLogger.Info("CSIIdentityServer-GetPluginCapabilities...", zap.Reflect("Request", req))
 
-	return &csi.GetPluginCapabilitiesResponse{
-		Capabilities: []*csi.PluginCapability{
-			{
-				Type: &csi.PluginCapability_Service_{
-					Service: &csi.PluginCapability_Service{
-						Type: csi.PluginCapability_Service_CONTROLLER_SERVICE,
-					},
+	caps := []*csi.PluginCapability{
+		{
+			Type: &csi.PluginCapability_Service_{
+				Service: &csi.PluginCapability_Service{
+					Type: csi.PluginCapability_Service_CONTROLLER_SERVICE,
 				},
 			},
-			{
-				Type: &csi.PluginCapability_Service_{
-					Service: &csi.PluginCapability_Service{
-						Type: csi.PluginCapability_Service_VOLUME_ACCESSIBILITY_CONSTRAINTS,
-					},
-				},
-			},
-			{
-				Type: &csi.PluginCapability_Service_{
-					Service: &csi.PluginCapability_Service{
-						Type: csi.PluginCapability_Service_GROUP_CONTROLLER_SERVICE,
-					},
-				},
-			},
-			/* TODO Add Volume Expansion {
-				Type: &csi.PluginCapability_Service_{
-					Service: &csi.PluginCapability_Service{
-						Type: csi.PluginCapability_VolumeExpansion_ONLINE,
-					},
-				},
-			}, */
 		},
-	}, nil
+		{
+			Type: &csi.PluginCapability_Service_{
+				Service: &csi.PluginCapability_Service{
+					Type: csi.PluginCapability_Service_VOLUME_ACCESSIBILITY_CONSTRAINTS,
+				},
+			},
+		},
+	}
+
+	if strings.ToLower(os.Getenv("IS_VGS_ENABLED")) != "false" {
+		caps = append(caps, &csi.PluginCapability{
+			Type: &csi.PluginCapability_Service_{
+				Service: &csi.PluginCapability_Service{
+					Type: csi.PluginCapability_Service_GROUP_CONTROLLER_SERVICE,
+				},
+			},
+		})
+	}
+
+	/* TODO Add Volume Expansion {
+		Type: &csi.PluginCapability_Service_{
+			Service: &csi.PluginCapability_Service{
+				Type: csi.PluginCapability_VolumeExpansion_ONLINE,
+			},
+		},
+	}, */
+
+	return &csi.GetPluginCapabilitiesResponse{Capabilities: caps}, nil
 }
 
 // Probe ...
