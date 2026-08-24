@@ -19,8 +19,6 @@ package ibmcsidriver
 
 import (
 	"context"
-	"os"
-	"strings"
 
 	commonError "github.com/IBM/ibm-csi-common/pkg/messages"
 	"github.com/IBM/ibm-csi-common/pkg/utils"
@@ -49,7 +47,8 @@ func (csiIdentity *CSIIdentityServer) GetPluginInfo(ctx context.Context, req *cs
 	}, nil
 }
 
-// GetPluginCapabilities ...
+// GetPluginCapabilities exposes the GroupController service only when VGS is
+// explicitly enabled, keeping capability discovery aligned with the RPCs.
 func (csiIdentity *CSIIdentityServer) GetPluginCapabilities(ctx context.Context, req *csi.GetPluginCapabilitiesRequest) (*csi.GetPluginCapabilitiesResponse, error) {
 	ctxLogger, _ := utils.GetContextLogger(ctx, false)
 	ctxLogger.Info("CSIIdentityServer-GetPluginCapabilities...", zap.Reflect("Request", req))
@@ -71,7 +70,7 @@ func (csiIdentity *CSIIdentityServer) GetPluginCapabilities(ctx context.Context,
 		},
 	}
 
-	if strings.ToLower(os.Getenv("IS_VGS_ENABLED")) != "false" {
+	if isVGSEnabled() {
 		caps = append(caps, &csi.PluginCapability{
 			Type: &csi.PluginCapability_Service_{
 				Service: &csi.PluginCapability_Service{
