@@ -938,15 +938,20 @@ func (fake *FakeSession) CreateVolumeFromSnapshotReturnsOnCall(i int, result1 *p
 }
 
 func (fake *FakeSession) DeleteGroupSnapshot(arg1 string, arg2 []string) error {
+	var arg2Copy []string
+	if arg2 != nil {
+		arg2Copy = make([]string, len(arg2))
+		copy(arg2Copy, arg2)
+	}
 	fake.deleteGroupSnapshotMutex.Lock()
 	ret, specificReturn := fake.deleteGroupSnapshotReturnsOnCall[len(fake.deleteGroupSnapshotArgsForCall)]
 	fake.deleteGroupSnapshotArgsForCall = append(fake.deleteGroupSnapshotArgsForCall, struct {
 		arg1 string
 		arg2 []string
-	}{arg1, arg2})
+	}{arg1, arg2Copy})
 	stub := fake.DeleteGroupSnapshotStub
 	fakeReturns := fake.deleteGroupSnapshotReturns
-	fake.recordInvocation("DeleteGroupSnapshot", []interface{}{arg1, arg2})
+	fake.recordInvocation("DeleteGroupSnapshot", []interface{}{arg1, arg2Copy})
 	fake.deleteGroupSnapshotMutex.Unlock()
 	if stub != nil {
 		return stub(arg1, arg2)
