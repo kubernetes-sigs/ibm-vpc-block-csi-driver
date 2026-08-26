@@ -727,12 +727,6 @@ func (csiCS *CSIControllerServer) CreateVolumeGroupSnapshot(ctx context.Context,
 	ctxLogger.Info("CSIControllerServer-CreateVolumeGroupSnapshot... ", zap.Reflect("Request", req))
 	defer metrics.UpdateDurationFromStart(ctxLogger, "CreateVolumeGroupSnapshot", time.Now())
 
-	// Feature flag to enable/disable VolumeGroupSnapshot feature.
-	if !isVGSEnabled() {
-		ctxLogger.Warn("Volume group snapshot support is disabled; create request rejected")
-		return nil, volumeGroupSnapshotStatusError(codes.Unimplemented, requestID, "volume group snapshot support is disabled")
-	}
-
 	snapshotName := req.GetName()
 	if len(snapshotName) == 0 {
 		return nil, volumeGroupSnapshotStatusError(codes.InvalidArgument, requestID, "volume group snapshot name must be provided")
@@ -802,18 +796,12 @@ func (csiCS *CSIControllerServer) CreateVolumeGroupSnapshot(ctx context.Context,
 }
 
 // DeleteVolumeGroupSnapshot validates the CSI member IDs and delegates group
-// deletion to the provider when VGS support is enabled.
+// deletion to the provider.
 func (csiCS *CSIControllerServer) DeleteVolumeGroupSnapshot(ctx context.Context, req *csi.DeleteVolumeGroupSnapshotRequest) (*csi.DeleteVolumeGroupSnapshotResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	ctx = context.WithValue(ctx, provider.RequestID, requestID)
 	defer metrics.UpdateDurationFromStart(ctxLogger, "DeleteVolumeGroupSnapshot", time.Now())
 	ctxLogger.Info("CSIControllerServer-DeleteVolumeGroupSnapshot... ", zap.Reflect("Request", req))
-
-	// Feature flag to enable/disable VolumeGroupSnapshot feature.
-	if !isVGSEnabled() {
-		ctxLogger.Warn("Volume group snapshot support is disabled; delete request rejected")
-		return nil, volumeGroupSnapshotStatusError(codes.Unimplemented, requestID, "volume group snapshot support is disabled")
-	}
 
 	groupSnapshotID := req.GetGroupSnapshotId()
 	if len(groupSnapshotID) == 0 {
@@ -856,12 +844,6 @@ func (csiCS *CSIControllerServer) GetVolumeGroupSnapshot(ctx context.Context, re
 	ctx = context.WithValue(ctx, provider.RequestID, requestID)
 	ctxLogger.Info("CSIControllerServer-GetVolumeGroupSnapshot... ", zap.Reflect("Request", req))
 	defer metrics.UpdateDurationFromStart(ctxLogger, "GetVolumeGroupSnapshot", time.Now())
-
-	// Feature flag to enable/disable VolumeGroupSnapshot feature.
-	if !isVGSEnabled() {
-		ctxLogger.Warn("Volume group snapshot support is disabled; get request rejected")
-		return nil, volumeGroupSnapshotStatusError(codes.Unimplemented, requestID, "volume group snapshot support is disabled")
-	}
 
 	groupSnapshotID := req.GetGroupSnapshotId()
 	if len(groupSnapshotID) == 0 {
@@ -910,16 +892,11 @@ func (csiCS *CSIControllerServer) GetVolumeGroupSnapshot(ctx context.Context, re
 	}, nil
 }
 
-// GroupControllerGetCapabilities advertises VGS RPC support only when the
-// feature flag is explicitly enabled.
+// GroupControllerGetCapabilities advertises the group snapshot operations
+// implemented by this controller.
 func (csiCS *CSIControllerServer) GroupControllerGetCapabilities(ctx context.Context, req *csi.GroupControllerGetCapabilitiesRequest) (*csi.GroupControllerGetCapabilitiesResponse, error) {
 	ctxLogger, _ := utils.GetContextLogger(ctx, false)
 	ctxLogger.Info("CSIControllerServer-GroupControllerGetCapabilities...", zap.Reflect("Request", req))
-
-	if !isVGSEnabled() {
-		ctxLogger.Warn("Volume group snapshot support is disabled; GroupController capabilities will not be advertised")
-		return &csi.GroupControllerGetCapabilitiesResponse{}, nil
-	}
 
 	return &csi.GroupControllerGetCapabilitiesResponse{
 		Capabilities: []*csi.GroupControllerServiceCapability{

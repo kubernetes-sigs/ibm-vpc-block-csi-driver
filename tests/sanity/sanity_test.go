@@ -258,13 +258,18 @@ type fakeSnapshot struct {
 
 type fakeProviderSession struct {
 	provider.DefaultVolumeProvider
-	volumes        map[string]*fakeVolume
-	snapshots      map[string]*fakeSnapshot
-	groupSnapshots map[string]*fakeGroupSnapshot
-	pub            map[string]string
-	providerName   provider.VolumeProvider
-	providerType   provider.VolumeType
-	tokens         map[string]int
+	volumes                   map[string]*fakeVolume
+	snapshots                 map[string]*fakeSnapshot
+	groupSnapshots            map[string]*fakeGroupSnapshot
+	createGroupSnapshotResult *provider.GroupSnapshot
+	createGroupSnapshotErr    error
+	deleteGroupSnapshotErr    error
+	getGroupSnapshotErr       error
+	getGroupSnapshotByNameErr error
+	pub                       map[string]string
+	providerName              provider.VolumeProvider
+	providerType              provider.VolumeType
+	tokens                    map[string]int
 }
 
 func newFakeProviderSession() *fakeProviderSession {
