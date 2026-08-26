@@ -81,6 +81,8 @@ var skipErrorCodes = map[string]bool{
 	"volume_profile_capacity_maxbandwidth_invalid": true,
 	"validation_failed_pattern":                    true,
 	"volume_tags_update_failed":                    true,
+	"snapshots_service_unavailable":                true,
+	"snapshots_source_volume_busy":                 true,
 
 	// IKS ms error code for skip re-try
 	"ST0008": true, //resources not found
@@ -434,6 +436,58 @@ func FromProviderToLibSnapshot(vpcSnapshot *models.Snapshot, logger *zap.Logger)
 		libSnapshot.ReadyToUse = true
 	} else {
 		libSnapshot.ReadyToUse = false
+	}
+	return
+}
+
+// FromProviderToLibGroupSnapshot converts a VPC consistency group to the generic model.
+// A group is ready only when it is stable and every full member snapshot is ready.
+func FromProviderToLibGroupSnapshot(vpcGroup *models.SnapshotConsistencyGroup, snapshotDetails []*models.Snapshot, logger *zap.Logger) (libGroupSnapshot *provider.GroupSnapshot) {
+	logger.Debug("Entry of FromProviderToLibGroupSnapshot method...")
+	defer logger.Debug("Exit from FromProviderToLibGroupSnapshot method...")
+
+	if vpcGroup == nil {
+		logger.Info("GroupSnapshot details are empty")
+		return
+	}
+
+	logger.Debug("GroupSnapshot details of VPC client", zap.Reflect("models.SnapshotConsistencyGroup", vpcGroup))
+
+	var createdTime time.Time
+	if vpcGroup.CreatedAt != nil {
+		createdTime = *vpcGroup.CreatedAt
+	}
+
+	libGroupSnapshot = &provider.GroupSnapshot{
+		GroupSnapshotID:           vpcGroup.ID,
+		GroupSnapshotCRN:          vpcGroup.CRN,
+		GroupSnapshotCreationTime: createdTime,
+		VPC:                       provider.VPC{Href: vpcGroup.Href},
+	}
+
+	// If full snapshot details are available (from Create flow), use them to populate source_volume_id
+	if len(snapshotDetails) > 0 {
+		for _, snap := range snapshotDetails {
+			libGroupSnapshot.Snapshots = append(libGroupSnapshot.Snapshots, FromProviderToLibSnapshot(snap, logger))
+		}
+	} else {
+		// Fallback: use snapshot references from the consistency group response (no source_volume info)
+		for i := range vpcGroup.Snapshots {
+			ref := &vpcGroup.Snapshots[i]
+			libGroupSnapshot.Snapshots = append(libGroupSnapshot.Snapshots, &provider.Snapshot{
+				SnapshotID:  ref.ID,
+				SnapshotCRN: ref.CRN,
+				VPC:         provider.VPC{Href: ref.Href},
+			})
+		}
+	}
+
+	libGroupSnapshot.ReadyToUse = vpcGroup.LifecycleState == snapshotReadyState && len(libGroupSnapshot.Snapshots) > 0
+	for _, snapshot := range libGroupSnapshot.Snapshots {
+		if snapshot == nil || !snapshot.ReadyToUse {
+			libGroupSnapshot.ReadyToUse = false
+			break
+		}
 	}
 	return
 }

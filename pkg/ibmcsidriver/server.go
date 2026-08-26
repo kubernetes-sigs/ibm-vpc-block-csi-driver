@@ -138,6 +138,10 @@ func (s *nonBlockingGRPCServer) Setup(endpoint string, ids csi.IdentityServer, c
 	}
 	if cs != nil {
 		csi.RegisterControllerServer(s.server, cs)
+		// Keep every VGS RPC unavailable unless the feature is explicitly enabled.
+		if gcs, ok := cs.(csi.GroupControllerServer); ok && isVGSEnabled() {
+			csi.RegisterGroupControllerServer(s.server, gcs)
+		}
 	}
 	if ns != nil {
 		csi.RegisterNodeServer(s.server, ns)

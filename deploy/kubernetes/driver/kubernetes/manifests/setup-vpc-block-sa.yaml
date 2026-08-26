@@ -8,7 +8,6 @@ metadata:
     app: ibm-vpc-block-csi-driver
     addonmanager.kubernetes.io/mode: Reconcile
 ---
-
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -36,7 +35,6 @@ rules:
     resources: ["configmaps"]
     verbs: ["get", "list"]
 ---
-
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -105,7 +103,6 @@ rules:
     verbs: ["get", "list"]
 
 ---
-
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -148,7 +145,6 @@ rules:
     resources: ["volumeattachments/status"]
     verbs: ["patch"]
 ---
-
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -166,7 +162,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 
 ---
-
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -192,7 +187,6 @@ rules:
     verbs: ["list", "watch", "create", "update", "patch"]
 
 ---
-
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -210,7 +204,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 
 ---
-
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -233,10 +226,21 @@ rules:
     verbs: ["create", "get", "list", "watch", "update", "delete", "patch"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotcontents/status"]
-    verbs: ["update","patch"]
+    verbs: ["update", "patch"]
+  - apiGroups: ["groupsnapshot.storage.k8s.io"]
+    resources:
+      [
+        "volumegroupsnapshots",
+        "volumegroupsnapshotcontents",
+        "volumegroupsnapshotclasses",
+      ]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["groupsnapshot.storage.k8s.io"]
+    resources:
+      ["volumegroupsnapshots/status", "volumegroupsnapshotcontents/status"]
+    verbs: ["get", "update", "patch"]
 
 ---
-
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
