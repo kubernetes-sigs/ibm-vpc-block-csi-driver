@@ -16,4 +16,4 @@
 set -e
 set -x
 cd /go/src/github.com/kubernetes-sigs/ibm-vpc-block-csi-driver
-CGO_ENABLED=0 go build -a -ldflags '-X main.vendorVersion='"vpcBlockDriver-${TAG}"' -extldflags "-static"' -o /go/bin/ibm-vpc-block-csi-driver ./cmd/
+CGO_ENABLED=0 GOOS=${OS:-linux} GOARCH=${ARCH:-amd64} go build -a -ldflags '-X main.vendorVersion='"vpcBlockDriver-${TAG}"' -extldflags "-static"' -o /go/bin/ibm-vpc-block-csi-driver ./cmd/

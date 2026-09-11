@@ -108,10 +108,22 @@ buildimage: build-systemutil
         --build-arg BUILD_URL=${BUILD_URL} \
 	-t $(CORE_DRIVER_IMG):$(ARCH)-$(TAG) -f Dockerfile .
 
+.PHONY: buildimage-local
+buildimage-local: build-systemutil
+	docker buildx build \
+        --platform linux/$(ARCH) \
+        --build-arg git_commit_id=${GIT_COMMIT_SHA} \
+        --build-arg git_remote_url=${GIT_REMOTE_URL} \
+        --build-arg build_date=${BUILD_DATE} \
+        --build-arg jenkins_build_number=${BUILD_NUMBER} \
+        --build-arg REPO_SOURCE_URL=${REPO_SOURCE_URL} \
+        --build-arg BUILD_URL=${BUILD_URL} \
+	-t $(CORE_DRIVER_IMG):$(ARCH)-$(TAG) --load -f Dockerfile .
+
 .PHONY: build-systemutil
 build-systemutil:
-	docker build --build-arg TAG=$(GIT_COMMIT_SHA) --build-arg OS=linux --build-arg ARCH=$(ARCH) -t csi-driver-builder --pull -f Dockerfile.builder .
-	docker run --env GHE_TOKEN=${GHE_TOKEN} csi-driver-builder
+	docker buildx build --platform linux/$(ARCH) --build-arg TAG=$(GIT_COMMIT_SHA) --build-arg OS=linux --build-arg ARCH=$(ARCH) -t csi-driver-builder --pull --load -f Dockerfile.builder .
+	docker run --platform linux/$(ARCH) --env GHE_TOKEN=${GHE_TOKEN} csi-driver-builder
 	docker cp `docker ps -q -n=1`:/go/bin/${EXE_DRIVER_NAME} ./${EXE_DRIVER_NAME}
 
 .PHONY: test-sanity
