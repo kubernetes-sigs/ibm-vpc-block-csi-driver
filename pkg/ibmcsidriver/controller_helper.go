@@ -20,6 +20,7 @@ package ibmcsidriver
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -102,8 +103,27 @@ func getVolumeParameters(logger *zap.Logger, req *csi.CreateVolumeRequest, confi
 	var encrypt = "undef"
 	volume := &provider.Volume{Name: &req.Name}
 
-	// Process storage class parameters
+	// Merge parameters from StorageClass and VolumeAttributesClass
+	// VolumeAttributesClass parameters take precedence over StorageClass parameters
+	allParameters := make(map[string]string)
 	for key, value := range req.GetParameters() {
+		allParameters[key] = value
+	}
+	for key, value := range req.GetMutableParameters() {
+		logger.Info("VolumeAttributesClass parameter detected", zap.String("key", key), zap.String("value", value))
+		allParameters[key] = value
+	}
+
+	// Sort keys for deterministic processing order
+	allKeys := make([]string, 0, len(allParameters))
+	for key := range allParameters {
+		allKeys = append(allKeys, key)
+	}
+	sort.Strings(allKeys)
+
+	// Process all merged parameters
+	for _, key := range allKeys {
+		value := allParameters[key]
 		var err error
 		switch key {
 		case Profile:

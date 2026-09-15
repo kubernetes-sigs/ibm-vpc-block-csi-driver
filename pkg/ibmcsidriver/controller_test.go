@@ -943,6 +943,7 @@ func TestControllerGetCapabilities(t *testing.T) {
 					{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT}}},
 					{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_LIST_SNAPSHOTS}}},
 					{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_EXPAND_VOLUME}}},
+					{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_MODIFY_VOLUME}}},
 					// &csi.ControllerServiceCapability{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_PUBLISH_READONLY}}},
 				},
 			},
@@ -1644,12 +1645,157 @@ func TestControllerGetVolume(t *testing.T) {
 }
 
 func TestControllerModifyVolume(t *testing.T) {
-	// Setup new driver each time so no interference
-	icDriver := initIBMCSIDriver(t)
+	testCases := []struct {
+		name              string
+		req               *csi.ControllerModifyVolumeRequest
+		libVolumeResponse *provider.Volume
+		libVolumeErr      error
+		libUpdateErr      error
+		expErrCode        codes.Code
+	}{
+		{
+			name:       "Empty VolumeID returns InvalidArgument error",
+			req:        &csi.ControllerModifyVolumeRequest{},
+			expErrCode: codes.InvalidArgument,
+		},
+		{
+			name: "Volume not found returns NotFound error",
+			req: &csi.ControllerModifyVolumeRequest{
+				VolumeId:          "test-vol-id",
+				MutableParameters: map[string]string{IOPS: "3000"},
+			},
+			libVolumeResponse: nil,
+			libVolumeErr:      nil,
+			expErrCode:        codes.NotFound,
+		},
+		{
+			name: "Non-numeric IOPS param returns InvalidArgument",
+			req: &csi.ControllerModifyVolumeRequest{
+				VolumeId:          "test-vol-id",
+				MutableParameters: map[string]string{IOPS: "not-a-number"},
+			},
+			libVolumeResponse: &provider.Volume{
+				VolumeID: "test-vol-id",
+				VPCVolume: provider.VPCVolume{
+					Profile: &provider.Profile{Name: CustomProfile},
+				},
+			},
+			expErrCode: codes.InvalidArgument,
+		},
+		{
+			name: "Non-numeric throughput param returns InvalidArgument",
+			req: &csi.ControllerModifyVolumeRequest{
+				VolumeId:          "test-vol-id",
+				MutableParameters: map[string]string{Throughput: "not-a-number"},
+			},
+			libVolumeResponse: &provider.Volume{
+				VolumeID: "test-vol-id",
+				VPCVolume: provider.VPCVolume{
+					Profile: &provider.Profile{Name: "general-purpose"},
+				},
+			},
+			expErrCode: codes.InvalidArgument,
+		},
+		{
+			name: "Non-numeric bandwidth param returns InvalidArgument",
+			req: &csi.ControllerModifyVolumeRequest{
+				VolumeId:          "test-vol-id",
+				MutableParameters: map[string]string{Bandwidth: "not-a-number"},
+			},
+			libVolumeResponse: &provider.Volume{
+				VolumeID: "test-vol-id",
+				VPCVolume: provider.VPCVolume{
+					Profile: &provider.Profile{Name: "general-purpose"},
+				},
+			},
+			expErrCode: codes.InvalidArgument,
+		},
+		{
+			name: "Unrecognized params returns InvalidArgument",
+			req: &csi.ControllerModifyVolumeRequest{
+				VolumeId:          "test-vol-id",
+				MutableParameters: map[string]string{"unknown-key": "value"},
+			},
+			libVolumeResponse: &provider.Volume{
+				VolumeID: "test-vol-id",
+				VPCVolume: provider.VPCVolume{
+					Profile: &provider.Profile{Name: CustomProfile},
+				},
+			},
+			expErrCode: codes.InvalidArgument,
+		},
+		{
+			name: "Valid IOPS modification succeeds",
+			req: &csi.ControllerModifyVolumeRequest{
+				VolumeId:          "test-vol-id",
+				MutableParameters: map[string]string{IOPS: "3000"},
+			},
+			libVolumeResponse: &provider.Volume{
+				VolumeID: "test-vol-id",
+				VPCVolume: provider.VPCVolume{
+					Profile: &provider.Profile{Name: CustomProfile},
+				},
+			},
+			expErrCode: codes.OK,
+		},
+		{
+			name: "Valid throughput/bandwidth modification succeeds",
+			req: &csi.ControllerModifyVolumeRequest{
+				VolumeId:          "test-vol-id",
+				MutableParameters: map[string]string{Throughput: "500"},
+			},
+			libVolumeResponse: &provider.Volume{
+				VolumeID: "test-vol-id",
+				VPCVolume: provider.VPCVolume{
+					Profile: &provider.Profile{Name: "general-purpose"},
+				},
+			},
+			expErrCode: codes.OK,
+		},
+		{
+			name: "Backend UpdateVolume error returns InvalidArgument error",
+			req: &csi.ControllerModifyVolumeRequest{
+				VolumeId:          "test-vol-id",
+				MutableParameters: map[string]string{IOPS: "3000"},
+			},
+			libVolumeResponse: &provider.Volume{
+				VolumeID: "test-vol-id",
+				VPCVolume: provider.VPCVolume{
+					Profile: &provider.Profile{Name: CustomProfile},
+				},
+			},
+			libUpdateErr: errors.New("backend error"),
+			expErrCode:   codes.InvalidArgument,
+		},
+	}
 
-	resp, err := icDriver.cs.ControllerModifyVolume(context.Background(), &csi.ControllerModifyVolumeRequest{})
+	logger, teardown := cloudProvider.GetTestLogger(t)
+	defer teardown()
 
-	assert.Nil(t, resp)
-	assert.NotNil(t, err)
-	assert.Equal(t, codes.Unimplemented, status.Code(err))
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			icDriver := initIBMCSIDriver(t)
+
+			fakeSession, err := icDriver.cs.CSIProvider.GetProviderSession(context.Background(), logger)
+			assert.Nil(t, err)
+			fakeStructSession, ok := fakeSession.(*fake.FakeSession)
+			assert.True(t, ok)
+			fakeStructSession.GetVolumeReturns(tc.libVolumeResponse, tc.libVolumeErr)
+			if tc.libUpdateErr != nil {
+				fakeStructSession.UpdateVolumeReturns(tc.libUpdateErr)
+			}
+
+			_, err = icDriver.cs.ControllerModifyVolume(context.Background(), tc.req)
+			if tc.expErrCode != codes.OK {
+				assert.NotNil(t, err)
+				serverError, ok := status.FromError(err)
+				assert.True(t, ok)
+				if serverError.Code() != tc.expErrCode {
+					t.Fatalf("Expected error code -> %v, Actual error code: %v. err: %v", tc.expErrCode, serverError.Code(), err)
+				}
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
 }
