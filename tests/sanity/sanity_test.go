@@ -322,7 +322,7 @@ func (c *fakeProviderSession) CreateVolume(volumeRequest provider.Volume) (*prov
 			Capacity: volumeRequest.Capacity,
 			Snapshot: provider.Snapshot{SnapshotID: volumeRequest.SnapshotID},
 			VPCVolume: provider.VPCVolume{
-				Profile: volumeRequest.VPCVolume.Profile,
+				Profile: volumeRequest.Profile,
 			},
 		},
 	}
