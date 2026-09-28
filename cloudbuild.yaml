@@ -3,13 +3,15 @@ timeout: 3000s
 options:
   substitution_option: ALLOW_LOOSE
 steps:
-  - name: 'gcr.io/k8s-testimages/gcb-docker-gcloud:v20210722-085d930'
-    entrypoint: make
+  # Build tool image: its entrypoint sets up Buildx and QEMU for ALL_ARCH.
+  # Driver images are still pushed to STAGING_REGISTRY in the Makefile.
+  - name: 'registry.k8s.io/releng/gcb-docker-gcloud:v20260806'
     env:
       - DOCKER_CLI_EXPERIMENTAL=enabled
       - TAG=$_GIT_TAG
       - PULL_BASE_REF=$_PULL_BASE_REF
     args:
+      - make
       - release-staging
 substitutions:
   # _GIT_TAG will be filled with a git-based tag for the image, of the form vYYYYMMDD-hash, and

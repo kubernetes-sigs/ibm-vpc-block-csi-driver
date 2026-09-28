@@ -99,7 +99,7 @@ ut-coverage:
 
 .PHONY: buildimage
 buildimage: build-systemutil
-	docker build --platform=linux/$(ARCH) \
+	docker buildx build --pull --load --platform=linux/$(ARCH) \
         --build-arg git_commit_id=${GIT_COMMIT_SHA} \
         --build-arg git_remote_url=${GIT_REMOTE_URL} \
         --build-arg build_date=${BUILD_DATE} \
@@ -107,10 +107,12 @@ buildimage: build-systemutil
         --build-arg REPO_SOURCE_URL=${REPO_SOURCE_URL} \
         --build-arg BUILD_URL=${BUILD_URL} \
 	-t $(CORE_DRIVER_IMG):$(ARCH)-$(TAG) -f Dockerfile .
+	@actual=$$(docker image inspect --format '{{.Os}}/{{.Architecture}}' $(CORE_DRIVER_IMG):$(ARCH)-$(TAG)); \
+	  test "$$actual" = "linux/$(ARCH)" || { echo "Image platform mismatch: expected linux/$(ARCH), got $$actual" >&2; exit 1; }
 
 .PHONY: build-systemutil
 build-systemutil:
-	docker build --build-arg TAG=$(GIT_COMMIT_SHA) --build-arg OS=linux --build-arg ARCH=$(ARCH) -t csi-driver-builder --pull -f Dockerfile.builder .
+	docker buildx build --pull --load --build-arg TAG=$(GIT_COMMIT_SHA) --build-arg OS=linux --build-arg ARCH=$(ARCH) -t csi-driver-builder -f Dockerfile.builder .
 	docker run --env GHE_TOKEN=${GHE_TOKEN} --env GOOS=linux --env GOARCH=$(ARCH) --env TAG=$(GIT_COMMIT_SHA) csi-driver-builder
 	docker cp `docker ps -q -n=1`:/go/bin/${EXE_DRIVER_NAME} ./${EXE_DRIVER_NAME}
 
