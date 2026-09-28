@@ -198,30 +198,6 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
-        - name: csi-external-modify-volume-controller
-          image: MUSTPATCHWITHKUSTOMIZE
-          imagePullPolicy: Always
-          securityContext:
-            privileged: false
-            allowPrivilegeEscalation: false
-          args:
-            - "--v=5"
-            - "--csi-address=$(ADDRESS)"
-            - "--timeout=900s"
-            - "--handle-volume-inuse-error=false"
-          env:
-            - name: ADDRESS
-              value: /csi/csi.sock
-          resources:
-            limits:
-              cpu: 80m
-              memory: 160Mi
-            requests:
-              cpu: 20m
-              memory: 40Mi
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /csi
       volumes:
         - name: vault-token
           projected:

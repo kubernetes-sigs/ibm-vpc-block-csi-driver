@@ -1,4 +1,4 @@
-kind: StatefulSet
+kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: ibm-vpc-block-csi-controller
@@ -19,5 +19,3 @@ spec:
           image: registry.k8s.io/sig-storage/csi-resizer:v2.1.0
         - name: csi-snapshotter
           image: registry.k8s.io/sig-storage/csi-snapshotter:v8.5.0
-        - name: csi-external-modify-volume-controller
-          image: registry.k8s.io/sig-storage/csi-resizer:v2.1.0
