@@ -79,7 +79,7 @@ type ResponseConsumer interface {
 func (r *Request) path() string {
 	path := r.operation.PathPattern
 	for k, v := range r.pathParams {
-		path = strings.Replace(path, "{"+k+"}", v, -1)
+		path = strings.ReplaceAll(path, "{"+k+"}", v)
 	}
 	return path
 }

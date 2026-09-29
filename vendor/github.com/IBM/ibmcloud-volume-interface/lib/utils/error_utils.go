@@ -108,11 +108,11 @@ func FaultToError(fault *provider.Fault) error {
 // SetFaultResponse sets the Fault field of any response struct
 func SetFaultResponse(fault error, response interface{}) error {
 	value := reflect.ValueOf(response)
-	if value.Kind() != reflect.Ptr || value.Elem().Kind() != reflect.Struct {
+	if value.Kind() != reflect.Pointer || value.Elem().Kind() != reflect.Struct {
 		return errors.New("value must be a pointer to a struct")
 	}
 	field := value.Elem().FieldByName("Fault")
-	if field.Kind() != reflect.Ptr {
+	if field.Kind() != reflect.Pointer {
 		return errors.New("value struct must have Fault provider.Fault field")
 	}
 	field.Set(reflect.ValueOf(ErrorToFault(fault)))

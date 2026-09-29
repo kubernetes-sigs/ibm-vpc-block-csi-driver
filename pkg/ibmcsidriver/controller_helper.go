@@ -504,6 +504,33 @@ func createCSISnapshotResponse(snapshot provider.Snapshot) *csi.CreateSnapshotRe
 	}
 }
 
+// createCSIVolumeGroupSnapshotResponse converts a provider GroupSnapshot to a CSI CreateVolumeGroupSnapshotResponse
+func createCSIVolumeGroupSnapshotResponse(groupSnapshot provider.GroupSnapshot) *csi.CreateVolumeGroupSnapshotResponse {
+	ts := timestamppb.New(groupSnapshot.GroupSnapshotCreationTime)
+
+	var snapshots []*csi.Snapshot
+	for _, snap := range groupSnapshot.Snapshots {
+		snapTs := timestamppb.New(snap.SnapshotCreationTime)
+		snapshots = append(snapshots, &csi.Snapshot{
+			SnapshotId:      snap.SnapshotCRN,
+			SourceVolumeId:  snap.VolumeID,
+			SizeBytes:       snap.SnapshotSize,
+			CreationTime:    snapTs,
+			ReadyToUse:      snap.ReadyToUse,
+			GroupSnapshotId: groupSnapshot.GroupSnapshotID,
+		})
+	}
+
+	return &csi.CreateVolumeGroupSnapshotResponse{
+		GroupSnapshot: &csi.VolumeGroupSnapshot{
+			GroupSnapshotId: groupSnapshot.GroupSnapshotID,
+			Snapshots:       snapshots,
+			CreationTime:    ts,
+			ReadyToUse:      groupSnapshot.ReadyToUse,
+		},
+	}
+}
+
 func createControllerPublishVolumeResponse(volumeAttachmentResponse provider.VolumeAttachmentResponse, extraPublishInfo map[string]string) *csi.ControllerPublishVolumeResponse {
 	publishContext := map[string]string{
 		PublishInfoVolumeID:   volumeAttachmentResponse.VolumeID,

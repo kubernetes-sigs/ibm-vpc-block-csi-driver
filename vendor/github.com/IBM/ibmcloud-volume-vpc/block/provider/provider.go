@@ -36,7 +36,6 @@ import (
 	"github.com/IBM/ibmcloud-volume-interface/provider/local"
 	vpcconfig "github.com/IBM/ibmcloud-volume-vpc/block/vpcconfig"
 	vpcauth "github.com/IBM/ibmcloud-volume-vpc/common/auth"
-	"github.com/IBM/ibmcloud-volume-vpc/common/messages"
 	userError "github.com/IBM/ibmcloud-volume-vpc/common/messages"
 	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/riaas"
 	"go.uber.org/zap"
@@ -135,7 +134,7 @@ func NewProvider(conf *vpcconfig.VPCBlockConfig, k8sClient *k8s_utils.Kubernetes
 	}
 	// Update VPC config for IKS deployment
 	provider.Config.VPCConfig.IsIKS = conf.IKSConfig != nil && conf.IKSConfig.Enabled
-	userError.MessagesEn = messages.InitMessages()
+	userError.MessagesEn = userError.InitMessages()
 	return provider, nil
 }
 

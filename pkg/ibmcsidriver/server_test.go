@@ -35,6 +35,7 @@ import (
 )
 
 func TestSetup(t *testing.T) {
+	t.Setenv(vgsFeatureFlag, "true")
 	goodEndpoint := flag.String("endpoint", "unix:/tmp/testcsi.sock", "Test CSI endpoint")
 	logger, teardown := cloudProvider.GetTestLogger(t)
 	defer teardown()
@@ -90,6 +91,54 @@ func TestSetup(t *testing.T) {
 		_, err := nonBlockingServer.Setup(*wrongAddressEndpointAddress, nil, nil, nil)
 		//assert.Nil(t, err) // Its working on local system
 		t.Logf("---------> error %v", err)
+	}
+}
+
+func TestGroupControllerRegistrationRequiresEnabledFeatureFlag(t *testing.T) {
+	testCases := []struct {
+		name       string
+		flagValue  string
+		registered bool
+	}{
+		{name: "enabled", flagValue: "true", registered: true},
+		{name: "disabled", flagValue: "false", registered: false},
+		{name: "invalid", flagValue: "invalid", registered: false},
+		{name: "missing", registered: false},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.name == "missing" {
+				previousValue, existed := os.LookupEnv(vgsFeatureFlag)
+				assert.NoError(t, os.Unsetenv(vgsFeatureFlag))
+				t.Cleanup(func() {
+					if existed {
+						assert.NoError(t, os.Setenv(vgsFeatureFlag, previousValue))
+					}
+				})
+			} else {
+				t.Setenv(vgsFeatureFlag, tc.flagValue)
+			}
+
+			logger, teardown := cloudProvider.GetTestLogger(t)
+			defer teardown()
+			server := NewNonBlockingGRPCServer(logger).(*nonBlockingGRPCServer)
+			socketPath := "/tmp/vgs-registration-" + tc.name + ".sock"
+			assert.NoError(t, os.RemoveAll(socketPath))
+			t.Cleanup(func() { assert.NoError(t, os.RemoveAll(socketPath)) })
+			endpoint := "unix:" + socketPath
+			listener, err := server.Setup(endpoint, &CSIIdentityServer{}, &CSIControllerServer{}, nil)
+			assert.NoError(t, err)
+			assert.NotNil(t, listener)
+			if err != nil {
+				return
+			}
+			defer listener.Close()
+			defer server.ForceStop()
+
+			_, registered := server.server.GetServiceInfo()["csi.v1.GroupController"]
+			assert.Equal(t, tc.registered, registered)
+		})
 	}
 }
 
