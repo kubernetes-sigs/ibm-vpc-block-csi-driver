@@ -217,3 +217,10 @@ func (volprov *DefaultVolumeProvider) GetSubnetForVolumeAccessPoint(subnetReques
 func (volprov *DefaultVolumeProvider) GetSecurityGroupForVolumeAccessPoint(securityGroupRequest SecurityGroupRequest) (string, error) {
 	return "", nil
 }
+
+// GetVolumeProfileBands returns a no-op nil result.
+// Concrete session implementations that support this operation
+// (e.g. IksVpcSession via armada-storage-api) override this method.
+func (volprov *DefaultVolumeProvider) GetVolumeProfileBands(profile string) ([]VolumeProfileBand, error) {
+	return nil, nil
+}
