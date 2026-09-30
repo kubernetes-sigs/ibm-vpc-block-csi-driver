@@ -18,12 +18,22 @@
 package provider
 
 import (
+	"sync"
+
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	vpcconfig "github.com/IBM/ibmcloud-volume-vpc/block/vpcconfig"
 	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/instances"
 	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/riaas"
 	"go.uber.org/zap"
 )
+
+// bmsOnceState holds the sync.Once state for lazy BMS manager init.
+// It is heap-allocated so that VPCSession remains copyable (sync.Once must
+// not be copied after first use, but VPCSession is copied in the IKS path).
+type bmsOnceState struct {
+	once sync.Once
+	mgr  instances.VolumeAttachManager
+}
 
 // VPCSession implements lib.Session
 type VPCSession struct {
@@ -39,6 +49,23 @@ type VPCSession struct {
 	Logger                *zap.Logger
 	APIRetry              FlexyRetry
 	SessionError          error
+
+	// bmsState is heap-allocated so that copying VPCSession (as the IKS path
+	// does) does not violate the sync.Once noCopy constraint.
+	// Only initialised on the first BMS request; nil on IKS clusters.
+	bmsState *bmsOnceState
+}
+
+// getBMSVolAttachMgr returns the lazily-initialised BMS volume-attachment
+// manager.  It is safe for concurrent use via sync.Once.
+func (vpcs *VPCSession) getBMSVolAttachMgr() instances.VolumeAttachManager {
+	if vpcs.bmsState == nil {
+		vpcs.bmsState = &bmsOnceState{}
+	}
+	vpcs.bmsState.once.Do(func() {
+		vpcs.bmsState.mgr = vpcs.Apiclient.BMSVolumeAttachService()
+	})
+	return vpcs.bmsState.mgr
 }
 
 const (

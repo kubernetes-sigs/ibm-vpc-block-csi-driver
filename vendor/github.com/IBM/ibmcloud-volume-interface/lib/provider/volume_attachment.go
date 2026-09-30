@@ -70,4 +70,12 @@ type VolumeAttachmentRequest struct {
 	VPCVolumeAttachment *VolumeAttachment `json:"vpcVolumeAttachment"`
 	// Only IKS provider
 	IKSVolumeAttachment *IKSVolumeAttachment `json:"iksVolumeAttachment"`
+	// Only for BMS SDP (self-managed cluster, bare metal node). Nil on IKS and VSI clusters.
+	BMSVolumeAttachment *BMSVolumeAttachment `json:"bmsVolumeAttachment,omitempty"`
+}
+
+// BMSVolumeAttachment carries BMS SDP-specific attachment parameters.
+// Protocol should be set to "nvme_tcp" for NVMe-oF over TCP.
+type BMSVolumeAttachment struct {
+	Protocol string `json:"protocol,omitempty"`
 }
