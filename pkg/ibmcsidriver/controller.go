@@ -259,6 +259,16 @@ func (csiCS *CSIControllerServer) ControllerPublishVolume(ctx context.Context, r
 			ClusterID: &clusterID,
 		},
 	}
+
+	// For self-managed clusters (clusterID == "") on bare metal nodes, use the
+	// BMS SDP attach path instead of the IKS/VSI path.
+	if clusterID == "" && isBaremetalNode(nodeID, ctxLogger) {
+		volumeAttachmentReq.IKSVolumeAttachment = nil
+		volumeAttachmentReq.BMSVolumeAttachment = &provider.BMSVolumeAttachment{
+			Protocol: "nvme_tcp",
+		}
+	}
+
 	response, err := sess.AttachVolume(volumeAttachmentReq)
 	if err != nil {
 		// Node should be present if not return the error code
@@ -314,6 +324,16 @@ func (csiCS *CSIControllerServer) ControllerUnpublishVolume(ctx context.Context,
 			ClusterID: &clusterID,
 		},
 	}
+
+	// For self-managed clusters (clusterID == "") on bare metal nodes, use the
+	// BMS SDP detach path instead of the IKS/VSI path.
+	if clusterID == "" && isBaremetalNode(nodeID, ctxLogger) {
+		volumeAttachmentReq.IKSVolumeAttachment = nil
+		volumeAttachmentReq.BMSVolumeAttachment = &provider.BMSVolumeAttachment{
+			Protocol: "nvme_tcp",
+		}
+	}
+
 	sess, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
 	if err != nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
