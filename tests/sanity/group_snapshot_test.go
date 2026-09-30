@@ -258,12 +258,6 @@ func TestVolumeGroupSnapshotSanity(t *testing.T) {
 
 		_, err = client.DeleteVolumeGroupSnapshot(ctx, &csi.DeleteVolumeGroupSnapshotRequest{
 			GroupSnapshotId: group.GroupSnapshotId,
-			SnapshotIds:     []string{"wrong-member-snapshot"},
-		})
-		requireRPCCode(t, err, codes.InvalidArgument)
-
-		_, err = client.DeleteVolumeGroupSnapshot(ctx, &csi.DeleteVolumeGroupSnapshotRequest{
-			GroupSnapshotId: group.GroupSnapshotId,
 			SnapshotIds:     snapshotIDs,
 		})
 		if err != nil {
@@ -642,7 +636,8 @@ func (c *fakeProviderSession) CreateGroupSnapshot(sourceVolumeIDs []string, para
 	return groupSnapshot, nil
 }
 
-func (c *fakeProviderSession) DeleteGroupSnapshot(groupSnapshotID string, snapshotIDs []string) error {
+// DeleteGroupSnapshot mirrors VPC's group-level deletion without checking member IDs.
+func (c *fakeProviderSession) DeleteGroupSnapshot(groupSnapshotID string, _ []string) error {
 	if c.deleteGroupSnapshotErr != nil {
 		return c.deleteGroupSnapshotErr
 	}
@@ -655,21 +650,6 @@ func (c *fakeProviderSession) DeleteGroupSnapshot(groupSnapshotID string, snapsh
 			Type:         providerError.RetrivalFailed,
 			BackendError: "Code:snapshot_consistency_groups_not_found, RC:404",
 		}
-	}
-
-	expectedSnapshotIDs := make(map[string]struct{}, len(groupSnapshot.Snapshots))
-	for _, snapshot := range groupSnapshot.Snapshots {
-		expectedSnapshotIDs[snapshot.SnapshotCRN] = struct{}{}
-	}
-	seenSnapshotIDs := make(map[string]struct{}, len(snapshotIDs))
-	for _, snapshotID := range snapshotIDs {
-		if _, exists := expectedSnapshotIDs[snapshotID]; !exists {
-			return groupSnapshotMemberMismatchError()
-		}
-		seenSnapshotIDs[snapshotID] = struct{}{}
-	}
-	if len(seenSnapshotIDs) != len(expectedSnapshotIDs) {
-		return groupSnapshotMemberMismatchError()
 	}
 
 	for _, snapshot := range groupSnapshot.Snapshots {
@@ -702,12 +682,4 @@ func (c *fakeProviderSession) GetGroupSnapshotByName(groupSnapshotName string, r
 		}
 	}
 	return nil, nil
-}
-
-func groupSnapshotMemberMismatchError() error {
-	return providerError.Message{
-		Code:        "GroupSnapshotMembersMismatch",
-		Description: "Group snapshot member IDs do not match",
-		Type:        providerError.InvalidRequest,
-	}
 }

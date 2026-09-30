@@ -72,6 +72,7 @@ var skipErrorCodes = map[string]bool{
 	SnapshotNotFound:                               true,
 	"snapshots_not_authorized":                     true,
 	SnapshotIDNotFound:                             true,
+	"snapshot_consistency_groups_not_found":        true, // Let CSI handle an already-deleted group immediately.
 	"snapshots_source_volume_not_found":            true,
 	"snapshots_source_volume_not_attached":         true,
 	"volume_capacity_maximum":                      true,
@@ -408,7 +409,8 @@ func FromProviderToLibVolume(vpcVolume *models.Volume, logger *zap.Logger) (libV
 	return
 }
 
-// FromProviderToLibSnapshot converting vpc provider snapshot type to generic lib snapshot type
+// FromProviderToLibSnapshot converts backend snapshot details to the provider model.
+// Missing source-volume details are preserved as an empty ID and keep the snapshot not ready.
 func FromProviderToLibSnapshot(vpcSnapshot *models.Snapshot, logger *zap.Logger) (libSnapshot *provider.Snapshot) {
 	logger.Debug("Entry of FromProviderToLibSnapshot method...")
 	defer logger.Debug("Exit from FromProviderToLibSnapshot method...")
@@ -425,18 +427,16 @@ func FromProviderToLibSnapshot(vpcSnapshot *models.Snapshot, logger *zap.Logger)
 		createdTime = *vpcSnapshot.CreatedAt
 	}
 	libSnapshot = &provider.Snapshot{
-		VolumeID:             vpcSnapshot.SourceVolume.ID,
 		SnapshotID:           vpcSnapshot.ID,
 		SnapshotCRN:          vpcSnapshot.CRN,
 		SnapshotCreationTime: createdTime,
 		SnapshotSize:         GiBToBytes(vpcSnapshot.MinimumCapacity),
 		VPC:                  provider.VPC{Href: vpcSnapshot.Href},
 	}
-	if vpcSnapshot.LifecycleState == snapshotReadyState {
-		libSnapshot.ReadyToUse = true
-	} else {
-		libSnapshot.ReadyToUse = false
+	if vpcSnapshot.SourceVolume != nil {
+		libSnapshot.VolumeID = vpcSnapshot.SourceVolume.ID
 	}
+	libSnapshot.ReadyToUse = libSnapshot.VolumeID != "" && vpcSnapshot.LifecycleState == snapshotReadyState
 	return
 }
 
@@ -463,31 +463,32 @@ func FromProviderToLibGroupSnapshot(vpcGroup *models.SnapshotConsistencyGroup, s
 		GroupSnapshotCRN:          vpcGroup.CRN,
 		GroupSnapshotCreationTime: createdTime,
 		VPC:                       provider.VPC{Href: vpcGroup.Href},
+		ReadyToUse:                vpcGroup.LifecycleState == snapshotReadyState && len(vpcGroup.Snapshots) > 0,
 	}
 
-	// If full snapshot details are available (from Create flow), use them to populate source_volume_id
-	if len(snapshotDetails) > 0 {
-		for _, snap := range snapshotDetails {
-			libGroupSnapshot.Snapshots = append(libGroupSnapshot.Snapshots, FromProviderToLibSnapshot(snap, logger))
-		}
-	} else {
-		// Fallback: use snapshot references from the consistency group response (no source_volume info)
-		for i := range vpcGroup.Snapshots {
-			ref := &vpcGroup.Snapshots[i]
-			libGroupSnapshot.Snapshots = append(libGroupSnapshot.Snapshots, &provider.Snapshot{
-				SnapshotID:  ref.ID,
-				SnapshotCRN: ref.CRN,
-				VPC:         provider.VPC{Href: ref.Href},
-			})
+	// ListSnapshots can return fewer details than the group's member references.
+	detailsByID := make(map[string]*models.Snapshot, len(snapshotDetails))
+	for _, snap := range snapshotDetails {
+		if snap != nil {
+			detailsByID[snap.ID] = snap
 		}
 	}
 
-	libGroupSnapshot.ReadyToUse = vpcGroup.LifecycleState == snapshotReadyState && len(libGroupSnapshot.Snapshots) > 0
-	for _, snapshot := range libGroupSnapshot.Snapshots {
-		if snapshot == nil || !snapshot.ReadyToUse {
+	// Keep every referenced member. Missing details leave a not-ready placeholder
+	// with no source volume ID, so CSI can retry instead of accepting a partial group.
+	for _, ref := range vpcGroup.Snapshots {
+		member := &provider.Snapshot{
+			SnapshotID:  ref.ID,
+			SnapshotCRN: ref.CRN,
+			VPC:         provider.VPC{Href: ref.Href},
+		}
+		if snap := detailsByID[ref.ID]; snap != nil {
+			member = FromProviderToLibSnapshot(snap, logger)
+		}
+		if !member.ReadyToUse {
 			libGroupSnapshot.ReadyToUse = false
-			break
 		}
+		libGroupSnapshot.Snapshots = append(libGroupSnapshot.Snapshots, member)
 	}
 	return
 }

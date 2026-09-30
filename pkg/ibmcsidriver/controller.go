@@ -781,7 +781,7 @@ func (csiCS *CSIControllerServer) CreateVolumeGroupSnapshot(ctx context.Context,
 
 	groupSnapshot, err = session.CreateGroupSnapshot(sourceVolumeIDs, groupSnapshotParameters)
 	if err != nil {
-		time.Sleep(time.Duration(getMaxDelaySnapshotCreate(ctxLogger)) * time.Second)
+		// Return the mapped error immediately; let the snapshotter schedule retries.
 		return nil, volumeGroupSnapshotCSIError(ctxLogger, requestID, "create", err)
 	}
 	createdSourceVolumeIDs, membershipAvailable := groupSnapshotSourceVolumeIDs(groupSnapshot)
@@ -795,8 +795,8 @@ func (csiCS *CSIControllerServer) CreateVolumeGroupSnapshot(ctx context.Context,
 	return createCSIVolumeGroupSnapshotResponse(*groupSnapshot), nil
 }
 
-// DeleteVolumeGroupSnapshot validates the CSI member IDs and delegates group
-// deletion to the provider.
+// DeleteVolumeGroupSnapshot requires the CSI group and member ID fields.
+// VPC deletes the group and its members using the group ID alone.
 func (csiCS *CSIControllerServer) DeleteVolumeGroupSnapshot(ctx context.Context, req *csi.DeleteVolumeGroupSnapshotRequest) (*csi.DeleteVolumeGroupSnapshotResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	ctx = context.WithValue(ctx, provider.RequestID, requestID)

@@ -14,8 +14,8 @@ github.com/IBM/secret-utils-lib v1.1.16 h1:RIainy11ICJVWjgi9FWSvBsl8xOwhzLvTKBI8
 github.com/IBM/secret-utils-lib v1.1.16/go.mod h1:lSoMdjyGd3MVWCsPRrr25KrVz4jsxBNtfkS9xvQYhoM=
 github.com/MahanteshR12/ibmcloud-volume-interface v0.0.0-20260928092856-a015a0bfeb5f h1:kZlqs2xOLNBZrEZETL3CNTfJByq/idW/iJTLGR4xwug=
 github.com/MahanteshR12/ibmcloud-volume-interface v0.0.0-20260928092856-a015a0bfeb5f/go.mod h1:PfpEN0ra0nmewiPQ6M/dn+Y9PA/W9gGSXfqZpp0X5ac=
-github.com/MahanteshR12/ibmcloud-volume-vpc v1.1.23-0.20260929091106-c7c41daef6a8 h1:zuuVgxcQLFBhSCCrAIleIwfH2FGXqfa9AbPwrWFtKas=
-github.com/MahanteshR12/ibmcloud-volume-vpc v1.1.23-0.20260929091106-c7c41daef6a8/go.mod h1:Zll+PLhiIsnbdgsoQvcFfITY66o3MIlr7M1417BtgJ8=
+github.com/MahanteshR12/ibmcloud-volume-vpc v1.1.23-0.20260930134346-7aa6665f4cc9 h1:4oH2J26tdjweTd9iBq1XSweulI2rrUPxc1E0RyHdWPo=
+github.com/MahanteshR12/ibmcloud-volume-vpc v1.1.23-0.20260930134346-7aa6665f4cc9/go.mod h1:Zll+PLhiIsnbdgsoQvcFfITY66o3MIlr7M1417BtgJ8=
 github.com/Masterminds/semver v1.5.0 h1:H65muMkzWKEuNDnfl9d70GUjFniHKHRbFPGBuZ3QEww=
 github.com/Masterminds/semver/v3 v3.4.0 h1:Zog+i5UMtVoCU8oKka5P7i9q9HgrJeGzI9SA1Xbatp0=
 github.com/Masterminds/semver/v3 v3.4.0/go.mod h1:4V+yj/TJE1HU9XfppCwVMZq3I84lprf4nC11bSS5beM=
