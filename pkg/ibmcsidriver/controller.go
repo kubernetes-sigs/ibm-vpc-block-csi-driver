@@ -19,8 +19,10 @@ package ibmcsidriver
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	commonError "github.com/IBM/ibm-csi-common/pkg/messages"
@@ -32,7 +34,6 @@ import (
 	userError "github.com/IBM/ibmcloud-volume-vpc/common/messages"
 	cloudProvider "github.com/IBM/ibmcloud-volume-vpc/pkg/ibmcloudprovider"
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
-
 	"go.uber.org/zap"
 )
 
@@ -42,6 +43,16 @@ type CSIControllerServer struct {
 	CSIProvider cloudProvider.CloudProviderInterface
 	mutex       utils.LockStore
 	csi.UnimplementedControllerServer
+
+	// bmsCacheMu guards bmsCacheHostNQN and bmsCacheSecret.
+	bmsCacheMu sync.RWMutex
+	// bmsCacheHostNQN maps BMS instance ID → host NQN (nvme_qualified_name).
+	// bmsCacheSecret maps BMS instance ID → RSA-encrypted PSK ciphertext.
+	// Both are ephemeral in-memory caches: populated on first attach per server,
+	// cleared on controller restart → triggers a fresh rotate+GetBMSServer on
+	// the next attach, which is the correct security behavior.
+	bmsCacheHostNQN map[string]string
+	bmsCacheSecret  map[string]string
 }
 
 const (
@@ -59,6 +70,20 @@ const (
 
 	// PublishInfoRequestID ...
 	PublishInfoRequestID = "request-id"
+
+	// PublishInfoBMSHostNQN is the BMS node host NQN — passed to NodeStageVolume via publishContext
+	PublishInfoBMSHostNQN = "bms-host-nqn"
+
+	// PublishInfoBMSSubsystemNQN is the BMS volume subsystem NQN — passed to NodeStageVolume via publishContext
+	PublishInfoBMSSubsystemNQN = "bms-subsystem-nqn"
+
+	// PublishInfoBMSTargetIPs is the comma-separated list of NVMe-oF target IPs — passed to NodeStageVolume via publishContext
+	PublishInfoBMSTargetIPs = "bms-target-ips"
+
+	// PublishInfoBMSEncryptedSecret is the RSA-encrypted PSK (ciphertext only, never plaintext)
+	// passed to NodeStageVolume via publishContext. The node decrypts locally with rsa_private_key.
+	PublishInfoBMSEncryptedSecret = "bms-encrypted-secret" // pragma: allowlist secret
+
 )
 
 var _ csi.ControllerServer = &CSIControllerServer{}
@@ -200,6 +225,66 @@ func (csiCS *CSIControllerServer) DeleteVolume(ctx context.Context, req *csi.Del
 	return &csi.DeleteVolumeResponse{}, nil
 }
 
+// getBMSServerInfo returns the host NQN and RSA-encrypted PSK for the given
+// BMS serverID using a pure in-memory cache.
+//
+// Cache strategy (both maps keyed by serverID):
+//   bmsCacheHostNQN  — host NQN  (nvme_qualified_name)
+//   bmsCacheSecret   — encrypted PSK ciphertext
+//
+// Fast path: both present in cache → 0 VPC calls.
+// Slow path: either absent → rotate(1) + GetBMSServer(1), then populate both.
+//
+// On controller restart the maps are empty → slow path on first attach per
+// server, which is correct: fresh rotate ensures the ciphertext was encrypted
+// with the current RSA key.
+func (csiCS *CSIControllerServer) getBMSServerInfo(_ context.Context, ctxLogger *zap.Logger, sess provider.Session, serverID string) (hostNQN, encryptedSecret string, err error) {
+	// Fast path
+	csiCS.bmsCacheMu.RLock()
+	cachedNQN := csiCS.bmsCacheHostNQN[serverID]
+	cachedSecret := csiCS.bmsCacheSecret[serverID]
+	csiCS.bmsCacheMu.RUnlock()
+
+	if cachedNQN != "" && cachedSecret != "" {
+		ctxLogger.Info("getBMSServerInfo: cache hit — 0 VPC calls", zap.String("serverID", serverID))
+		return cachedNQN, cachedSecret, nil
+	}
+
+	// Slow path: rotate then fetch
+	ctxLogger.Info("getBMSServerInfo: cache miss — calling rotate + GetBMSServer",
+		zap.String("serverID", serverID))
+
+	keyID := csiCS.CSIProvider.GetBMSKeyID()
+	if keyID != "" {
+		if rotErr := sess.RotateBMSEncryptedSecret(serverID, keyID); rotErr != nil {
+			ctxLogger.Warn("getBMSServerInfo: rotate failed — GetBMSServer may return stale ciphertext",
+				zap.String("serverID", serverID), zap.Error(rotErr))
+		}
+	} else {
+		ctxLogger.Warn("getBMSServerInfo: key_id not configured — skipping rotate")
+	}
+
+	info, getErr := sess.GetBMSServer(serverID)
+	if getErr != nil {
+		return "", "", fmt.Errorf("getBMSServerInfo: GetBMSServer failed for server %s: %w", serverID, getErr)
+	}
+	if info.HostNQN == "" {
+		return "", "", fmt.Errorf("getBMSServerInfo: empty nvme_qualified_name for server %s", serverID)
+	}
+
+	// Populate cache
+	csiCS.bmsCacheMu.Lock()
+	csiCS.bmsCacheHostNQN[serverID] = info.HostNQN
+	csiCS.bmsCacheSecret[serverID] = info.EncryptedSecret
+	csiCS.bmsCacheMu.Unlock()
+
+	ctxLogger.Info("getBMSServerInfo: cache populated",
+		zap.String("serverID", serverID),
+		zap.String("hostNQN", info.HostNQN),
+		zap.Bool("encryptedSecretPresent", info.EncryptedSecret != ""))
+	return info.HostNQN, info.EncryptedSecret, nil
+}
+
 // ControllerPublishVolume ...
 func (csiCS *CSIControllerServer) ControllerPublishVolume(ctx context.Context, req *csi.ControllerPublishVolumeRequest) (*csi.ControllerPublishVolumeResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
@@ -259,6 +344,16 @@ func (csiCS *CSIControllerServer) ControllerPublishVolume(ctx context.Context, r
 			ClusterID: &clusterID,
 		},
 	}
+
+	// For self-managed clusters (clusterID == "") on bare metal nodes, use the
+	// BMS SDP attach path instead of the IKS/VSI path.
+	if clusterID == "" && isBaremetalNode(nodeID, ctxLogger) {
+		volumeAttachmentReq.IKSVolumeAttachment = nil
+		volumeAttachmentReq.BMSVolumeAttachment = &provider.BMSVolumeAttachment{
+			Protocol: "nvme_tcp",
+		}
+	}
+
 	response, err := sess.AttachVolume(volumeAttachmentReq)
 	if err != nil {
 		// Node should be present if not return the error code
@@ -280,7 +375,35 @@ func (csiCS *CSIControllerServer) ControllerPublishVolume(ctx context.Context, r
 	}
 
 	ctxLogger.Info("Attachment response", zap.Reflect("Response", response))
-	controllerPublishVolumeResponse := createControllerPublishVolumeResponse(*response, map[string]string{PublishInfoRequestID: requestID})
+
+	// Build extra publish info — always include requestID
+	extraPublishInfo := map[string]string{PublishInfoRequestID: requestID}
+
+	// BMS path: attachment response carries BMSResponse when the volume is NVMe-oF/TCP
+	if response.BMSResponse != nil && response.BMSResponse.SubsystemNQN != "" {
+		// getBMSServerInfo handles rotate + GetBMSServer with in-memory caching:
+		//   cache hit  → 0 VPC calls
+		//   cache miss → rotate(1) + GetBMSServer(1), then populate cache
+		hostNQN, encryptedSecret, infoErr := csiCS.getBMSServerInfo(
+			ctx, ctxLogger, sess, req.GetNodeId())
+		if infoErr != nil {
+			return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, infoErr)
+		}
+
+		extraPublishInfo[PublishInfoBMSHostNQN] = hostNQN
+		extraPublishInfo[PublishInfoBMSSubsystemNQN] = response.BMSResponse.SubsystemNQN
+		extraPublishInfo[PublishInfoBMSTargetIPs] = strings.Join(response.BMSResponse.TargetIPs, ",")
+		if encryptedSecret != "" {
+			extraPublishInfo[PublishInfoBMSEncryptedSecret] = encryptedSecret // pragma: allowlist secret
+		}
+		ctxLogger.Info("BMS publishContext built",
+			zap.String("subsysNQN", response.BMSResponse.SubsystemNQN),
+			zap.String("hostNQN", hostNQN),
+			zap.Int("targetIPs", len(response.BMSResponse.TargetIPs)),
+			zap.Bool("encryptedSecretPresent", encryptedSecret != ""))
+	}
+
+	controllerPublishVolumeResponse := createControllerPublishVolumeResponse(*response, extraPublishInfo)
 	return controllerPublishVolumeResponse, nil
 }
 
@@ -314,6 +437,16 @@ func (csiCS *CSIControllerServer) ControllerUnpublishVolume(ctx context.Context,
 			ClusterID: &clusterID,
 		},
 	}
+
+	// For self-managed clusters (clusterID == "") on bare metal nodes, use the
+	// BMS SDP detach path instead of the IKS/VSI path.
+	if clusterID == "" && isBaremetalNode(nodeID, ctxLogger) {
+		volumeAttachmentReq.IKSVolumeAttachment = nil
+		volumeAttachmentReq.BMSVolumeAttachment = &provider.BMSVolumeAttachment{
+			Protocol: "nvme_tcp",
+		}
+	}
+
 	sess, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
 	if err != nil {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)

@@ -45,6 +45,19 @@ import (
 	mount "k8s.io/mount-utils"
 )
 
+// bmsStateDir is the directory where per-volume BMS state files are stored.
+// Each file is named by volumeID and contains the subsystem NQN used at
+// NodeStageVolume time.  NodeUnstageVolume reads this file because
+// NodeUnstageVolumeRequest carries no publishContext per the CSI spec.
+const bmsStateDir = "/var/lib/kubelet/plugins/vpc.block.csi.ibm.io/bms-state"
+
+// bmsSecretName is the k8s Secret name that holds the BMS RSA key pair.
+const bmsSecretName = "storage-bm-secret"
+
+// bmsSecretPrivKeyField is the key inside bmsSecretName that holds the
+// PEM-encoded RSA private key used by the node to decrypt the PSK.
+const bmsSecretPrivKeyField = "rsa_private_key"
+
 // CSINodeServer ...
 type CSINodeServer struct {
 	Driver   *IBMCSIDriver
@@ -54,6 +67,19 @@ type CSINodeServer struct {
 	// TODO: Only lock mutually exclusive calls and make locking more fine grained
 	mux sync.Mutex
 	csi.UnimplementedNodeServer
+
+	// BMSPrivKey is the PEM-encoded RSA private key loaded once at startup from
+	// the k8s secret "storage-bm-secret" (key "rsa_private_key").
+	// Used by NodeStageVolume to decrypt publishContext["bms-encrypted-secret"]
+	// into the plaintext PSK passed to nvme connect --tls-key.
+	// Nil on non-BMS nodes — all BMS code paths guard on len(BMSPrivKey) > 0.
+	BMSPrivKey []byte
+
+	// subsysRefCount tracks how many volumes currently use each NVMe subsystem
+	// NQN on this node.  The subsystem connection is torn down only when the
+	// count reaches zero.  Protected by subsysMu.
+	subsysRefCount map[string]int
+	subsysMu       sync.Mutex
 }
 
 // StatsUtils ...
@@ -244,8 +270,20 @@ func (csiNS *CSINodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeSt
 		}
 	}
 
-	// Check devicePath is available in the publish context
+	// BMS NVMe-oF/TCP path: detected by presence of bms-subsystem-nqn in publishContext.
+	// nodeStageVolumeBMS handles the NVMe-specific work (PSK decrypt, subsystem
+	// ref-count, nvme connect, device wait, state file) and returns the resolved
+	// device path.  The shared format+mount tail below runs for both BMS and VSI.
 	devicePath := publishContext[PublishInfoDevicePath]
+	if subsysNQN := publishContext[PublishInfoBMSSubsystemNQN]; subsysNQN != "" {
+		var bmsErr error
+		devicePath, bmsErr = csiNS.nodeStageVolumeBMS(ctx, ctxLogger, requestID, req, volumeID, stagingTargetPath, publishContext)
+		if bmsErr != nil {
+			return nil, bmsErr
+		}
+	}
+
+	// Check devicePath is available (from publishContext for VSI, or returned by nodeStageVolumeBMS for BMS)
 	if len(devicePath) == 0 {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.EmptyDevicePath, requestID, nil)
 	}
@@ -359,6 +397,14 @@ func (csiNS *CSINodeServer) NodeUnstageVolume(ctx context.Context, req *csi.Node
 	}
 	if len(stagingTargetPath) == 0 {
 		return nil, commonError.GetCSIError(ctxLogger, commonError.NoStagingTargetPath, requestID, nil)
+	}
+
+	// BMS NVMe-oF/TCP path: check whether a state file exists for this volume.
+	// NodeUnstageVolumeRequest carries no publishContext (CSI spec §3.4.2), so the
+	// state file written at NodeStageVolume time is the only way to recover the
+	// subsystem NQN needed for reference-count decrement / disconnect.
+	if subsysNQN, err := readBMSStateFile(volumeID); err == nil && subsysNQN != "" {
+		return csiNS.nodeUnstageVolumeBMS(ctx, ctxLogger, requestID, volumeID, stagingTargetPath, subsysNQN)
 	}
 
 	ctxLogger.Info("Unmounting staging target path", zap.String("stagingTargetPath", stagingTargetPath))

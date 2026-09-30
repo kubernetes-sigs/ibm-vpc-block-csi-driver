@@ -62,4 +62,13 @@ type VolumeManager interface {
 	// Volume operations
 	// Expand the volume with authorization by passing required information in the volume object
 	ExpandVolume(expandVolumeRequest ExpandVolumeRequest) (int64, error)
+
+	// ModifyVolume modifies the volume. Returns a ModifyVolumeResponse containing
+	// the updated attributes, and any error. Using a response struct keeps this
+	// interface stable when new modifiable attributes are added in the future.
+	ModifyVolume(modifyVolumeRequest ModifyVolumeRequest) (*ModifyVolumeResponse, error)
+	// GetVolumeProfileBands retrieves the ordered capacity-to-IOPS bands for the
+	// named VPC file volume profile (e.g. "dp2"). On sessions that do not support
+	// this operation (e.g. direct RIAAS) implementations should return an error.
+	GetVolumeProfileBands(profile string) ([]VolumeProfileBand, error)
 }

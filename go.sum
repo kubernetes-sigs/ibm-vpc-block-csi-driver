@@ -8,10 +8,10 @@ github.com/IBM/go-sdk-core/v5 v5.17.4 h1:VGb9+mRrnS2HpHZFM5hy4J6ppIWnwNrw0G+tLSg
 github.com/IBM/go-sdk-core/v5 v5.17.4/go.mod h1:KsAAI7eStAWwQa4F96MLy+whYSh39JzNjklZRbN/8ns=
 github.com/IBM/ibm-csi-common v1.1.26 h1:Z+xRJUBpADdAVIffv8nODg3CMgcmwO0TAij5NHLomyI=
 github.com/IBM/ibm-csi-common v1.1.26/go.mod h1:qf0vG4gs+oTdHTpGP3ofJ9XaT6+IBsbfwfR9z/KBzoY=
-github.com/IBM/ibmcloud-volume-interface v1.2.21 h1:7w7ZAY3F5DLfzaV4sLoC/4S0AYXZrUPHanrlBHaNb4c=
-github.com/IBM/ibmcloud-volume-interface v1.2.21/go.mod h1:lpon+MgOK9F0Q8AxZDG/dWXc9vJiiYfPri9ToskBA08=
-github.com/IBM/ibmcloud-volume-vpc v1.1.24 h1:Gy8zUXf5AqhznAQl6K1kKREWEt612x95n0FHJIL4TgA=
-github.com/IBM/ibmcloud-volume-vpc v1.1.24/go.mod h1:R0/rIDIVPtFKPIWTSaB3kBj7Z4AAed8KXwDsUWCz8Kg=
+github.com/IBM/ibmcloud-volume-interface v1.2.24-0.20261030133322-0a24a5f8ac70 h1:0IZ8tCDkYXERdhwvMjx41rAuFcbU7aGq74S8Ag5sk9I=
+github.com/IBM/ibmcloud-volume-interface v1.2.24-0.20261030133322-0a24a5f8ac70/go.mod h1:OVtko4KazT4Z0Yd4ZzJdFd0/xLDm7OS/ZIFCOxqGXys=
+github.com/IBM/ibmcloud-volume-vpc v1.1.25-0.20261030150911-4554bd047aa5 h1:McUTCsGHv/QlPAEi1T+CS8HFM/8iFvsRb86IzcmObbk=
+github.com/IBM/ibmcloud-volume-vpc v1.1.25-0.20261030150911-4554bd047aa5/go.mod h1:NRrkTjW/4pQrQma4Ph2ckiTqPPOjba+tcKtZvo0mUGA=
 github.com/IBM/secret-common-lib v1.1.15 h1:r2oQE7UAjHiPHhUUWJmI1NYYmuTRHWENtFolTSbXMwI=
 github.com/IBM/secret-common-lib v1.1.15/go.mod h1:bJO2iazBFnfjj6jhfgy/T4FQQQE/aIxio1CrNZ83+0U=
 github.com/IBM/secret-utils-lib v1.1.16 h1:RIainy11ICJVWjgi9FWSvBsl8xOwhzLvTKBI8AWq7wI=
@@ -334,8 +334,8 @@ google.golang.org/grpc v1.25.1/go.mod h1:c3i+UQWmh7LiEpx4sFZnkU36qjEYZ0imhYfXVyQ
 google.golang.org/grpc v1.26.0/go.mod h1:qbnxyOmOxrQa7FizSgH+ReBfzJrCY1pSN7KXBS8abTk=
 google.golang.org/grpc v1.27.0/go.mod h1:qbnxyOmOxrQa7FizSgH+ReBfzJrCY1pSN7KXBS8abTk=
 google.golang.org/grpc v1.34.0/go.mod h1:WotjhfgOW/POjDeRt8vscBtXq+2VjORFy659qA51WJ8=
-google.golang.org/grpc v1.83.1 h1:HIO0+BEtBP6soyqvqC8sNUjZ7bTs+0hFQuFF+RAy++Y=
-google.golang.org/grpc v1.83.1/go.mod h1:kDyl6SKsiHKt0uylY5gtn5cEjkrIOhQOGDgIc4JGwzQ=
+google.golang.org/grpc v1.83.2 h1:EManeRomTObA0BU7I8vXgg/78uE5MJ9M8B39EX2WscU=
+google.golang.org/grpc v1.83.2/go.mod h1:YPI1hK3kDked6iHvgX3tR0y+nX/qpMFKhPgFsokw1S8=
 google.golang.org/protobuf v0.0.0-20200109180630-ec00e32a8dfd/go.mod h1:DFci5gLYBciE7Vtevhsrf46CRTquxDuWsQurQQe4oz8=
 google.golang.org/protobuf v0.0.0-20200221191635-4d8936d0db64/go.mod h1:kwYJMbMJ01Woi6D6+Kah6886xMZcty6N08ah7+eCXa0=
 google.golang.org/protobuf v0.0.0-20200228230310-ab0ca4ff8a60/go.mod h1:cfTl7dwQJ+fmap5saPgwCLgHXTUD7jkjRqWcaiX5VyM=

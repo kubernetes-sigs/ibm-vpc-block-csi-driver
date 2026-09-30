@@ -18,6 +18,7 @@
 package provider
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
@@ -93,3 +94,14 @@ func (vpcIks *IksVpcSession) WaitForDetachVolume(volumeAttachmentRequest provide
 	defer vpcIks.IksSession.Logger.Debug("Exit from IksVpcSession.WaitForDetachVolume method...")
 	return vpcIks.IksSession.WaitForDetachVolume(volumeAttachmentRequest)
 }
+
+// RotateBMSEncryptedSecret is not supported via the IKS dual session path.
+func (vpcIks *IksVpcSession) RotateBMSEncryptedSecret(serverID, keyID string) error {
+	return fmt.Errorf("RotateBMSEncryptedSecret is not supported via the IKS session path")
+}
+
+// GetBMSServer is not supported via the IKS dual session path.
+func (vpcIks *IksVpcSession) GetBMSServer(serverID string) (*provider.BMSServerInfo, error) {
+	return nil, fmt.Errorf("GetBMSServer is not supported via the IKS session path")
+}
+
