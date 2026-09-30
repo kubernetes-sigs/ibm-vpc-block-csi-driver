@@ -1,0 +1,8 @@
+apiVersion: storage.k8s.io/v1
+kind: VolumeAttributesClass
+metadata:
+  name: ibm-block-sdp-vac
+driverName: vpc.block.csi.ibm.io
+parameters:
+  iops: "6000"
+  throughput: "8192"

@@ -89,6 +89,7 @@ func (icDriver *IBMCSIDriver) SetupIBMCSIDriver(provider cloudProvider.CloudProv
 		csi.ControllerServiceCapability_RPC_LIST_SNAPSHOTS,
 		// csi.ControllerServiceCapability_RPC_PUBLISH_READONLY,
 		csi.ControllerServiceCapability_RPC_EXPAND_VOLUME,
+		csi.ControllerServiceCapability_RPC_MODIFY_VOLUME,
 	}
 	_ = icDriver.AddControllerServiceCapabilities(csc) // #nosec G104: Attempt to AddControllerServiceCapabilities only on best-effort basis.Error cannot be usefully handled.
 
