@@ -95,7 +95,7 @@ func (tg *tokenGenerator) buildToken(contextCredentials provider.ContextCredenti
 
 	switch {
 	case contextCredentials.UserID == "":
-		errStr := "User ID is not configured"
+		errStr := "user ID is not configured"
 		logger.Error(errStr)
 		err = errors.New(errStr)
 		return
