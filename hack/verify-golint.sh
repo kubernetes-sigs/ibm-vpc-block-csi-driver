@@ -16,6 +16,11 @@
 
 set -euo pipefail
 
+readonly PKG_ROOT="$(git rev-parse --show-toplevel)"
+# Use the module's Go version: the CI image may have a newer toolchain than
+# the pinned golangci-lint binary supports.
+export GOTOOLCHAIN="go$(awk '$1 == "go" {print $2; exit}' "${PKG_ROOT}/go.mod")"
+
 LINT_CMD=$(go env GOPATH)/bin/golangci-lint
 if [[ -z "$(command -v ${LINT_CMD})" ]]; then
   echo "Cannot find ${LINT_CMD}"
@@ -23,7 +28,6 @@ if [[ -z "$(command -v ${LINT_CMD})" ]]; then
 fi
 
 echo "Verifying golint"
-readonly PKG_ROOT="$(git rev-parse --show-toplevel)"
 
 ${LINT_CMD} version
 ${LINT_CMD} run --timeout=10m

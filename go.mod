@@ -5,7 +5,7 @@ go 1.26.6
 require (
 	github.com/IBM/ibm-csi-common v1.1.26
 	github.com/IBM/ibmcloud-volume-interface v1.2.21
-	github.com/IBM/ibmcloud-volume-vpc v1.1.23
+	github.com/IBM/ibmcloud-volume-vpc v1.1.24
 	github.com/IBM/secret-utils-lib v1.1.16
 	github.com/container-storage-interface/spec v1.13.0
 	github.com/golang/glog v1.2.5
@@ -76,7 +76,7 @@ require (
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	go.mongodb.org/mongo-driver v1.14.0 // indirect
+	go.mongodb.org/mongo-driver v1.17.7 // indirect
 	go.opentelemetry.io/otel v1.44.0 // indirect
 	go.opentelemetry.io/otel/trace v1.44.0 // indirect
 	go.uber.org/mock v0.6.0 // indirect
