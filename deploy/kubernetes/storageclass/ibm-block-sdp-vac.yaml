@@ -4,5 +4,5 @@ metadata:
   name: ibm-block-sdp-vac
 driverName: vpc.block.csi.ibm.io
 parameters:
-  iops: "6000"
-  throughput: "8192"
+  iops: "4000"
+  throughput: "5000"
