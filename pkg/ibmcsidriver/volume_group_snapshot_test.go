@@ -17,13 +17,18 @@ limitations under the License.
 package ibmcsidriver
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
+	commonError "github.com/IBM/ibm-csi-common/pkg/messages"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	providerError "github.com/IBM/ibmcloud-volume-interface/lib/utils"
+	utilReasonCode "github.com/IBM/ibmcloud-volume-interface/lib/utils/reasoncode"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestVolumeGroupSnapshotStatusErrorIncludesMessageAndRequestID(t *testing.T) {
@@ -70,7 +75,7 @@ func TestResolveGroupSnapshotSourceVolumes(t *testing.T) {
 }
 
 // Member resolution uses CRNs only and never accepts a partial member list.
-func TestResolveGroupSnapshotMemberIDs(t *testing.T) {
+func TestResolveGroupSnapshotMemberCRNs(t *testing.T) {
 	testCases := []struct {
 		name         string
 		snapshots    []*provider.Snapshot
@@ -101,9 +106,67 @@ func TestResolveGroupSnapshotMemberIDs(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			crns, ok := resolveGroupSnapshotMemberIDs(tc.snapshots)
+			crns, ok := resolveGroupSnapshotMemberCRNs(tc.snapshots)
 			assert.Equal(t, tc.expectedOK, ok)
 			assert.Equal(t, tc.expectedCRNs, crns)
+		})
+	}
+}
+
+// A failed GetProviderSession call is mapped by its provider reason code.
+// Anything that is not a known reason code, including a plain error, becomes Internal.
+func TestProviderSessionCSIError(t *testing.T) {
+	// GetCSIError looks messages up here; without it the status code would be OK and no error is returned.
+	commonError.MessagesEn = commonError.InitMessages()
+
+	testCases := []struct {
+		name         string
+		err          error
+		expectedCode codes.Code
+		expectedText string // CSI reason code carried in the message
+	}{
+		{
+			name:         "endpoint not reachable",
+			err:          providerError.Message{Code: string(utilReasonCode.EndpointNotReachable)},
+			expectedCode: codes.Unavailable,
+			expectedText: commonError.EndpointNotReachable,
+		},
+		{
+			name:         "timeout",
+			err:          providerError.Message{Code: string(utilReasonCode.Timeout)},
+			expectedCode: codes.DeadlineExceeded,
+			expectedText: commonError.Timeout,
+		},
+		{
+			name:         "unknown reason code",
+			err:          providerError.Message{Code: "SomethingElse"},
+			expectedCode: codes.Internal,
+			expectedText: commonError.InternalError,
+		},
+		{
+			name:         "provider error without a reason code",
+			err:          providerError.Message{},
+			expectedCode: codes.Internal,
+			expectedText: commonError.InternalError,
+		},
+		{
+			name:         "plain error",
+			err:          errors.New("connection refused"),
+			expectedCode: codes.Internal,
+			expectedText: commonError.InternalError,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := providerSessionCSIError(zap.NewNop(), "request-id", tc.err)
+
+			st, ok := status.FromError(err)
+			assert.True(t, ok, "must be a gRPC status error")
+			assert.Equal(t, tc.expectedCode, st.Code())
+			assert.Contains(t, st.Message(), "Code: "+tc.expectedText)
+			assert.Contains(t, st.Message(), "request-id")
+			assert.Contains(t, st.Message(), tc.err.Error(), "the original error must be kept in the message")
 		})
 	}
 }
@@ -125,12 +188,69 @@ func TestIsGroupSnapshotNotFound(t *testing.T) {
 	assert.False(t, isGroupSnapshotNotFound(providerError.Message{Type: providerError.DeletionFailed}))
 }
 
+// Source validation must distinguish a name conflict from an invalid new backend result.
+func TestValidateGroupSnapshotSourceVolumes(t *testing.T) {
+	testCases := []struct {
+		name         string
+		snapshots    []*provider.Snapshot
+		mismatchCode codes.Code
+		wantCode     codes.Code
+	}{
+		{
+			name:         "matching sources in a different order",
+			snapshots:    []*provider.Snapshot{{VolumeID: "volume-b"}, {VolumeID: "volume-a"}},
+			mismatchCode: codes.AlreadyExists, wantCode: codes.OK,
+		},
+		{
+			name:         "missing members",
+			mismatchCode: codes.AlreadyExists,
+			wantCode:     codes.Aborted,
+		},
+		{
+			name: "missing source volume", snapshots: []*provider.Snapshot{{VolumeID: "volume-a"}, {}},
+			mismatchCode: codes.Internal, wantCode: codes.Aborted,
+		},
+		{
+			name:         "existing group contains different sources",
+			snapshots:    []*provider.Snapshot{{VolumeID: "volume-a"}, {VolumeID: "volume-c"}},
+			mismatchCode: codes.AlreadyExists, wantCode: codes.AlreadyExists,
+		},
+		{
+			name:         "new group contains unexpected sources",
+			snapshots:    []*provider.Snapshot{{VolumeID: "volume-a"}, {VolumeID: "volume-c"}},
+			mismatchCode: codes.Internal, wantCode: codes.Internal,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateGroupSnapshotSourceVolumes("group-name", "request-id", tc.snapshots, []string{"volume-a", "volume-b"}, tc.mismatchCode)
+			assert.Equal(t, tc.wantCode, status.Code(err))
+			if err != nil {
+				assert.Contains(t, err.Error(), "group-name")
+				assert.Contains(t, err.Error(), "request-id")
+			}
+			if tc.wantCode == codes.AlreadyExists {
+				assert.Contains(t, err.Error(), "delete and recreate the requested VolumeGroupSnapshot")
+			}
+		})
+	}
+}
+
 func TestVolumeGroupSnapshotErrorCode(t *testing.T) {
 	testCases := []struct {
 		name     string
 		err      error
 		expected codes.Code
 	}{
+		{
+			name: "provider member source-volume details are incomplete",
+			err: providerError.Message{
+				Code: "GroupSnapshotMemberDetailsUnavailable",
+				Type: providerError.RetrivalFailed,
+				RC:   409,
+			},
+			expected: codes.Aborted,
+		},
 		{
 			name: "member lookup permission denied",
 			err: providerError.Message{

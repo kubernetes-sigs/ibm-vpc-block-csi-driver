@@ -114,6 +114,20 @@ var messagesEn = map[string]util.Message{
 		RC:          500,
 		Action:      "Review the backend error and verify that the snapshot consistency group name and resource group are correct.",
 	},
+	"GroupSnapshotMemberLookupFailed": {
+		Code:        "GroupSnapshotMemberLookupFailed",
+		Description: "Failed to retrieve individual member snapshot details for the snapshot consistency group with ID '%s'.",
+		Type:        util.RetrivalFailed,
+		RC:          500,
+		Action:      "Review the backend error and verify snapshot read permissions. Retry if the backend service is temporarily unavailable.",
+	},
+	"GroupSnapshotMemberDetailsUnavailable": {
+		Code:        "GroupSnapshotMemberDetailsUnavailable",
+		Description: "Complete individual member snapshot source-volume details are not available for snapshot consistency group '%s'.",
+		Type:        util.RetrivalFailed,
+		RC:          409,
+		Action:      "Retry the same request so the existing group is reused. Do not create another group while member details are incomplete.",
+	},
 	"InvalidGroupSnapshotName": {
 		Code:        "InvalidGroupSnapshotName",
 		Description: "Snapshot consistency group name must be provided.",

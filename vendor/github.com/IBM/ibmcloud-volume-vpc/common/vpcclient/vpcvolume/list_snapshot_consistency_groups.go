@@ -26,7 +26,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// ListSnapshotConsistencyGroups GETs /snapshot_consistency_groups
+// ListSnapshotConsistencyGroups returns group objects, not individual snapshots.
 func (scg *SnapshotConsistencyGroupService) ListSnapshotConsistencyGroups(limit int, start string, filters *models.ListSnapshotConsistencyGroupFilters, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroupList, error) {
 	ctxLogger.Debug("Entry Backend ListSnapshotConsistencyGroups")
 	defer ctxLogger.Debug("Exit Backend ListSnapshotConsistencyGroups")

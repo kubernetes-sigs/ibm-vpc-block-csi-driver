@@ -25,8 +25,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// GetSnapshotConsistencyGroup GETs /snapshot_consistency_groups/{id}
-func (scg *SnapshotConsistencyGroupService) GetSnapshotConsistencyGroup(groupID string, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroup, error) {
+// GetSnapshotConsistencyGroup returns group details and references to its member snapshots.
+func (scg *SnapshotConsistencyGroupService) GetSnapshotConsistencyGroup(groupID string, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroupResponse, error) {
 	ctxLogger.Debug("Entry Backend GetSnapshotConsistencyGroup")
 	defer ctxLogger.Debug("Exit Backend GetSnapshotConsistencyGroup")
 
@@ -38,8 +38,10 @@ func (scg *SnapshotConsistencyGroupService) GetSnapshotConsistencyGroup(groupID 
 		PathPattern: snapshotConsistencyGroupIDPath,
 	}
 
-	var result models.SnapshotConsistencyGroup
-	var apiErr models.Error
+	var (
+		result models.SnapshotConsistencyGroupResponse
+		apiErr models.Error
+	)
 
 	request := scg.client.NewRequest(operation)
 	ctxLogger.Info("Equivalent curl command", zap.Reflect("URL", request.URL()), zap.Reflect("Operation", operation))
@@ -55,7 +57,7 @@ func (scg *SnapshotConsistencyGroupService) GetSnapshotConsistencyGroup(groupID 
 }
 
 // GetSnapshotConsistencyGroupByName GETs /snapshot_consistency_groups filtered by name
-func (scg *SnapshotConsistencyGroupService) GetSnapshotConsistencyGroupByName(name, resourceGroupID string, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroup, error) {
+func (scg *SnapshotConsistencyGroupService) GetSnapshotConsistencyGroupByName(name, resourceGroupID string, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroupResponse, error) {
 	ctxLogger.Debug("Entry Backend GetSnapshotConsistencyGroupByName")
 	defer ctxLogger.Debug("Exit Backend GetSnapshotConsistencyGroupByName")
 

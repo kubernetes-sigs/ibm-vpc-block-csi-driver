@@ -1856,7 +1856,7 @@ func TestCreateVolumeGroupSnapshotRetriesWhenCreatedMembershipIsUnavailable(t *t
 
 	assert.Nil(t, response)
 	assert.Equal(t, codes.Aborted, status.Code(err))
-	assert.Contains(t, status.Convert(err).Message(), "was created, but its individual member snapshot details are not available")
+	assert.Contains(t, status.Convert(err).Message(), "individual member snapshot details are not available")
 }
 
 // A nil provider result must return an error instead of panicking while reading members.
@@ -1959,6 +1959,35 @@ func TestCreateVolumeGroupSnapshotRejectsExistingNameWithDifferentSources(t *tes
 	assert.Nil(t, response)
 	assert.Equal(t, codes.AlreadyExists, status.Code(err))
 	assert.Contains(t, status.Convert(err).Message(), "different set of source volume IDs")
+	assert.Contains(t, status.Convert(err).Message(), "delete and recreate the requested VolumeGroupSnapshot")
+	assert.Contains(t, status.Convert(err).Message(), "volume-id-3")
+	assert.Contains(t, status.Convert(err).Message(), "volume-id-2")
+	assert.Equal(t, 0, fakeStructSession.CreateGroupSnapshotCallCount())
+}
+
+// A failed name lookup must explain the affected group and never start creation.
+func TestCreateVolumeGroupSnapshotNameLookupFailure(t *testing.T) {
+	t.Setenv(vgsFeatureFlag, "true")
+	logger, teardown := cloudProvider.GetTestLogger(t)
+	defer teardown()
+	icDriver := initIBMCSIDriver(t)
+	fakeSession, err := icDriver.cs.CSIProvider.GetProviderSession(context.Background(), logger)
+	assert.NoError(t, err)
+	fakeStructSession := fakeSession.(*fake.FakeSession)
+	fakeStructSession.GetGroupSnapshotByNameReturns(nil, providerError.Message{
+		Code: "GroupSnapshotNameLookupFailed", Type: providerError.RetrivalFailed,
+		BackendError: "Code:snapshots_not_authorized, RC:403 Forbidden",
+	})
+
+	response, err := icDriver.cs.CreateVolumeGroupSnapshot(context.Background(), &csi.CreateVolumeGroupSnapshotRequest{
+		Name: "group-snapshot-name", SourceVolumeIds: []string{"volume-id-1"},
+		Parameters: map[string]string{ResourceGroup: "resource-group-id"},
+	})
+	assert.Nil(t, response)
+	assert.Equal(t, codes.PermissionDenied, status.Code(err))
+	assert.Contains(t, status.Convert(err).Message(), "group-snapshot-name")
+	assert.Contains(t, status.Convert(err).Message(), "resource-group-id")
+	assert.Contains(t, status.Convert(err).Message(), "no new group was created")
 	assert.Equal(t, 0, fakeStructSession.CreateGroupSnapshotCallCount())
 }
 

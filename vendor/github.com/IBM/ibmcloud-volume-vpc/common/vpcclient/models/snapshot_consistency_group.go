@@ -18,58 +18,59 @@ package models
 
 import "time"
 
-type SnapshotConsistencyGroup struct {
-	Href                    string                     `json:"href,omitempty"`
-	ID                      string                     `json:"id,omitempty"`
-	Name                    string                     `json:"name,omitempty"`
-	CRN                     string                     `json:"crn,omitempty"`
-	ResourceGroup           *ResourceGroup             `json:"resource_group,omitempty"`
-	CreatedAt               *time.Time                 `json:"created_at,omitempty"`
-	Status                  string                     `json:"status,omitempty"`
-	LifecycleState          string                     `json:"lifecycle_state,omitempty"`
-	ResourceType            string                     `json:"resource_type,omitempty"`
-	Snapshots               []SnapshotReference        `json:"snapshots,omitempty"`
-	ServiceTags             []string                   `json:"service_tags,omitempty"`
-	UserTags                []string                   `json:"user_tags,omitempty"`
-	DeleteSnapshotsOnDelete bool                       `json:"delete_snapshots_on_delete,omitempty"`
-	BackupPolicyPlan        *BackupPolicyPlanReference `json:"backup_policy_plan,omitempty"`
+// SnapshotConsistencyGroupResponse is the response received from the VPC
+type SnapshotConsistencyGroupResponse struct {
+	Href                    string                     `json:"href"`
+	ID                      string                     `json:"id"`
+	Name                    string                     `json:"name"`
+	CRN                     string                     `json:"crn"`
+	ResourceGroup           *ResourceGroup             `json:"resource_group"`
+	CreatedAt               *time.Time                 `json:"created_at"`
+	Status                  string                     `json:"status"`
+	LifecycleState          string                     `json:"lifecycle_state"`
+	ResourceType            string                     `json:"resource_type"`
+	Snapshots               []SnapshotReference        `json:"snapshots"`
+	ServiceTags             []string                   `json:"service_tags"`
+	UserTags                []string                   `json:"user_tags"`
+	DeleteSnapshotsOnDelete bool                       `json:"delete_snapshots_on_delete"`
+	BackupPolicyPlan        *BackupPolicyPlanReference `json:"backup_policy_plan"`
 }
 
 type BackupPolicyPlanReference struct {
-	ID           string                  `json:"id,omitempty"`
-	Href         string                  `json:"href,omitempty"`
-	Name         string                  `json:"name,omitempty"`
-	Deleted      *Deleted                `json:"deleted,omitempty"`
-	ResourceType string                  `json:"resource_type,omitempty"`
-	Remote       *BackupPolicyPlanRemote `json:"remote,omitempty"`
+	ID           string                  `json:"id"`
+	Href         string                  `json:"href"`
+	Name         string                  `json:"name"`
+	Deleted      *Deleted                `json:"deleted"`
+	ResourceType string                  `json:"resource_type"`
+	Remote       *BackupPolicyPlanRemote `json:"remote"`
 }
 
 type BackupPolicyPlanRemote struct {
-	Region *RegionReference `json:"region,omitempty"`
+	Region *RegionReference `json:"region"`
 }
 
 type RegionReference struct {
-	Href string `json:"href,omitempty"`
-	Name string `json:"name,omitempty"`
+	Href string `json:"href"`
+	Name string `json:"name"`
 }
 
 // SnapshotReference is a reference to a snapshot within a consistency group
 type SnapshotReference struct {
-	Href         string   `json:"href,omitempty"`
-	ID           string   `json:"id,omitempty"`
-	Name         string   `json:"name,omitempty"`
-	CRN          string   `json:"crn,omitempty"`
-	ResourceType string   `json:"resource_type,omitempty"`
-	Deleted      *Deleted `json:"deleted,omitempty"`
+	Href         string   `json:"href"`
+	ID           string   `json:"id"`
+	Name         string   `json:"name"`
+	CRN          string   `json:"crn"`
+	ResourceType string   `json:"resource_type"`
+	Deleted      *Deleted `json:"deleted"`
 }
 
 // SnapshotConsistencyGroupList ...
 type SnapshotConsistencyGroupList struct {
-	First                     *HReference                 `json:"first,omitempty"`
-	Limit                     int                         `json:"limit,omitempty"`
-	SnapshotConsistencyGroups []*SnapshotConsistencyGroup `json:"snapshot_consistency_groups"`
-	Next                      *HReference                 `json:"next,omitempty"`
-	TotalCount                int                         `json:"total_count,omitempty"`
+	First                     *HReference                         `json:"first,omitempty"`
+	Limit                     int                                 `json:"limit,omitempty"`
+	SnapshotConsistencyGroups []*SnapshotConsistencyGroupResponse `json:"snapshot_consistency_groups"`
+	Next                      *HReference                         `json:"next,omitempty"`
+	TotalCount                int                                 `json:"total_count,omitempty"`
 }
 
 // SnapshotConsistencyGroupRequest is the request body for creating a consistency group

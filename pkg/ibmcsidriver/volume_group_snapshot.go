@@ -20,12 +20,31 @@ import (
 	"fmt"
 	"strings"
 
+	commonError "github.com/IBM/ibm-csi-common/pkg/messages"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	providerError "github.com/IBM/ibmcloud-volume-interface/lib/utils"
+	utilReasonCode "github.com/IBM/ibmcloud-volume-interface/lib/utils/reasoncode"
+	userError "github.com/IBM/ibmcloud-volume-vpc/common/messages"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+// validateGroupSnapshotSourceVolumes checks membership in both Create paths.
+// A name conflict uses AlreadyExists; unexpected members after creation use Internal.
+func validateGroupSnapshotSourceVolumes(snapshotName, requestID string, snapshots []*provider.Snapshot, sourceVolumeIDs []string, mismatchCode codes.Code) error {
+	memberVolumeIDs, available := resolveGroupSnapshotSourceVolumes(snapshots)
+	if !available {
+		return volumeGroupSnapshotStatusError(codes.Aborted, requestID, "volume group snapshot %q cannot be validated because its individual member snapshot details are not available; retry the request", snapshotName)
+	}
+	if matchIDs(memberVolumeIDs, sourceVolumeIDs) {
+		return nil
+	}
+	if mismatchCode == codes.AlreadyExists {
+		return volumeGroupSnapshotStatusError(codes.AlreadyExists, requestID, "volume group snapshot %q already exists with a different set of source volume IDs (requested %v, existing %v); create a new VolumeGroupSnapshot or delete and recreate the requested VolumeGroupSnapshot to generate a new snapshot name", snapshotName, sourceVolumeIDs, memberVolumeIDs)
+	}
+	return volumeGroupSnapshotStatusError(codes.Internal, requestID, "backend returned unexpected source volumes for newly created volume group snapshot %q (requested %v, returned %v)", snapshotName, sourceVolumeIDs, memberVolumeIDs)
+}
 
 // resolveGroupSnapshotSourceVolumes returns the source volume ID for each member snapshot.
 // The boolean is false when any member has no source volume ID yet.
@@ -45,9 +64,9 @@ func resolveGroupSnapshotSourceVolumes(snapshots []*provider.Snapshot) ([]string
 	return volumeIDs, true
 }
 
-// resolveGroupSnapshotMemberIDs returns the CRN for each member snapshot.
+// resolveGroupSnapshotMemberCRNs returns the CRN for each member snapshot.
 // The boolean is false when any member has no CRN.
-func resolveGroupSnapshotMemberIDs(snapshots []*provider.Snapshot) ([]string, bool) {
+func resolveGroupSnapshotMemberCRNs(snapshots []*provider.Snapshot) ([]string, bool) {
 	if len(snapshots) == 0 {
 		return nil, false
 	}
@@ -100,6 +119,18 @@ func volumeGroupSnapshotStatusError(code codes.Code, requestID, message string, 
 	return status.Errorf(code, "%s (request ID: %s)", description, requestID)
 }
 
+// providerSessionCSIError maps a GetProviderSession failure to the CSI error:
+// unreachable endpoint, timeout, or internal error for everything else.
+func providerSessionCSIError(logger *zap.Logger, requestID string, err error) error {
+	switch userError.GetUserErrorCode(err) {
+	case string(utilReasonCode.EndpointNotReachable):
+		return commonError.GetCSIError(logger, commonError.EndpointNotReachable, requestID, err)
+	case string(utilReasonCode.Timeout):
+		return commonError.GetCSIError(logger, commonError.Timeout, requestID, err)
+	}
+	return commonError.GetCSIError(logger, commonError.InternalError, requestID, err)
+}
+
 // volumeGroupSnapshotCSIError converts known VPC failures into actionable CSI
 // status codes and preserves the request ID in the returned error.
 func volumeGroupSnapshotCSIError(logger *zap.Logger, requestID, operation string, err error) error {
@@ -116,6 +147,9 @@ func volumeGroupSnapshotCSIError(logger *zap.Logger, requestID, operation string
 func volumeGroupSnapshotErrorCode(err error) codes.Code {
 	if err == nil {
 		return codes.OK
+	}
+	if userError.GetUserErrorCode(err) == "GroupSnapshotMemberDetailsUnavailable" {
+		return codes.Aborted
 	}
 
 	errorText := strings.ToLower(strings.ReplaceAll(err.Error(), " ", ""))

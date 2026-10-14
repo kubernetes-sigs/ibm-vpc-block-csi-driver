@@ -25,18 +25,18 @@ import (
 // SnapshotConsistencyGroupManager operations
 type SnapshotConsistencyGroupManager interface {
 	// CreateSnapshotConsistencyGroup creates a snapshot consistency group
-	CreateSnapshotConsistencyGroup(snapshotGroupReq *models.SnapshotConsistencyGroupRequest, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroup, error)
+	CreateSnapshotConsistencyGroup(snapshotGroupReq *models.SnapshotConsistencyGroupRequest, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroupResponse, error)
 
-	// Delete a snapshot consistency group
+	// DeleteSnapshotConsistencyGroup deletes a snapshot consistency group
 	DeleteSnapshotConsistencyGroup(groupID string, ctxLogger *zap.Logger) error
 
-	// Get a snapshot consistency group by ID
-	GetSnapshotConsistencyGroup(groupID string, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroup, error)
+	// GetSnapshotConsistencyGroup gets a snapshot consistency group by ID
+	GetSnapshotConsistencyGroup(groupID string, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroupResponse, error)
 
-	// Get a snapshot consistency group by name
-	GetSnapshotConsistencyGroupByName(name, resourceGroupID string, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroup, error)
+	// GetSnapshotConsistencyGroupByName gets a snapshot consistency group by name
+	GetSnapshotConsistencyGroupByName(name, resourceGroupID string, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroupResponse, error)
 
-	// List snapshot consistency groups
+	// ListSnapshotConsistencyGroups lists snapshot consistency groups
 	ListSnapshotConsistencyGroups(limit int, start string, filters *models.ListSnapshotConsistencyGroupFilters, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroupList, error)
 }
 

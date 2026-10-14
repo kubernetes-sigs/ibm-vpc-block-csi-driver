@@ -743,37 +743,23 @@ func (csiCS *CSIControllerServer) CreateVolumeGroupSnapshot(ctx context.Context,
 	// provider initialization
 	session, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
 	if err != nil {
-		if userError.GetUserErrorCode(err) == string(utilReasonCode.EndpointNotReachable) {
-			return nil, commonError.GetCSIError(ctxLogger, commonError.EndpointNotReachable, requestID, err)
-		}
-		if userError.GetUserErrorCode(err) == string(utilReasonCode.Timeout) {
-			return nil, commonError.GetCSIError(ctxLogger, commonError.Timeout, requestID, err)
-		}
-		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
+		return nil, providerSessionCSIError(ctxLogger, requestID, err)
 	}
 
 	// check if a group snapshot with this name already exists
 	groupSnapshot, err := session.GetGroupSnapshotByName(snapshotName, resourceGroupID)
 	if err != nil {
-		return nil, volumeGroupSnapshotCSIError(ctxLogger, requestID, "look up the existing", err)
+		ctxLogger.Error("Failed to check whether the volume group snapshot already exists",
+			zap.String("snapshotName", snapshotName), zap.String("resourceGroupID", resourceGroupID), zap.Error(err))
+		return nil, volumeGroupSnapshotStatusError(volumeGroupSnapshotErrorCode(err), requestID, "failed to check whether volume group snapshot %q exists in resource group %q; no new group was created by this request: %v", snapshotName, resourceGroupID, err)
 	}
 	if groupSnapshot != nil {
-		// check if all members have volumeID
-		existingSourceVolumeIDs, ok := resolveGroupSnapshotSourceVolumes(groupSnapshot.Snapshots)
-		if !ok {
-			return nil, volumeGroupSnapshotStatusError(codes.Aborted, requestID, "volume group snapshot %q exists, but its individual member snapshot details are not available; retry the request", snapshotName)
-		}
-
-		// match source volumes
-		if !matchIDs(existingSourceVolumeIDs, sourceVolumeIDs) {
-			ctxLogger.Warn("Volume group snapshot name is already used with different source volumes",
-				zap.String("snapshotName", snapshotName),
-				zap.String("groupSnapshotID", groupSnapshot.GroupSnapshotID))
-			return nil, volumeGroupSnapshotStatusError(codes.AlreadyExists, requestID, "volume group snapshot %q already exists with a different set of source volume IDs", snapshotName)
+		if err := validateGroupSnapshotSourceVolumes(snapshotName, requestID, groupSnapshot.Snapshots, sourceVolumeIDs, codes.AlreadyExists); err != nil {
+			return nil, err
 		}
 
 		// check if each member's CRN is present
-		if _, ok = resolveGroupSnapshotMemberIDs(groupSnapshot.Snapshots); !ok {
+		if _, ok := resolveGroupSnapshotMemberCRNs(groupSnapshot.Snapshots); !ok {
 			return nil, volumeGroupSnapshotStatusError(codes.Internal, requestID, "backend response for volume group snapshot %q did not include individual member snapshot CRNs", groupSnapshot.GroupSnapshotID)
 		}
 
@@ -795,21 +781,13 @@ func (csiCS *CSIControllerServer) CreateVolumeGroupSnapshot(ctx context.Context,
 		return nil, volumeGroupSnapshotStatusError(codes.Aborted, requestID, "backend returned no details for volume group snapshot %q; retry the request", snapshotName)
 	}
 
-	// --- validate the group snapshot response ---
-
-	// check if all snapshot members have sourceVolumeIDs
-	createdSourceVolumeIDs, ok := resolveGroupSnapshotSourceVolumes(groupSnapshot.Snapshots)
-	if !ok {
-		return nil, volumeGroupSnapshotStatusError(codes.Aborted, requestID, "volume group snapshot %q was created, but its individual member snapshot details are not available; retry the request", snapshotName)
-	}
-
-	// if yes, match it with req's sourceVolumeIDs
-	if !matchIDs(createdSourceVolumeIDs, sourceVolumeIDs) {
-		return nil, volumeGroupSnapshotStatusError(codes.Internal, requestID, "backend returned unexpected source volumes for newly created volume group snapshot %q", snapshotName)
+	// The provider supplies complete source-volume details; verify they match the request.
+	if err := validateGroupSnapshotSourceVolumes(snapshotName, requestID, groupSnapshot.Snapshots, sourceVolumeIDs, codes.Internal); err != nil {
+		return nil, err
 	}
 
 	// check if all snapshot members have CRN's
-	if _, ok := resolveGroupSnapshotMemberIDs(groupSnapshot.Snapshots); !ok {
+	if _, ok := resolveGroupSnapshotMemberCRNs(groupSnapshot.Snapshots); !ok {
 		return nil, volumeGroupSnapshotStatusError(codes.Internal, requestID, "backend response for volume group snapshot %q did not include individual member snapshot CRNs", groupSnapshot.GroupSnapshotID)
 	}
 
@@ -839,13 +817,7 @@ func (csiCS *CSIControllerServer) DeleteVolumeGroupSnapshot(ctx context.Context,
 	// provider initialization
 	session, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
 	if err != nil {
-		if userError.GetUserErrorCode(err) == string(utilReasonCode.EndpointNotReachable) {
-			return nil, commonError.GetCSIError(ctxLogger, commonError.EndpointNotReachable, requestID, err)
-		}
-		if userError.GetUserErrorCode(err) == string(utilReasonCode.Timeout) {
-			return nil, commonError.GetCSIError(ctxLogger, commonError.Timeout, requestID, err)
-		}
-		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
+		return nil, providerSessionCSIError(ctxLogger, requestID, err)
 	}
 
 	err = session.DeleteGroupSnapshot(groupSnapshotID, snapshotIDs)
@@ -882,13 +854,7 @@ func (csiCS *CSIControllerServer) GetVolumeGroupSnapshot(ctx context.Context, re
 	// provider initialization
 	session, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
 	if err != nil {
-		if userError.GetUserErrorCode(err) == string(utilReasonCode.EndpointNotReachable) {
-			return nil, commonError.GetCSIError(ctxLogger, commonError.EndpointNotReachable, requestID, err)
-		}
-		if userError.GetUserErrorCode(err) == string(utilReasonCode.Timeout) {
-			return nil, commonError.GetCSIError(ctxLogger, commonError.Timeout, requestID, err)
-		}
-		return nil, commonError.GetCSIError(ctxLogger, commonError.InternalError, requestID, err)
+		return nil, providerSessionCSIError(ctxLogger, requestID, err)
 	}
 
 	// fetch the VGS and its full member snapshot details.
@@ -901,7 +867,7 @@ func (csiCS *CSIControllerServer) GetVolumeGroupSnapshot(ctx context.Context, re
 	}
 
 	// verify that the backend returned CRNs for all member snapshots.
-	memberSnapshotCRNs, ok := resolveGroupSnapshotMemberIDs(groupSnapshot.Snapshots)
+	memberSnapshotCRNs, ok := resolveGroupSnapshotMemberCRNs(groupSnapshot.Snapshots)
 	if !ok {
 		return nil, volumeGroupSnapshotStatusError(codes.Internal, requestID, "backend response for volume group snapshot %q did not include individual member snapshot CRNs", groupSnapshotID)
 	}

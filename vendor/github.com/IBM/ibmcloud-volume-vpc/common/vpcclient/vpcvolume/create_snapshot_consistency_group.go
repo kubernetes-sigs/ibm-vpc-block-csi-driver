@@ -26,7 +26,7 @@ import (
 )
 
 // CreateSnapshotConsistencyGroup POSTs to /snapshot_consistency_groups
-func (scg *SnapshotConsistencyGroupService) CreateSnapshotConsistencyGroup(snapshotGroupReq *models.SnapshotConsistencyGroupRequest, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroup, error) {
+func (scg *SnapshotConsistencyGroupService) CreateSnapshotConsistencyGroup(snapshotGroupReq *models.SnapshotConsistencyGroupRequest, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroupResponse, error) {
 	ctxLogger.Debug("Entry Backend CreateSnapshotConsistencyGroup")
 	defer ctxLogger.Debug("Exit Backend CreateSnapshotConsistencyGroup")
 
@@ -39,7 +39,7 @@ func (scg *SnapshotConsistencyGroupService) CreateSnapshotConsistencyGroup(snaps
 	}
 
 	var (
-		result models.SnapshotConsistencyGroup
+		result models.SnapshotConsistencyGroupResponse
 		apiErr models.Error
 	)
 

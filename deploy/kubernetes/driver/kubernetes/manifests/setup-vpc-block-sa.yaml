@@ -227,18 +227,17 @@ rules:
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotcontents/status"]
     verbs: ["update", "patch"]
+  # The sidecar reads classes and updates content; snapshot-controller owns VGS objects.
   - apiGroups: ["groupsnapshot.storage.k8s.io"]
-    resources:
-      [
-        "volumegroupsnapshots",
-        "volumegroupsnapshotcontents",
-        "volumegroupsnapshotclasses",
-      ]
-    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    resources: ["volumegroupsnapshotclasses"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: ["groupsnapshot.storage.k8s.io"]
-    resources:
-      ["volumegroupsnapshots/status", "volumegroupsnapshotcontents/status"]
-    verbs: ["get", "update", "patch"]
+    resources: ["volumegroupsnapshotcontents"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  # Backend handles and readiness are written through the content status sub-resource.
+  - apiGroups: ["groupsnapshot.storage.k8s.io"]
+    resources: ["volumegroupsnapshotcontents/status"]
+    verbs: ["update", "patch"]
 
 ---
 kind: ClusterRoleBinding

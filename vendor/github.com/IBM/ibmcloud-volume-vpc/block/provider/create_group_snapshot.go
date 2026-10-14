@@ -51,8 +51,10 @@ func (vpcs *VPCSession) CreateGroupSnapshot(sourceVolumeIDs []string, groupSnaps
 		DeleteSnapshotsOnDelete: true,
 	}
 
-	var result *models.SnapshotConsistencyGroup
-	var err error
+	var (
+		result *models.SnapshotConsistencyGroupResponse
+		err    error
+	)
 	err = retry(vpcs.Logger, func() error {
 		result, err = vpcs.Apiclient.SnapshotConsistencyGroupService().CreateSnapshotConsistencyGroup(reqBody, vpcs.Logger)
 		return err
@@ -63,122 +65,10 @@ func (vpcs *VPCSession) CreateGroupSnapshot(sourceVolumeIDs []string, groupSnaps
 
 	vpcs.Logger.Info("Successfully created snapshot consistency group", zap.Reflect("GroupSnapshot", result))
 
-	// List all snapshots belonging to this consistency group to get full details (source_volume, etc.)
-	var snapshotList *models.SnapshotList
-	err = retry(vpcs.Logger, func() error {
-		snapshotList, err = vpcs.Apiclient.SnapshotService().ListSnapshots(0, "", &models.LisSnapshotFilters{
-			SnapshotConsistencyGroupID: result.ID,
-		}, vpcs.Logger)
-		return err
-	})
-	var snapshotDetails []*models.Snapshot
+	groupSnapshotResponse, err := vpcs.getGroupSnapshotWithMembers(result)
 	if err != nil {
-		vpcs.Logger.Warn("Failed to retrieve full details for individual member snapshots; using snapshot references and reporting the group as not ready", zap.Error(err))
-	} else if snapshotList != nil {
-		snapshotDetails = snapshotList.Snapshots
+		return nil, err
 	}
-
-	groupSnapshotResponse := FromProviderToLibGroupSnapshot(result, snapshotDetails, vpcs.Logger)
 	vpcs.Logger.Info("Prepared volume group snapshot response", zap.Reflect("groupSnapshotResponse", groupSnapshotResponse))
-	return groupSnapshotResponse, nil
-}
-
-// DeleteGroupSnapshot deletes a snapshot consistency group
-// snapshotIDs contains the list of individual snapshot IDs within the group snapshot (required by CSI spec)
-func (vpcs *VPCSession) DeleteGroupSnapshot(groupSnapshotID string, snapshotIDs []string) error {
-	vpcs.Logger.Info("Entry DeleteGroupSnapshot", zap.Reflect("groupSnapshotID", groupSnapshotID), zap.Reflect("snapshotIDs", snapshotIDs))
-	defer vpcs.Logger.Info("Exit DeleteGroupSnapshot", zap.Reflect("groupSnapshotID", groupSnapshotID))
-	defer metrics.UpdateDurationFromStart(vpcs.Logger, "DeleteGroupSnapshot", time.Now())
-
-	err := retry(vpcs.Logger, func() error {
-		return vpcs.Apiclient.SnapshotConsistencyGroupService().DeleteSnapshotConsistencyGroup(groupSnapshotID, vpcs.Logger)
-	})
-	if err != nil {
-		return userError.GetUserError("FailedToDeleteGroupSnapshot", err, groupSnapshotID)
-	}
-
-	vpcs.Logger.Info("Successfully deleted the snapshot consistency group")
-	return nil
-}
-
-// GetGroupSnapshot gets a snapshot consistency group by ID
-func (vpcs *VPCSession) GetGroupSnapshot(groupSnapshotID string) (*provider.GroupSnapshot, error) {
-	vpcs.Logger.Info("Entry GetGroupSnapshot", zap.Reflect("groupSnapshotID", groupSnapshotID))
-	defer vpcs.Logger.Info("Exit GetGroupSnapshot", zap.Reflect("groupSnapshotID", groupSnapshotID))
-
-	var result *models.SnapshotConsistencyGroup
-	var err error
-	err = retry(vpcs.Logger, func() error {
-		result, err = vpcs.Apiclient.SnapshotConsistencyGroupService().GetSnapshotConsistencyGroup(groupSnapshotID, vpcs.Logger)
-		return err
-	})
-	if err != nil {
-		return nil, userError.GetUserError("GroupSnapshotRetrievalFailed", err, groupSnapshotID)
-	}
-
-	vpcs.Logger.Info("Successfully retrieved snapshot consistency group details", zap.Reflect("groupSnapshotDetails", result))
-
-	// List all snapshots belonging to this consistency group to get full details (source_volume, etc.)
-	var snapshotList *models.SnapshotList
-	err = retry(vpcs.Logger, func() error {
-		snapshotList, err = vpcs.Apiclient.SnapshotService().ListSnapshots(0, "", &models.LisSnapshotFilters{
-			SnapshotConsistencyGroupID: result.ID,
-		}, vpcs.Logger)
-		return err
-	})
-	var snapshotDetails []*models.Snapshot
-	if err != nil {
-		vpcs.Logger.Warn("Failed to retrieve full details for individual member snapshots; using snapshot references and reporting the group as not ready", zap.Error(err))
-	} else if snapshotList != nil {
-		snapshotDetails = snapshotList.Snapshots
-	}
-
-	groupSnapshotResponse := FromProviderToLibGroupSnapshot(result, snapshotDetails, vpcs.Logger)
-	return groupSnapshotResponse, nil
-}
-
-// GetGroupSnapshotByName gets a snapshot consistency group by name
-func (vpcs *VPCSession) GetGroupSnapshotByName(name string, resourceGroupID string) (*provider.GroupSnapshot, error) {
-	vpcs.Logger.Debug("Entry of GetGroupSnapshotByName method...")
-	defer vpcs.Logger.Debug("Exit from GetGroupSnapshotByName method...")
-
-	vpcs.Logger.Info("Retrieving snapshot consistency group by name from VPC", zap.Reflect("GroupSnapshotName", name))
-
-	if len(name) == 0 {
-		return nil, userError.GetUserError("InvalidGroupSnapshotName", nil)
-	}
-
-	var result *models.SnapshotConsistencyGroup
-	var err error
-	err = retry(vpcs.Logger, func() error {
-		result, err = vpcs.Apiclient.SnapshotConsistencyGroupService().GetSnapshotConsistencyGroupByName(name, resourceGroupID, vpcs.Logger)
-		return err
-	})
-	if err != nil {
-		return nil, userError.GetUserError("GroupSnapshotNameLookupFailed", err, name)
-	}
-
-	if result == nil {
-		return nil, nil
-	}
-
-	vpcs.Logger.Info("Successfully retrieved snapshot consistency group details", zap.Reflect("groupSnapshotDetails", result))
-
-	// List all snapshots belonging to this consistency group to get full details (source_volume, etc.)
-	var snapshotList *models.SnapshotList
-	err = retry(vpcs.Logger, func() error {
-		snapshotList, err = vpcs.Apiclient.SnapshotService().ListSnapshots(0, "", &models.LisSnapshotFilters{
-			SnapshotConsistencyGroupID: result.ID,
-		}, vpcs.Logger)
-		return err
-	})
-	var snapshotDetails []*models.Snapshot
-	if err != nil {
-		vpcs.Logger.Warn("Failed to retrieve full details for individual member snapshots; using snapshot references and reporting the group as not ready", zap.Error(err))
-	} else if snapshotList != nil {
-		snapshotDetails = snapshotList.Snapshots
-	}
-
-	groupSnapshotResponse := FromProviderToLibGroupSnapshot(result, snapshotDetails, vpcs.Logger)
 	return groupSnapshotResponse, nil
 }

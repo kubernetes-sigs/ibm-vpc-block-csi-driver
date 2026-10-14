@@ -19,6 +19,7 @@ package provider
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -29,7 +30,29 @@ import (
 	"go.uber.org/zap"
 )
 
-const startSnapshoIDNotFoundMsg = "start parameter is not valid"
+const startSnapshotIDNotFoundMsg = "start parameter is not valid"
+
+// nextSnapshotStart returns the decoded "start" token of the next page.
+// No Next link means this is the last page, so it returns "" and no error.
+// A Next link without a usable start token is an error, never a silent end of listing.
+func nextSnapshotStart(list *models.SnapshotList) (string, error) {
+	if list == nil || list.Next == nil {
+		return "", nil
+	}
+	nextURL, err := url.Parse(list.Next.Href)
+	if err != nil {
+		return "", fmt.Errorf("snapshot next page link %q is not a valid URL: %w", list.Next.Href, err)
+	}
+	query, err := url.ParseQuery(nextURL.RawQuery)
+	if err != nil {
+		return "", fmt.Errorf("snapshot next page link %q has an invalid query: %w", list.Next.Href, err)
+	}
+	start := query.Get("start")
+	if start == "" {
+		return "", fmt.Errorf("snapshot next page link %q has no start token", list.Next.Href)
+	}
+	return start, nil
+}
 
 // ListSnapshots list all snapshots
 func (vpcs *VPCSession) ListSnapshots(limit int, start string, filters map[string]string) (*provider.SnapshotList, error) {
@@ -62,7 +85,7 @@ func (vpcs *VPCSession) ListSnapshots(limit int, start string, filters map[strin
 	})
 
 	if err != nil {
-		if strings.Contains(err.Error(), startSnapshoIDNotFoundMsg) {
+		if strings.Contains(err.Error(), startSnapshotIDNotFoundMsg) {
 			return nil, userError.GetUserError("StartSnapshotIDNotFound", err, start)
 		}
 		return nil, userError.GetUserError("ListSnapshotsFailed", err)
@@ -72,16 +95,13 @@ func (vpcs *VPCSession) ListSnapshots(limit int, start string, filters map[strin
 
 	var respSnapshotList = &provider.SnapshotList{}
 	if snapshots != nil {
-		if snapshots.Next != nil {
-			var next string
-			// "Next":{"href":"https://eu-gb.iaas.cloud.ibm.com/v1/snapshots?start=3e898aa7-ac71-4323-952d-a8d741c65a68\u0026limit=1\u0026zone.name=eu-gb-1"}
-			if strings.Contains(snapshots.Next.Href, "start=") {
-				next = strings.Split(strings.Split(snapshots.Next.Href, "start=")[1], "\u0026")[0]
-			} else {
-				vpcs.Logger.Warn("snapshots.Next.Href is not in expected format", zap.Reflect("snapshots.Next.Href", snapshots.Next.Href))
-			}
-			respSnapshotList.Next = next
+		// "Next":{"href":"https://eu-gb.iaas.cloud.ibm.com/v1/snapshots?start=3e898aa7-ac71-4323-952d-a8d741c65a68\u0026limit=1\u0026zone.name=eu-gb-1"}
+		next, nextErr := nextSnapshotStart(snapshots)
+		if nextErr != nil {
+			vpcs.Logger.Error("Invalid pagination metadata in snapshot list", zap.Error(nextErr))
+			return nil, userError.GetUserError("ListSnapshotsFailed", nextErr)
 		}
+		respSnapshotList.Next = next
 
 		snapshotslist := snapshots.Snapshots
 		for _, snapItem := range snapshotslist {
