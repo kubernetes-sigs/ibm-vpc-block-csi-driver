@@ -472,7 +472,7 @@ func getResourceGroup(logger *zap.Logger, snapshotParameters map[string]string, 
 
 	}
 
-	// return cluster's resource group
+	// return cluster's resource group from storage-secret-store
 	logger.Info("Using cluster's resource group", zap.String("resourceGroup", config.VPC.G2ResourceGroupID))
 	return config.VPC.G2ResourceGroupID
 }
@@ -500,6 +500,33 @@ func createCSISnapshotResponse(snapshot provider.Snapshot) *csi.CreateSnapshotRe
 			SizeBytes:      snapshot.SnapshotSize,
 			CreationTime:   ts,
 			ReadyToUse:     snapshot.ReadyToUse,
+		},
+	}
+}
+
+// createCSIVolumeGroupSnapshotResponse converts a provider GroupSnapshot to a CSI CreateVolumeGroupSnapshotResponse
+func createCSIVolumeGroupSnapshotResponse(groupSnapshot provider.GroupSnapshot) *csi.CreateVolumeGroupSnapshotResponse {
+	ts := timestamppb.New(groupSnapshot.GroupSnapshotCreationTime)
+
+	var snapshots []*csi.Snapshot
+	for _, snap := range groupSnapshot.Snapshots {
+		snapTs := timestamppb.New(snap.SnapshotCreationTime)
+		snapshots = append(snapshots, &csi.Snapshot{
+			SnapshotId:      snap.SnapshotCRN,
+			SourceVolumeId:  snap.VolumeID,
+			SizeBytes:       snap.SnapshotSize,
+			CreationTime:    snapTs,
+			ReadyToUse:      snap.ReadyToUse,
+			GroupSnapshotId: groupSnapshot.GroupSnapshotID,
+		})
+	}
+
+	return &csi.CreateVolumeGroupSnapshotResponse{
+		GroupSnapshot: &csi.VolumeGroupSnapshot{
+			GroupSnapshotId: groupSnapshot.GroupSnapshotID,
+			Snapshots:       snapshots,
+			CreationTime:    ts,
+			ReadyToUse:      groupSnapshot.ReadyToUse,
 		},
 	}
 }

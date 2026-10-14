@@ -23,7 +23,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"os"
 	"path"
@@ -149,6 +148,11 @@ func (v providerIDGenerator) GenerateInvalidNodeID() string {
 }
 
 func initCSIDriverForSanity(t *testing.T) *csiDriver.IBMCSIDriver {
+	driver, _ := initCSIDriverAndProviderForSanity(t)
+	return driver
+}
+
+func initCSIDriverAndProviderForSanity(t *testing.T) (*csiDriver.IBMCSIDriver, *FakeSanityCloudProvider) {
 	vendorVersion := "test-vendor-version-1.1.2"
 	driver := "fakedriver"
 
@@ -158,7 +162,10 @@ func initCSIDriverForSanity(t *testing.T) *csiDriver.IBMCSIDriver {
 	csiSanityDriver := csiDriver.GetIBMCSIDriver()
 
 	// Create fake provider and mounter
-	provider, _ := NewFakeSanityCloudProvider("", logger)
+	fakeProvider, err := NewFakeSanityCloudProvider("", logger)
+	if err != nil {
+		t.Fatalf("Failed to create fake cloud provider: %v", err)
+	}
 	mounter := mountManager.NewFakeNodeMounter()
 
 	statsUtil := &MockStatSanity{}
@@ -172,12 +179,12 @@ func initCSIDriverForSanity(t *testing.T) *csiDriver.IBMCSIDriver {
 	fakeNodeInfo.NewNodeMetadataReturns(&fakeNodeData, nil)
 
 	// Setup the IBM CSI Driver
-	err := csiSanityDriver.SetupIBMCSIDriver(provider, mounter, statsUtil, &fakeNodeData, &fakeNodeInfo, logger, driver, vendorVersion)
+	err = csiSanityDriver.SetupIBMCSIDriver(fakeProvider, mounter, statsUtil, &fakeNodeData, &fakeNodeInfo, logger, driver, vendorVersion)
 	if err != nil {
 		t.Fatalf("Failed to setup IBM CSI Driver: %v", err)
 	}
 
-	return csiSanityDriver
+	return csiSanityDriver, fakeProvider
 }
 
 // Fake State interface methods implementation for getting
@@ -196,15 +203,16 @@ func (su *MockStatSanity) DeviceInfo(path string) (int64, error) {
 
 // IsBlockDevice ..
 func (su *MockStatSanity) IsBlockDevice(devicePath string) (bool, error) {
-	if !strings.Contains(devicePath, TargetPath) {
-		return false, errors.New("not a valid path")
-	}
-	return true, nil
+	return false, nil
 }
 
 func (su *MockStatSanity) IsDevicePathNotExist(devicePath string) bool {
-	// return true if not matched
-	return !strings.Contains(devicePath, TargetPath)
+	// Paths under TempDir are managed by the test driver; treat them as existing.
+	if strings.HasPrefix(devicePath, TempDir) {
+		return false
+	}
+	_, err := os.Stat(devicePath)
+	return os.IsNotExist(err)
 }
 
 // FakeSanityCloudProvider Provider
@@ -250,22 +258,29 @@ type fakeSnapshot struct {
 
 type fakeProviderSession struct {
 	provider.DefaultVolumeProvider
-	volumes      map[string]*fakeVolume
-	snapshots    map[string]*fakeSnapshot
-	pub          map[string]string
-	providerName provider.VolumeProvider
-	providerType provider.VolumeType
-	tokens       map[string]int
+	volumes                   map[string]*fakeVolume
+	snapshots                 map[string]*fakeSnapshot
+	groupSnapshots            map[string]*fakeGroupSnapshot
+	createGroupSnapshotResult *provider.GroupSnapshot
+	createGroupSnapshotErr    error
+	deleteGroupSnapshotErr    error
+	getGroupSnapshotErr       error
+	getGroupSnapshotByNameErr error
+	pub                       map[string]string
+	providerName              provider.VolumeProvider
+	providerType              provider.VolumeType
+	tokens                    map[string]int
 }
 
 func newFakeProviderSession() *fakeProviderSession {
 	return &fakeProviderSession{
-		volumes:      make(map[string]*fakeVolume),
-		snapshots:    make(map[string]*fakeSnapshot),
-		pub:          make(map[string]string),
-		providerName: csiConfig.CSIProviderName,
-		providerType: csiConfig.CSIProviderVolumeType,
-		tokens:       make(map[string]int),
+		volumes:        make(map[string]*fakeVolume),
+		snapshots:      make(map[string]*fakeSnapshot),
+		groupSnapshots: make(map[string]*fakeGroupSnapshot),
+		pub:            make(map[string]string),
+		providerName:   csiConfig.CSIProviderName,
+		providerType:   csiConfig.CSIProviderVolumeType,
+		tokens:         make(map[string]int),
 	}
 }
 
@@ -330,7 +345,16 @@ func (c *fakeProviderSession) UpdateVolume(volumeRequest provider.Volume) error 
 
 // Create the volume from snapshot with snapshot tags
 func (c *fakeProviderSession) CreateVolumeFromSnapshot(snapshot provider.Snapshot, tags map[string]string) (*provider.Volume, error) {
-	return nil, nil
+	name := fmt.Sprintf("vol-from-snap-%s", uuid.New().String()[:10])
+	fakeVol := &fakeVolume{
+		Volume: &provider.Volume{
+			VolumeID: fmt.Sprintf("vol-uuid-test-vol-%s", uuid.New().String()[:10]),
+			Name:     &name,
+			Snapshot: provider.Snapshot{SnapshotID: snapshot.SnapshotID},
+		},
+	}
+	c.volumes[name] = fakeVol
+	return fakeVol.Volume, nil
 }
 
 // Delete the volume
@@ -461,7 +485,7 @@ func (c *fakeProviderSession) AttachVolume(attachRequest provider.VolumeAttachme
 		VolumeAttachmentRequest: provider.VolumeAttachmentRequest{
 			VolumeID:            attachRequest.VolumeID,
 			InstanceID:          attachRequest.InstanceID,
-			VPCVolumeAttachment: &provider.VolumeAttachment{DevicePath: "/csi/mount/vol1"},
+			VPCVolumeAttachment: &provider.VolumeAttachment{DevicePath: "fake"},
 		},
 	}
 	return attachmentDetails, nil
@@ -484,7 +508,7 @@ func (c *fakeProviderSession) WaitForAttachVolume(attachRequest provider.VolumeA
 		VolumeAttachmentRequest: provider.VolumeAttachmentRequest{
 			VolumeID:            attachRequest.VolumeID,
 			InstanceID:          attachRequest.InstanceID,
-			VPCVolumeAttachment: &provider.VolumeAttachment{DevicePath: "/csi/mount/vol1"},
+			VPCVolumeAttachment: &provider.VolumeAttachment{DevicePath: "fake"},
 		},
 	}, nil
 }
@@ -503,17 +527,13 @@ func (c *fakeProviderSession) GetVolumeAttachment(attachRequest provider.VolumeA
 // Snapshot operations
 // Create the snapshot on the volume
 func (c *fakeProviderSession) CreateSnapshot(sourceVolumeID string, snapshotParameters provider.SnapshotParameters) (*provider.Snapshot, error) {
-	snapshotID := fmt.Sprintf("vol-uuid-test-vol-%s", uuid.New().String()[:10])
-	for _, existingSnapshot := range c.snapshots {
-		if existingSnapshot.SnapshotID == snapshotID && existingSnapshot.VolumeID == sourceVolumeID {
-			return nil, errors.New("snapshot already present for same volume")
-		}
-	}
+	snapshotID := fmt.Sprintf("snapshot-%s", uuid.New().String())
 	fakeSnapshot := &fakeSnapshot{
 		Snapshot: &provider.Snapshot{
 			VolumeID:             sourceVolumeID,
 			SnapshotID:           snapshotID,
-			ReadyToUse:           false,
+			SnapshotCRN:          snapshotID,
+			ReadyToUse:           true,
 			SnapshotSize:         1,
 			SnapshotCreationTime: time.Now(),
 		},
@@ -522,7 +542,6 @@ func (c *fakeProviderSession) CreateSnapshot(sourceVolumeID string, snapshotPara
 
 	c.snapshots[snapshotID] = fakeSnapshot
 	return fakeSnapshot.Snapshot, nil
-
 }
 
 // Delete the snapshot
@@ -533,36 +552,54 @@ func (c *fakeProviderSession) DeleteSnapshot(snap *provider.Snapshot) error {
 
 // Get the snapshot
 func (c *fakeProviderSession) GetSnapshot(snapshotID string, _ ...string) (*provider.Snapshot, error) {
-	fmt.Println("GetSnapshot", c.snapshots)
-	fmt.Println("snapshotID", snapshotID)
-	fmt.Println("c.snapshots[snapshotID]", c.snapshots[snapshotID])
-	ret, err := c.snapshots[snapshotID]
-	fmt.Println(ret)
-	if !err {
-		fmt.Println("Error")
-		return nil, errors.New("error")
+	ret, ok := c.snapshots[snapshotID]
+	if !ok {
+		return nil, nil
 	}
 	return ret.Snapshot, nil
 }
 
 // Snapshot list by using tags
 func (c *fakeProviderSession) ListSnapshots(maxResults int, nextToken string, tags map[string]string) (*provider.SnapshotList, error) {
-	var snapshots []*provider.Snapshot
-	var retToken string
-	for _, fakeSnapshot := range c.snapshots {
-		if fakeSnapshot.VolumeID == tags["source_volume.id"] || len(tags["source_volume.id"]) == 0 {
-			snapshots = append(snapshots, fakeSnapshot.Snapshot)
+	// Collect snapshot IDs in a stable order so pagination is deterministic.
+	allIDs := make([]string, 0, len(c.snapshots))
+	for id := range c.snapshots {
+		allIDs = append(allIDs, id)
+	}
+	// Filter by source volume ID if requested.
+	if sourceVolumeID := tags["source_volume.id"]; sourceVolumeID != "" {
+		filtered := allIDs[:0]
+		for _, id := range allIDs {
+			if c.snapshots[id].VolumeID == sourceVolumeID {
+				filtered = append(filtered, id)
+			}
+		}
+		allIDs = filtered
+	}
+
+	// Apply pagination start token.
+	startIdx := 0
+	if nextToken != "" {
+		if idx, ok := c.tokens[nextToken]; ok {
+			startIdx = idx
 		}
 	}
-	if maxResults > 0 {
-		r1 := rand.New(rand.NewSource(time.Now().UnixNano()))
-		retToken = fmt.Sprintf("token-%d", r1.Uint64())
-		c.tokens[retToken] = maxResults
-		snapshots = snapshots[0:maxResults]
-		fmt.Printf("%v\n", snapshots)
+	if startIdx >= len(allIDs) {
+		return &provider.SnapshotList{}, nil
 	}
-	if len(nextToken) != 0 {
-		snapshots = snapshots[c.tokens[nextToken]:]
+	allIDs = allIDs[startIdx:]
+
+	var retToken string
+	if maxResults > 0 && maxResults < len(allIDs) {
+		nextStart := startIdx + maxResults
+		retToken = fmt.Sprintf("token-%d", nextStart)
+		c.tokens[retToken] = nextStart
+		allIDs = allIDs[:maxResults]
+	}
+
+	snapshots := make([]*provider.Snapshot, 0, len(allIDs))
+	for _, id := range allIDs {
+		snapshots = append(snapshots, c.snapshots[id].Snapshot)
 	}
 	return &provider.SnapshotList{
 		Snapshots: snapshots,
@@ -575,27 +612,12 @@ func (c *fakeProviderSession) GetSnapshotByName(snapshotName string, _ ...string
 	if len(snapshotName) == 0 {
 		return nil, errors.New("no name passed")
 	}
-	var snapshots []*fakeSnapshot
 	for _, s := range c.snapshots {
-		name, exists := s.tags["name"]
-		if !exists {
-			continue
-		}
-		if name == snapshotName {
-			fmt.Println("name is same")
-			snapshots = append(snapshots, s)
+		if name, exists := s.tags["name"]; exists && name == snapshotName {
+			return s.Snapshot, nil
 		}
 	}
-	if len(snapshots) == 0 {
-		errorMsg := providerError.Message{
-			Code:        "StorageFindFailedWithSnapshotName",
-			Description: "Snapshot not found by name",
-			Type:        providerError.RetrivalFailed,
-		}
-		return nil, errorMsg
-	}
-
-	return snapshots[0].Snapshot, nil
+	return nil, nil
 }
 
 func createTargetDir(targetPath string) error {

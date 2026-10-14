@@ -147,6 +147,26 @@ func (volprov *DefaultVolumeProvider) ListSnapshots(limit int, start string, tag
 	return nil, nil
 }
 
+// CreateGroupSnapshot creates a group snapshot
+func (volprov *DefaultVolumeProvider) CreateGroupSnapshot(sourceVolumeIDs []string, groupSnapshotParameters GroupSnapshotParameters) (*GroupSnapshot, error) {
+	return nil, nil
+}
+
+// DeleteGroupSnapshot deletes the group snapshot
+func (volprov *DefaultVolumeProvider) DeleteGroupSnapshot(groupSnapshotID string, snapshotIDs []string) error {
+	return nil
+}
+
+// GetGroupSnapshot gets the group snapshot by ID
+func (volprov *DefaultVolumeProvider) GetGroupSnapshot(groupSnapshotID string) (*GroupSnapshot, error) {
+	return nil, nil
+}
+
+// GetGroupSnapshotByName gets the group snapshot by name
+func (volprov *DefaultVolumeProvider) GetGroupSnapshotByName(groupSnapshotName string, resourceGroupID string) (*GroupSnapshot, error) {
+	return nil, nil
+}
+
 // ExpandVolume expand the volume with authorization by passing required information in the volume object
 func (volprov *DefaultVolumeProvider) ExpandVolume(expandVolumeRequest ExpandVolumeRequest) (int64, error) {
 	return 0, nil
@@ -196,4 +216,11 @@ func (volprov *DefaultVolumeProvider) GetSubnetForVolumeAccessPoint(subnetReques
 // GetSecurityGroupForVolumeAccessPoint retrieves the securityGroup matching with available cluster SG in the VPC
 func (volprov *DefaultVolumeProvider) GetSecurityGroupForVolumeAccessPoint(securityGroupRequest SecurityGroupRequest) (string, error) {
 	return "", nil
+}
+
+// GetVolumeProfileBands returns a no-op nil result.
+// Concrete session implementations that support this operation
+// (e.g. IksVpcSession via armada-storage-api) override this method.
+func (volprov *DefaultVolumeProvider) GetVolumeProfileBands(profile string) ([]VolumeProfileBand, error) {
+	return nil, nil
 }
