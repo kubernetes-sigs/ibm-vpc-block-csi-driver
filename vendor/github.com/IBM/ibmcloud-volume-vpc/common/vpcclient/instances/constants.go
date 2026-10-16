@@ -31,6 +31,9 @@ const (
 	// IksPathPrefix  IKS URL path prefix
 	IksPathPrefix = "v2/storage/vpc/"
 
+	// BMSPathPrefix  Bare Metal Server URL path prefix for SDP volume attachments
+	BMSPathPrefix = "v1/bare_metal_servers"
+
 	// IksClusterQueryKey ...
 	IksClusterQueryKey = "cluster"
 
