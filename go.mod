@@ -109,6 +109,7 @@ require (
 // The below fixes the "go list -mod=readonly -m all" execution
 replace (
 	k8s.io/cli-runtime => k8s.io/cli-runtime v0.32.10
+	k8s.io/cloud-provider => k8s.io/cloud-provider v0.32.10
 	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.32.10
 	k8s.io/cri-api => k8s.io/cri-api v0.32.10
 	k8s.io/cri-client => k8s.io/cri-client v0.32.10
