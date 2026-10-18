@@ -19,12 +19,11 @@ package provider
 
 // GroupSnapshotManager ...
 type GroupSnapshotManager interface {
-	// CreateGroupSnapshot creates a group snapshot for the given source volume IDs
+	// CreateGroupSnapshot creates a group snapshot for the given source volumeIDs
 	CreateGroupSnapshot(sourceVolumeIDs []string, groupSnapshotParameters GroupSnapshotParameters) (*GroupSnapshot, error)
 
 	// DeleteGroupSnapshot deletes the group snapshot
-	// snapshotIDs contains the list of individual snapshot IDs within the group snapshot
-	DeleteGroupSnapshot(groupSnapshotID string, snapshotIDs []string) error
+	DeleteGroupSnapshot(groupSnapshotID string) error
 
 	// GetGroupSnapshot fetches the group snapshot by ID
 	GetGroupSnapshot(groupSnapshotID string) (*GroupSnapshot, error)

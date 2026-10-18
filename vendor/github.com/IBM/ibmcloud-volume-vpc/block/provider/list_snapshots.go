@@ -32,9 +32,8 @@ import (
 
 const startSnapshotIDNotFoundMsg = "start parameter is not valid"
 
-// nextSnapshotStart returns the decoded "start" token of the next page.
-// No Next link means this is the last page, so it returns "" and no error.
-// A Next link without a usable start token is an error, never a silent end of listing.
+// nextSnapshotStart reads the next page's start token. No next link means the last page.
+// Return an error if the link is invalid or its token is missing.
 func nextSnapshotStart(list *models.SnapshotList) (string, error) {
 	if list == nil || list.Next == nil {
 		return "", nil
@@ -95,7 +94,6 @@ func (vpcs *VPCSession) ListSnapshots(limit int, start string, filters map[strin
 
 	var respSnapshotList = &provider.SnapshotList{}
 	if snapshots != nil {
-		// "Next":{"href":"https://eu-gb.iaas.cloud.ibm.com/v1/snapshots?start=3e898aa7-ac71-4323-952d-a8d741c65a68\u0026limit=1\u0026zone.name=eu-gb-1"}
 		next, nextErr := nextSnapshotStart(snapshots)
 		if nextErr != nil {
 			vpcs.Logger.Error("Invalid pagination metadata in snapshot list", zap.Error(nextErr))

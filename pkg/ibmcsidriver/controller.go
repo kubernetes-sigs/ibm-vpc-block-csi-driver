@@ -724,7 +724,7 @@ func (csiCS *CSIControllerServer) CreateVolumeGroupSnapshot(ctx context.Context,
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	// populate requestID in the context
 	ctx = context.WithValue(ctx, provider.RequestID, requestID)
-	ctxLogger.Info("CSIControllerServer-CreateVolumeGroupSnapshot... ", zap.Reflect("Request", req))
+	ctxLogger.Info("CSIControllerServer-CreateVolumeGroupSnapshot", zap.String("snapshotName", req.GetName()), zap.Strings("sourceVolumeIDs", req.GetSourceVolumeIds()))
 	defer metrics.UpdateDurationFromStart(ctxLogger, "CreateVolumeGroupSnapshot", time.Now())
 
 	// validation of req body
@@ -749,8 +749,6 @@ func (csiCS *CSIControllerServer) CreateVolumeGroupSnapshot(ctx context.Context,
 	// check if a group snapshot with this name already exists
 	groupSnapshot, err := session.GetGroupSnapshotByName(snapshotName, resourceGroupID)
 	if err != nil {
-		ctxLogger.Error("Failed to check whether the volume group snapshot already exists",
-			zap.String("snapshotName", snapshotName), zap.String("resourceGroupID", resourceGroupID), zap.Error(err))
 		return nil, volumeGroupSnapshotStatusError(volumeGroupSnapshotErrorCode(err), requestID, "failed to check whether volume group snapshot %q exists in resource group %q; no new group was created by this request: %v", snapshotName, resourceGroupID, err)
 	}
 	if groupSnapshot != nil {
@@ -781,7 +779,6 @@ func (csiCS *CSIControllerServer) CreateVolumeGroupSnapshot(ctx context.Context,
 		return nil, volumeGroupSnapshotStatusError(codes.Aborted, requestID, "backend returned no details for volume group snapshot %q; retry the request", snapshotName)
 	}
 
-	// The provider supplies complete source-volume details; verify they match the request.
 	if err := validateGroupSnapshotSourceVolumes(snapshotName, requestID, groupSnapshot.Snapshots, sourceVolumeIDs, codes.Internal); err != nil {
 		return nil, err
 	}
@@ -794,33 +791,30 @@ func (csiCS *CSIControllerServer) CreateVolumeGroupSnapshot(ctx context.Context,
 	return createCSIVolumeGroupSnapshotResponse(*groupSnapshot), nil
 }
 
-// DeleteVolumeGroupSnapshot requires the CSI group and member ID fields.
-// VPC deletes the group(including members) using the group ID alone.
+// DeleteVolumeGroupSnapshot requires the CSI group and member ID fields. VPC deletes by groupID alone, without fetching member details first.
 func (csiCS *CSIControllerServer) DeleteVolumeGroupSnapshot(ctx context.Context, req *csi.DeleteVolumeGroupSnapshotRequest) (*csi.DeleteVolumeGroupSnapshotResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	ctx = context.WithValue(ctx, provider.RequestID, requestID)
 	defer metrics.UpdateDurationFromStart(ctxLogger, "DeleteVolumeGroupSnapshot", time.Now())
-	ctxLogger.Info("CSIControllerServer-DeleteVolumeGroupSnapshot... ", zap.Reflect("Request", req))
 
 	groupSnapshotID := req.GetGroupSnapshotId()
 	if len(groupSnapshotID) == 0 {
 		return nil, volumeGroupSnapshotStatusError(codes.InvalidArgument, requestID, "volume group snapshot ID must be provided")
 	}
 
-	// Extract snapshot IDs from the request (required by CSI spec)
-	snapshotIDs := req.GetSnapshotIds()
-	if len(snapshotIDs) == 0 {
+	// CSI requires memberIDs, but VPC does not need them to delete the group.
+	if len(req.GetSnapshotIds()) == 0 {
 		return nil, volumeGroupSnapshotStatusError(codes.InvalidArgument, requestID, "at least one individual member snapshot ID must be provided")
 	}
-	ctxLogger.Info("DeleteVolumeGroupSnapshot snapshot IDs", zap.Reflect("snapshotIDs", snapshotIDs))
+	ctxLogger.Info("CSIControllerServer-DeleteVolumeGroupSnapshot", zap.String("groupSnapshotID", groupSnapshotID))
 
-	// provider initialization
+	// Provider initialization
 	session, err := csiCS.CSIProvider.GetProviderSession(ctx, ctxLogger)
 	if err != nil {
 		return nil, providerSessionCSIError(ctxLogger, requestID, err)
 	}
 
-	err = session.DeleteGroupSnapshot(groupSnapshotID, snapshotIDs)
+	err = session.DeleteGroupSnapshot(groupSnapshotID)
 	if isGroupSnapshotNotFound(err) {
 		ctxLogger.Info("Volume group snapshot does not exist; considered delete as successful",
 			zap.String("groupSnapshotID", groupSnapshotID),
@@ -837,7 +831,7 @@ func (csiCS *CSIControllerServer) DeleteVolumeGroupSnapshot(ctx context.Context,
 func (csiCS *CSIControllerServer) GetVolumeGroupSnapshot(ctx context.Context, req *csi.GetVolumeGroupSnapshotRequest) (*csi.GetVolumeGroupSnapshotResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	ctx = context.WithValue(ctx, provider.RequestID, requestID)
-	ctxLogger.Info("CSIControllerServer-GetVolumeGroupSnapshot... ", zap.Reflect("Request", req))
+	ctxLogger.Info("CSIControllerServer-GetVolumeGroupSnapshot", zap.String("groupSnapshotID", req.GetGroupSnapshotId()), zap.Int("memberSnapshotCount", len(req.GetSnapshotIds())))
 	defer metrics.UpdateDurationFromStart(ctxLogger, "GetVolumeGroupSnapshot", time.Now())
 
 	groupSnapshotID := req.GetGroupSnapshotId()
@@ -870,11 +864,6 @@ func (csiCS *CSIControllerServer) GetVolumeGroupSnapshot(ctx context.Context, re
 	memberSnapshotCRNs, ok := resolveGroupSnapshotMemberCRNs(groupSnapshot.Snapshots)
 	if !ok {
 		return nil, volumeGroupSnapshotStatusError(codes.Internal, requestID, "backend response for volume group snapshot %q did not include individual member snapshot CRNs", groupSnapshotID)
-	}
-
-	// check if all members have volumeID
-	if _, sourceVolumeDetailsAvailable := resolveGroupSnapshotSourceVolumes(groupSnapshot.Snapshots); !sourceVolumeDetailsAvailable {
-		return nil, volumeGroupSnapshotStatusError(codes.Aborted, requestID, "volume group snapshot %q exists, but its individual member snapshot details are not available; retry the request", groupSnapshotID)
 	}
 
 	// compare the req's CRNs with the resp's CRNs regardless of order.

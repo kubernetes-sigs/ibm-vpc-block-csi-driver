@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -566,6 +567,7 @@ func (c *fakeProviderSession) ListSnapshots(maxResults int, nextToken string, ta
 	for id := range c.snapshots {
 		allIDs = append(allIDs, id)
 	}
+	sort.Strings(allIDs)
 	// Filter by source volume ID if requested.
 	if sourceVolumeID := tags["source_volume.id"]; sourceVolumeID != "" {
 		filtered := allIDs[:0]

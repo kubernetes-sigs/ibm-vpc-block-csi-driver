@@ -73,7 +73,7 @@ var skipErrorCodes = map[string]bool{
 	SnapshotNotFound:                               true,
 	"snapshots_not_authorized":                     true,
 	SnapshotIDNotFound:                             true,
-	"snapshot_consistency_groups_not_found":        true, // Let CSI handle an already-deleted group immediately.
+	"snapshot_consistency_groups_not_found":        true,
 	"snapshots_source_volume_not_found":            true,
 	"snapshots_source_volume_not_attached":         true,
 	"volume_capacity_maximum":                      true,
@@ -411,8 +411,7 @@ func FromProviderToLibVolume(vpcVolume *models.Volume, logger *zap.Logger) (libV
 	return
 }
 
-// FromProviderToLibSnapshot converts backend snapshot details to the provider model.
-// Missing source-volume details are preserved as an empty ID and keep the snapshot not ready.
+// FromProviderToLibSnapshot converting vpc provider snapshot type to generic lib snapshot type
 func FromProviderToLibSnapshot(vpcSnapshot *models.Snapshot, logger *zap.Logger) (libSnapshot *provider.Snapshot) {
 	logger.Debug("Entry of FromProviderToLibSnapshot method...")
 	defer logger.Debug("Exit from FromProviderToLibSnapshot method...")
@@ -442,8 +441,8 @@ func FromProviderToLibSnapshot(vpcSnapshot *models.Snapshot, logger *zap.Logger)
 	return
 }
 
-// FromProviderToLibGroupSnapshot converts a VPC consistency group to the generic model.
-// A group is ready only when it is stable and every full member snapshot is ready.
+// FromProviderToLibGroupSnapshot converts	 VPC group details to the shared provider model.
+// The group is ready only when it is stable and all member snapshots are ready.
 func FromProviderToLibGroupSnapshot(vpcGroup *models.SnapshotConsistencyGroupResponse, snapshotDetails []*models.Snapshot, logger *zap.Logger) (libGroupSnapshot *provider.GroupSnapshot) {
 	logger.Debug("Entry of FromProviderToLibGroupSnapshot method...")
 	defer logger.Debug("Exit from FromProviderToLibGroupSnapshot method...")
@@ -468,7 +467,6 @@ func FromProviderToLibGroupSnapshot(vpcGroup *models.SnapshotConsistencyGroupRes
 		ReadyToUse:                vpcGroup.LifecycleState == snapshotReadyState && len(vpcGroup.Snapshots) > 0,
 	}
 
-	// ListSnapshots can return fewer details than the group's member references.
 	detailsByID := make(map[string]*models.Snapshot, len(snapshotDetails))
 	for _, snap := range snapshotDetails {
 		if snap != nil {
@@ -476,8 +474,7 @@ func FromProviderToLibGroupSnapshot(vpcGroup *models.SnapshotConsistencyGroupRes
 		}
 	}
 
-	// Keep every referenced member. Missing details leave a not-ready placeholder
-	// with no source volume ID, so CSI can retry instead of accepting a partial group.
+	// Keep all members. Members with missing details stay not ready and have no source volume ID.
 	libGroupSnapshot.Snapshots = make([]*provider.Snapshot, 0, len(vpcGroup.Snapshots))
 	for _, ref := range vpcGroup.Snapshots {
 		var member *provider.Snapshot

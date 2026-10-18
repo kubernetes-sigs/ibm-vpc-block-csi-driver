@@ -25,9 +25,8 @@ import (
 )
 
 // DeleteGroupSnapshot deletes a snapshot consistency group
-// snapshotIDs contains the list of individual snapshot IDs within the group snapshot (required by CSI spec)
-func (vpcs *VPCSession) DeleteGroupSnapshot(groupSnapshotID string, snapshotIDs []string) error {
-	vpcs.Logger.Info("Entry DeleteGroupSnapshot", zap.Reflect("groupSnapshotID", groupSnapshotID), zap.Reflect("snapshotIDs", snapshotIDs))
+func (vpcs *VPCSession) DeleteGroupSnapshot(groupSnapshotID string) error {
+	vpcs.Logger.Info("Entry DeleteGroupSnapshot", zap.Reflect("groupSnapshotID", groupSnapshotID))
 	defer vpcs.Logger.Info("Exit DeleteGroupSnapshot", zap.Reflect("groupSnapshotID", groupSnapshotID))
 	defer metrics.UpdateDurationFromStart(vpcs.Logger, "DeleteGroupSnapshot", time.Now())
 

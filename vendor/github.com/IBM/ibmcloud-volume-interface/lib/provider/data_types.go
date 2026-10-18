@@ -134,19 +134,19 @@ type SnapshotList struct {
 
 // GroupSnapshot represents a group of snapshots taken consistently
 type GroupSnapshot struct {
-	// The unique group snapshot ID assigned by the provider
-	GroupSnapshotID string `json:"groupSnapshotID,omitempty"`
+	// The unique group snapshotID assigned by the cloud provider
+	GroupSnapshotID string `json:"groupSnapshotID"`
 
 	// The group snapshot CRN assigned by cloud provider
-	GroupSnapshotCRN string `json:"groupSnapshotCRN,omitempty"`
+	GroupSnapshotCRN string `json:"groupSnapshotCRN"`
 
 	// Time stamp when group snapshot creation was initiated
 	GroupSnapshotCreationTime time.Time `json:"groupSnapCreationTime"`
 
-	// List of individual snapshots in this group
-	Snapshots []*Snapshot `json:"snapshots,omitempty"`
+	// List of individual member snapshots in this group
+	Snapshots []*Snapshot `json:"snapshots"`
 
-	// status of group snapshot
+	// status of the group snapshot
 	ReadyToUse bool `json:"readyToUse"`
 
 	// VPC contains vpc fields

@@ -30,42 +30,24 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// validateGroupSnapshotSourceVolumes checks membership in both Create paths.
-// A name conflict uses AlreadyExists; unexpected members after creation use Internal.
+// validateGroupSnapshotSourceVolumes checks if members from req and resp match
 func validateGroupSnapshotSourceVolumes(snapshotName, requestID string, snapshots []*provider.Snapshot, sourceVolumeIDs []string, mismatchCode codes.Code) error {
-	memberVolumeIDs, available := resolveGroupSnapshotSourceVolumes(snapshots)
-	if !available {
-		return volumeGroupSnapshotStatusError(codes.Aborted, requestID, "volume group snapshot %q cannot be validated because its individual member snapshot details are not available; retry the request", snapshotName)
+	memberVolumeIDs := make([]string, 0, len(snapshots))
+	for _, snapshot := range snapshots {
+		memberVolumeIDs = append(memberVolumeIDs, snapshot.VolumeID)
 	}
+
 	if matchIDs(memberVolumeIDs, sourceVolumeIDs) {
 		return nil
 	}
+
 	if mismatchCode == codes.AlreadyExists {
 		return volumeGroupSnapshotStatusError(codes.AlreadyExists, requestID, "volume group snapshot %q already exists with a different set of source volume IDs (requested %v, existing %v); create a new VolumeGroupSnapshot or delete and recreate the requested VolumeGroupSnapshot to generate a new snapshot name", snapshotName, sourceVolumeIDs, memberVolumeIDs)
 	}
 	return volumeGroupSnapshotStatusError(codes.Internal, requestID, "backend returned unexpected source volumes for newly created volume group snapshot %q (requested %v, returned %v)", snapshotName, sourceVolumeIDs, memberVolumeIDs)
 }
 
-// resolveGroupSnapshotSourceVolumes returns the source volume ID for each member snapshot.
-// The boolean is false when any member has no source volume ID yet.
-func resolveGroupSnapshotSourceVolumes(snapshots []*provider.Snapshot) ([]string, bool) {
-	if len(snapshots) == 0 {
-		return nil, false
-	}
-
-	volumeIDs := make([]string, 0, len(snapshots))
-	for _, snapshot := range snapshots {
-		if snapshot == nil || snapshot.VolumeID == "" {
-			return nil, false
-		}
-		volumeIDs = append(volumeIDs, snapshot.VolumeID)
-	}
-
-	return volumeIDs, true
-}
-
-// resolveGroupSnapshotMemberCRNs returns the CRN for each member snapshot.
-// The boolean is false when any member has no CRN.
+// resolveGroupSnapshotMemberCRNs returns the CRN for each member snapshot. The boolean is false when any member has no CRN.
 func resolveGroupSnapshotMemberCRNs(snapshots []*provider.Snapshot) ([]string, bool) {
 	if len(snapshots) == 0 {
 		return nil, false
@@ -82,8 +64,7 @@ func resolveGroupSnapshotMemberCRNs(snapshots []*provider.Snapshot) ([]string, b
 	return crns, true
 }
 
-// matchIDs reports whether left and right contain the same IDs regardless of
-// order, preserving duplicate counts.
+// matchIDs reports whether left and right contain the same IDs regardless of order, preserving duplicate counts.
 func matchIDs(left, right []string) bool {
 	if len(left) != len(right) {
 		return false

@@ -48,7 +48,7 @@ func (vpcs *VPCSession) GetGroupSnapshot(groupSnapshotID string) (*provider.Grou
 	return vpcs.getGroupSnapshotWithMembers(result)
 }
 
-// GetGroupSnapshotByName gets a snapshot consistency group by name
+// GetGroupSnapshotByName gets a snapshot consistency group by name and resourceGroupID
 func (vpcs *VPCSession) GetGroupSnapshotByName(name string, resourceGroupID string) (*provider.GroupSnapshot, error) {
 	vpcs.Logger.Debug("Entry of GetGroupSnapshotByName method...")
 	defer vpcs.Logger.Debug("Exit from GetGroupSnapshotByName method...")
@@ -81,12 +81,13 @@ func (vpcs *VPCSession) GetGroupSnapshotByName(name string, resourceGroupID stri
 }
 
 // getGroupSnapshotWithMembers fetches full member details and converts the group.
-// Return incomplete source-volume details as an error so CSI retries the same group.
+// If any member's source volumeID is missing, return an error so CSI sidecar can retry.
 func (vpcs *VPCSession) getGroupSnapshotWithMembers(group *models.SnapshotConsistencyGroupResponse) (*provider.GroupSnapshot, error) {
 	if group == nil {
 		return nil, errors.New("VPC returned an empty snapshot consistency group response")
 	}
-	// With an empty ID the client drops the group filter and would list every snapshot in the account.
+
+	// Reject an empty groupID
 	if group.ID == "" {
 		return nil, errors.New("VPC returned a snapshot consistency group without an ID")
 	}
@@ -97,7 +98,7 @@ func (vpcs *VPCSession) getGroupSnapshotWithMembers(group *models.SnapshotConsis
 		return nil, userError.GetUserError("GroupSnapshotMemberLookupFailed", err, group.ID)
 	}
 
-	// A complete listing can still lack details while members are being created.
+	// Check if any member snapshot is missing its source volumeID.
 	response := FromProviderToLibGroupSnapshot(group, snapshotDetails, vpcs.Logger)
 	if len(response.Snapshots) == 0 {
 		return nil, userError.GetUserError("GroupSnapshotMemberDetailsUnavailable", nil, group.ID)
@@ -111,8 +112,7 @@ func (vpcs *VPCSession) getGroupSnapshotWithMembers(group *models.SnapshotConsis
 }
 
 // listGroupMemberSnapshots reads every page of the group's member snapshots.
-// Any page failure returns an error, so a partial member list is never treated as complete.
-// There is no retry here; the caller returns the error and CSI retries the whole request.
+// If any page fails, return error without retrying/returning partial results. CSI can then retry the req from the start.
 func (vpcs *VPCSession) listGroupMemberSnapshots(groupID string) ([]*models.Snapshot, error) {
 	filters := &models.LisSnapshotFilters{SnapshotConsistencyGroupID: groupID}
 	seenTokens := map[string]bool{}
@@ -127,16 +127,19 @@ func (vpcs *VPCSession) listGroupMemberSnapshots(groupID string) ([]*models.Snap
 		if page == nil {
 			return nil, errors.New("VPC returned an empty snapshot page")
 		}
+
 		members = append(members, page.Snapshots...)
 
 		start, err = nextSnapshotStart(page)
 		if err != nil {
 			return nil, err
 		}
+
 		if start == "" {
 			return members, nil
 		}
-		// Token-cycle guard: a token we already used (including A -> B -> A) would loop forever.
+
+		// Stop if a page token repeats, so we do not keep fetching the same pages.
 		if seenTokens[start] {
 			return nil, fmt.Errorf("snapshot list repeated page token %q", start)
 		}

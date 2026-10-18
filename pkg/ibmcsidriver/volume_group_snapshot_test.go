@@ -39,41 +39,6 @@ func TestVolumeGroupSnapshotStatusErrorIncludesMessageAndRequestID(t *testing.T)
 	assert.True(t, strings.Contains(message, "request ID: request-id"))
 }
 
-// Source-volume resolution returns all member volume IDs or rejects the whole list.
-func TestResolveGroupSnapshotSourceVolumes(t *testing.T) {
-	testCases := []struct {
-		name        string
-		snapshots   []*provider.Snapshot
-		expectedIDs []string
-		expectedOK  bool
-	}{
-		{name: "nil members"},
-		{name: "empty members", snapshots: []*provider.Snapshot{}},
-		{
-			name:      "nil member after a valid member",
-			snapshots: []*provider.Snapshot{{VolumeID: "volume-1"}, nil},
-		},
-		{
-			name:      "missing source volume after a valid member",
-			snapshots: []*provider.Snapshot{{VolumeID: "volume-1"}, {SnapshotCRN: "snapshot-crn-2"}},
-		},
-		{
-			name:        "complete source volumes",
-			snapshots:   []*provider.Snapshot{{VolumeID: "volume-2"}, {VolumeID: "volume-1"}},
-			expectedIDs: []string{"volume-2", "volume-1"},
-			expectedOK:  true,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			ids, ok := resolveGroupSnapshotSourceVolumes(tc.snapshots)
-			assert.Equal(t, tc.expectedOK, ok)
-			assert.Equal(t, tc.expectedIDs, ids)
-		})
-	}
-}
-
 // Member resolution uses CRNs only and never accepts a partial member list.
 func TestResolveGroupSnapshotMemberCRNs(t *testing.T) {
 	testCases := []struct {
@@ -200,15 +165,6 @@ func TestValidateGroupSnapshotSourceVolumes(t *testing.T) {
 			name:         "matching sources in a different order",
 			snapshots:    []*provider.Snapshot{{VolumeID: "volume-b"}, {VolumeID: "volume-a"}},
 			mismatchCode: codes.AlreadyExists, wantCode: codes.OK,
-		},
-		{
-			name:         "missing members",
-			mismatchCode: codes.AlreadyExists,
-			wantCode:     codes.Aborted,
-		},
-		{
-			name: "missing source volume", snapshots: []*provider.Snapshot{{VolumeID: "volume-a"}, {}},
-			mismatchCode: codes.Internal, wantCode: codes.Aborted,
 		},
 		{
 			name:         "existing group contains different sources",

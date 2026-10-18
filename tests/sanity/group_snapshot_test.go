@@ -131,7 +131,7 @@ func TestVolumeGroupSnapshotSanity(t *testing.T) {
 	}
 	t.Setenv("IS_VGS_ENABLED", "true")
 
-	client, _ := newGroupControllerSanityClient(t)
+	client, session := newGroupControllerSanityClient(t)
 
 	t.Run("advertises group snapshot capability", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -256,12 +256,24 @@ func TestVolumeGroupSnapshotSanity(t *testing.T) {
 		})
 		requireRPCCode(t, err, codes.InvalidArgument)
 
+		// Delete must work even when member details cannot be fetched.
+		session.getGroupSnapshotErr = providerError.Message{Code: "GroupSnapshotMemberDetailsUnavailable", Type: providerError.RetrivalFailed}
+		t.Cleanup(func() { session.getGroupSnapshotErr = nil })
 		_, err = client.DeleteVolumeGroupSnapshot(ctx, &csi.DeleteVolumeGroupSnapshotRequest{
 			GroupSnapshotId: group.GroupSnapshotId,
 			SnapshotIds:     snapshotIDs,
 		})
 		if err != nil {
 			t.Fatalf("DeleteVolumeGroupSnapshot failed: %v", err)
+		}
+		session.getGroupSnapshotErr = nil
+		if _, exists := session.groupSnapshots[group.GroupSnapshotId]; exists {
+			t.Fatal("group still exists after deletion")
+		}
+		for _, snapshotID := range snapshotIDs {
+			if _, exists := session.snapshots[snapshotID]; exists {
+				t.Fatalf("member snapshot %q still exists after deletion", snapshotID)
+			}
 		}
 
 		_, err = client.GetVolumeGroupSnapshot(ctx, &csi.GetVolumeGroupSnapshotRequest{
@@ -493,7 +505,10 @@ func TestVolumeGroupSnapshotMissingMemberDetailsSanity(t *testing.T) {
 		{
 			name: "created group has no members",
 			configure: func(session *fakeProviderSession) {
-				session.createGroupSnapshotResult = &provider.GroupSnapshot{GroupSnapshotID: "created-without-members"}
+				session.createGroupSnapshotErr = providerError.Message{
+					Code: "GroupSnapshotMemberDetailsUnavailable",
+					Type: providerError.RetrivalFailed,
+				}
 			},
 			call: func(ctx context.Context, client csi.GroupControllerClient) error {
 				_, err := client.CreateVolumeGroupSnapshot(ctx, &csi.CreateVolumeGroupSnapshotRequest{
@@ -503,14 +518,14 @@ func TestVolumeGroupSnapshotMissingMemberDetailsSanity(t *testing.T) {
 				return err
 			},
 			wantCode:    codes.Aborted,
-			wantMessage: "individual member snapshot details are not available",
+			wantMessage: "GroupSnapshotMemberDetailsUnavailable",
 		},
 		{
 			name: "existing group has no members",
 			configure: func(session *fakeProviderSession) {
-				session.groupSnapshots["existing-without-members"] = &fakeGroupSnapshot{
-					GroupSnapshot: &provider.GroupSnapshot{GroupSnapshotID: "existing-without-members"},
-					name:          "existing-without-members",
+				session.getGroupSnapshotByNameErr = providerError.Message{
+					Code: "GroupSnapshotMemberDetailsUnavailable",
+					Type: providerError.RetrivalFailed,
 				}
 			},
 			call: func(ctx context.Context, client csi.GroupControllerClient) error {
@@ -521,7 +536,7 @@ func TestVolumeGroupSnapshotMissingMemberDetailsSanity(t *testing.T) {
 				return err
 			},
 			wantCode:    codes.Aborted,
-			wantMessage: "individual member snapshot details are not available",
+			wantMessage: "GroupSnapshotMemberDetailsUnavailable",
 		},
 		{
 			name: "get response is missing member snapshot CRN",
@@ -546,11 +561,9 @@ func TestVolumeGroupSnapshotMissingMemberDetailsSanity(t *testing.T) {
 		{
 			name: "get response is missing source volume ID",
 			configure: func(session *fakeProviderSession) {
-				session.groupSnapshots["missing-source-id"] = &fakeGroupSnapshot{
-					GroupSnapshot: &provider.GroupSnapshot{
-						GroupSnapshotID: "missing-source-id",
-						Snapshots:       []*provider.Snapshot{{SnapshotCRN: "snapshot-1"}},
-					},
+				session.getGroupSnapshotErr = providerError.Message{
+					Code: "GroupSnapshotMemberDetailsUnavailable",
+					Type: providerError.RetrivalFailed,
 				}
 			},
 			call: func(ctx context.Context, client csi.GroupControllerClient) error {
@@ -561,7 +574,7 @@ func TestVolumeGroupSnapshotMissingMemberDetailsSanity(t *testing.T) {
 				return err
 			},
 			wantCode:    codes.Aborted,
-			wantMessage: "individual member snapshot details are not available; retry the request",
+			wantMessage: "GroupSnapshotMemberDetailsUnavailable",
 		},
 	}
 
@@ -689,8 +702,8 @@ func (c *fakeProviderSession) CreateGroupSnapshot(sourceVolumeIDs []string, para
 	return groupSnapshot, nil
 }
 
-// DeleteGroupSnapshot mirrors VPC's group-level deletion without checking member IDs.
-func (c *fakeProviderSession) DeleteGroupSnapshot(groupSnapshotID string, _ []string) error {
+// DeleteGroupSnapshot mirrors VPC's group-level deletion, which uses the group ID alone.
+func (c *fakeProviderSession) DeleteGroupSnapshot(groupSnapshotID string) error {
 	if c.deleteGroupSnapshotErr != nil {
 		return c.deleteGroupSnapshotErr
 	}
