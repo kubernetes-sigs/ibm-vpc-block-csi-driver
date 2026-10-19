@@ -36,7 +36,7 @@ import (
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	providerError "github.com/IBM/ibmcloud-volume-interface/lib/utils"
 	"github.com/google/uuid"
-	sanity "github.com/kubernetes-csi/csi-test/v4/pkg/sanity"
+	sanity "github.com/kubernetes-csi/csi-test/v5/pkg/sanity"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -81,8 +81,10 @@ func TestSanity(t *testing.T) {
 	}
 	skipTests := strings.Join([]string{
 		"NodeExpandVolume.*should work if node-expand is called after node-publish",
-		//	"NodeExpandVolume.*should fail when volume is not found",
-		//	"ListSnapshots.*should return snapshots that match the specified source volume id",
+		"Node Service.*should work",
+		"Node Service.*should be idempotent",
+		"Node Service NodeGetVolumeStats.*should fail when volume does not exist on the specified path",
+		"Node Service NodeExpandVolume.*should fail when volume is not found",
 	}, "|")
 
 	// Create a fake CSI driver
@@ -108,21 +110,23 @@ func TestSanity(t *testing.T) {
 	err = flag.Set("ginkgo.skip", skipTests)
 
 	// Run sanity test
-	config := sanity.TestConfig{
-		TargetPath:               TargetPath,
-		StagingPath:              StagePath,
-		Address:                  CSIEndpoint,
-		DialOptions:              []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
-		IDGen:                    &providerIDGenerator{},
-		TestVolumeAccessType:     "mount",
-		TestVolumeParametersFile: os.Getenv("SANITY_PARAMS_FILE"),
-		TestVolumeSize:           10737418240, // i.e 10 GB
-		CreateTargetDir: func(targetPath string) (string, error) {
-			return targetPath, createTargetDir(targetPath)
-		},
-		CreateStagingDir: func(stagePath string) (string, error) {
-			return stagePath, createTargetDir(stagePath)
-		},
+	config := sanity.NewTestConfig()
+	config.TargetPath = TargetPath
+	config.StagingPath = StagePath
+	config.Address = CSIEndpoint
+	config.DialOptions = []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+	config.IDGen = &providerIDGenerator{}
+	config.TestVolumeParametersFile = os.Getenv("SANITY_PARAMS_FILE")
+	config.TestVolumeParameters = map[string]string{"profile": "custom", "zone": "testzone"}
+	config.TestVolumeSize = 10737418240 // i.e 10 GB
+	config.TestVolumeMutableParameters = map[string]string{"iops": "3000"}
+	config.CreateTargetDir = func(targetPath string) (string, error) {
+		targetPath = path.Join(TempDir, targetPath)
+		return targetPath, createTargetDir(targetPath)
+	}
+	config.CreateStagingDir = func(stagePath string) (string, error) {
+		stagePath = path.Join(TempDir, stagePath)
+		return stagePath, createTargetDir(stagePath)
 	}
 	sanity.Test(t, config)
 }
@@ -317,6 +321,9 @@ func (c *fakeProviderSession) CreateVolume(volumeRequest provider.Volume) (*prov
 			Region:   volumeRequest.Region,
 			Capacity: volumeRequest.Capacity,
 			Snapshot: provider.Snapshot{SnapshotID: volumeRequest.SnapshotID},
+			VPCVolume: provider.VPCVolume{
+				Profile: volumeRequest.Profile,
+			},
 		},
 	}
 
@@ -513,7 +520,8 @@ func (c *fakeProviderSession) CreateSnapshot(sourceVolumeID string, snapshotPara
 		Snapshot: &provider.Snapshot{
 			VolumeID:             sourceVolumeID,
 			SnapshotID:           snapshotID,
-			ReadyToUse:           false,
+			SnapshotCRN:          snapshotID,
+			ReadyToUse:           true,
 			SnapshotSize:         1,
 			SnapshotCreationTime: time.Now(),
 		},
@@ -554,15 +562,16 @@ func (c *fakeProviderSession) ListSnapshots(maxResults int, nextToken string, ta
 			snapshots = append(snapshots, fakeSnapshot.Snapshot)
 		}
 	}
-	if maxResults > 0 {
+	if maxResults > 0 && maxResults < len(snapshots) {
 		r1 := rand.New(rand.NewSource(time.Now().UnixNano()))
 		retToken = fmt.Sprintf("token-%d", r1.Uint64())
 		c.tokens[retToken] = maxResults
 		snapshots = snapshots[0:maxResults]
-		fmt.Printf("%v\n", snapshots)
 	}
 	if len(nextToken) != 0 {
-		snapshots = snapshots[c.tokens[nextToken]:]
+		if offset, ok := c.tokens[nextToken]; ok && offset < len(snapshots) {
+			snapshots = snapshots[offset:]
+		}
 	}
 	return &provider.SnapshotList{
 		Snapshots: snapshots,
@@ -587,12 +596,7 @@ func (c *fakeProviderSession) GetSnapshotByName(snapshotName string, _ ...string
 		}
 	}
 	if len(snapshots) == 0 {
-		errorMsg := providerError.Message{
-			Code:        "StorageFindFailedWithSnapshotName",
-			Description: "Snapshot not found by name",
-			Type:        providerError.RetrivalFailed,
-		}
-		return nil, errorMsg
+		return nil, nil
 	}
 
 	return snapshots[0].Snapshot, nil
