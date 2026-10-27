@@ -44,6 +44,8 @@ func validateGroupSnapshotSourceVolumes(snapshotName, requestID string, snapshot
 	if mismatchCode == codes.AlreadyExists {
 		return volumeGroupSnapshotStatusError(codes.AlreadyExists, requestID, "volume group snapshot %q already exists with a different set of source volume IDs (requested %v, existing %v); create a new VolumeGroupSnapshot or delete and recreate the requested VolumeGroupSnapshot to generate a new snapshot name", snapshotName, sourceVolumeIDs, memberVolumeIDs)
 	}
+
+	// comes here after a VGS gets created, but VPC returned snapshots of different volumes
 	return volumeGroupSnapshotStatusError(codes.Internal, requestID, "backend returned unexpected source volumes for newly created volume group snapshot %q (requested %v, returned %v)", snapshotName, sourceVolumeIDs, memberVolumeIDs)
 }
 

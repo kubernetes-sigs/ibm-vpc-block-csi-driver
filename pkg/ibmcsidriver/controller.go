@@ -791,7 +791,7 @@ func (csiCS *CSIControllerServer) CreateVolumeGroupSnapshot(ctx context.Context,
 	return createCSIVolumeGroupSnapshotResponse(*groupSnapshot), nil
 }
 
-// DeleteVolumeGroupSnapshot requires the CSI group and member ID fields. VPC deletes by groupID alone, without fetching member details first.
+// DeleteVolumeGroupSnapshot deletes the VGS provided the groupID.
 func (csiCS *CSIControllerServer) DeleteVolumeGroupSnapshot(ctx context.Context, req *csi.DeleteVolumeGroupSnapshotRequest) (*csi.DeleteVolumeGroupSnapshotResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	ctx = context.WithValue(ctx, provider.RequestID, requestID)
@@ -826,8 +826,7 @@ func (csiCS *CSIControllerServer) DeleteVolumeGroupSnapshot(ctx context.Context,
 	return &csi.DeleteVolumeGroupSnapshotResponse{}, nil
 }
 
-// GetVolumeGroupSnapshot retrieves a group and verifies that the caller's
-// required snapshot IDs match the backend member snapshots.
+// GetVolumeGroupSnapshot retrieves a group and verifies that the caller's required snapshot IDs match the backend member snapshots.
 func (csiCS *CSIControllerServer) GetVolumeGroupSnapshot(ctx context.Context, req *csi.GetVolumeGroupSnapshotRequest) (*csi.GetVolumeGroupSnapshotResponse, error) {
 	ctxLogger, requestID := utils.GetContextLogger(ctx, false)
 	ctx = context.WithValue(ctx, provider.RequestID, requestID)
@@ -877,7 +876,7 @@ func (csiCS *CSIControllerServer) GetVolumeGroupSnapshot(ctx context.Context, re
 	}, nil
 }
 
-// GroupControllerGetCapabilities advertises the group snapshot operations implemented by this controller.
+// GroupControllerGetCapabilities advertises the VGS operations implemented by this controller.
 func (csiCS *CSIControllerServer) GroupControllerGetCapabilities(ctx context.Context, req *csi.GroupControllerGetCapabilitiesRequest) (*csi.GroupControllerGetCapabilitiesResponse, error) {
 	ctxLogger, _ := utils.GetContextLogger(ctx, false)
 	ctxLogger.Info("CSIControllerServer-GroupControllerGetCapabilities...", zap.Reflect("Request", req))
