@@ -911,6 +911,7 @@ sigs.k8s.io/structured-merge-diff/v6/value
 ## explicit; go 1.22
 sigs.k8s.io/yaml
 # k8s.io/cli-runtime => k8s.io/cli-runtime v0.32.10
+# k8s.io/cloud-provider => k8s.io/cloud-provider v0.32.10
 # k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.32.10
 # k8s.io/cri-api => k8s.io/cri-api v0.32.10
 # k8s.io/cri-client => k8s.io/cri-client v0.32.10
