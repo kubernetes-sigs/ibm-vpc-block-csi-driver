@@ -90,21 +90,17 @@ func (csiNS *CSINodeServer) findDevicePathSource(ctxLogger *zap.Logger, devicePa
 
 	if err := csiNS.waitForDevicePath(ctxLogger, devicePath, maxRetries, retryInterval); err != nil {
 		// Device path still doesn't exist after retries
-		// This could be an NVMe device or the device is not attached properly
 		ctxLogger.Error("Device path not found even after udevadm trigger and retries - refusing to proceed",
 			zap.String("devicePath", devicePath),
 			zap.String("volumeID", volumeID),
-			zap.String("possibleCause", "Device may be NVMe (not yet supported) or not properly attached"),
 			zap.String("action", "Verify volume attachment and device path"),
 			zap.Error(err))
-		return "", fmt.Errorf("device path not found: %s (volume: %s). Possible causes: NVMe device (not supported), device not attached, or incorrect device path: %w", devicePath, volumeID, err)
+		return "", fmt.Errorf("device path not found: %s (volume: %s): %w", devicePath, volumeID, err)
 	}
 
 	ctxLogger.Info("Device path found after udevadm trigger and retry",
 		zap.String("devicePath", devicePath))
 	return devicePath, nil
-	// TODO: Implement NVMe device path resolution when NVMe support is added
-	// For example, /dev/disk/by-uuid/e75b09ee-27d5-491a-85cd-c380f0e8ef5e -> ../../nvme2n1
 }
 
 func (csiNS *CSINodeServer) processMount(ctxLogger *zap.Logger, requestID, stagingTargetPath, targetPath, fsType string, options []string) (*csi.NodePublishVolumeResponse, error) {
