@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -58,7 +59,7 @@ const (
 type FormData struct {
 	fileName    string
 	contentType string
-	contents    interface{}
+	contents    any
 }
 
 // RequestBuilder is used to build an HTTP Request instance.
@@ -105,7 +106,7 @@ func (requestBuilder *RequestBuilder) WithContext(ctx context.Context) *RequestB
 // invalid URL string (e.g. ":<badscheme>").
 func (requestBuilder *RequestBuilder) ConstructHTTPURL(serviceURL string, pathSegments []string, pathParameters []string) (*RequestBuilder, error) {
 	if serviceURL == "" {
-		return requestBuilder, SDKErrorf(fmt.Errorf(ERRORMSG_SERVICE_URL_MISSING), "", "no-url", getComponentInfo())
+		return requestBuilder, SDKErrorf(errors.New(ERRORMSG_SERVICE_URL_MISSING), "", "no-url", getComponentInfo())
 	}
 	var URL *url.URL
 
@@ -143,7 +144,7 @@ func (requestBuilder *RequestBuilder) ConstructHTTPURL(serviceURL string, pathSe
 // The resulting request URL: "https://myservice.cloud.ibm.com/resource/res-123-456-789-abc/type/type-1"
 func (requestBuilder *RequestBuilder) ResolveRequestURL(serviceURL string, path string, pathParams map[string]string) (*RequestBuilder, error) {
 	if serviceURL == "" {
-		err := fmt.Errorf(ERRORMSG_SERVICE_URL_MISSING)
+		err := errors.New(ERRORMSG_SERVICE_URL_MISSING)
 		return requestBuilder, SDKErrorf(err, "", "service-url-missing", getComponentInfo())
 	}
 
@@ -218,10 +219,10 @@ func (requestBuilder *RequestBuilder) AddHeader(name string, value string) *Requ
 // AddFormData adds a new mime part (constructed from the input parameters)
 // to the request's multi-part form.
 func (requestBuilder *RequestBuilder) AddFormData(fieldName string, fileName string, contentType string,
-	contents interface{}) *RequestBuilder {
+	contents any) *RequestBuilder {
 	if fileName == "" {
 		if file, ok := contents.(*os.File); ok {
-			if !((os.File{}) == *file) { // if file is not empty
+			if (os.File{}) != *file { // if file is not empty
 				name := filepath.Base(file.Name())
 				fileName = name
 			}
@@ -236,7 +237,7 @@ func (requestBuilder *RequestBuilder) AddFormData(fieldName string, fileName str
 }
 
 // SetBodyContentJSON sets the body content from a JSON structure.
-func (requestBuilder *RequestBuilder) SetBodyContentJSON(bodyContent interface{}) (*RequestBuilder, error) {
+func (requestBuilder *RequestBuilder) SetBodyContentJSON(bodyContent any) (*RequestBuilder, error) {
 	requestBuilder.Body = new(bytes.Buffer)
 	err := json.NewEncoder(requestBuilder.Body.(io.Writer)).Encode(bodyContent)
 	if err != nil {
@@ -280,7 +281,7 @@ func createFormFile(formWriter *multipart.Writer, fieldname string, filename str
 }
 
 // SetBodyContentForMultipart sets the body content for a part in a multi-part form.
-func (requestBuilder *RequestBuilder) SetBodyContentForMultipart(contentType string, content interface{}, writer io.Writer) error {
+func (requestBuilder *RequestBuilder) SetBodyContentForMultipart(contentType string, content any, writer io.Writer) error {
 	var err error
 	if stream, ok := content.(io.Reader); ok {
 		_, err = io.Copy(writer, stream)
@@ -346,7 +347,6 @@ func (requestBuilder *RequestBuilder) SetBodyContentForMultipart(contentType str
 
 // Build builds an HTTP Request object from this RequestBuilder instance.
 func (requestBuilder *RequestBuilder) Build() (req *http.Request, err error) {
-
 	// If the request builder contains a non-empty "Form" map, then we need to create
 	// a form-based request body, with the specific flavor depending on the content type.
 	if len(requestBuilder.Form) > 0 {
@@ -474,7 +474,6 @@ func (requestBuilder *RequestBuilder) createMultipartFormRequestBody() (bodyRead
 			err = SDKErrorf(err, err.Error(), "form-close-error", getComponentInfo())
 			return
 		}
-
 	}()
 
 	// Grab the Content-Type from the form writer (it will also contain the boundary string)
@@ -484,8 +483,8 @@ func (requestBuilder *RequestBuilder) createMultipartFormRequestBody() (bodyRead
 }
 
 // SetBodyContent sets the body content from one of three different sources.
-func (requestBuilder *RequestBuilder) SetBodyContent(contentType string, jsonContent interface{}, jsonPatchContent interface{},
-	nonJSONContent interface{}) (builder *RequestBuilder, err error) {
+func (requestBuilder *RequestBuilder) SetBodyContent(contentType string, jsonContent any, jsonPatchContent any,
+	nonJSONContent any) (builder *RequestBuilder, err error) {
 	if !IsNil(jsonContent) {
 		builder, err = requestBuilder.SetBodyContentJSON(jsonContent)
 		if err != nil {
@@ -530,7 +529,7 @@ func (requestBuilder *RequestBuilder) SetBodyContent(contentType string, jsonCon
 // AddQuerySlice converts the passed in slice 'slice' by calling the ConverSlice method,
 // and adds the converted slice to the request's query string. An error is returned when
 // conversion fails.
-func (requestBuilder *RequestBuilder) AddQuerySlice(param string, slice interface{}) (err error) {
+func (requestBuilder *RequestBuilder) AddQuerySlice(param string, slice any) (err error) {
 	convertedSlice, err := ConvertSlice(slice)
 	if err != nil {
 		err = RepurposeSDKProblem(err, "convert-slice-error")

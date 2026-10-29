@@ -65,10 +65,5 @@ func (vpcs *VPCSession) CreateGroupSnapshot(sourceVolumeIDs []string, groupSnaps
 
 	vpcs.Logger.Info("Successfully created snapshot consistency group", zap.Reflect("GroupSnapshot", result))
 
-	groupSnapshotResponse, err := vpcs.getGroupSnapshotWithMembers(result)
-	if err != nil {
-		return nil, err
-	}
-	vpcs.Logger.Info("Prepared volume group snapshot response", zap.Reflect("groupSnapshotResponse", groupSnapshotResponse))
-	return groupSnapshotResponse, nil
+	return vpcs.getGroupSnapshotWithMembers(result)
 }

@@ -50,8 +50,8 @@ type VPCFileVolume struct {
 	TransitEncryption  string               `json:"transit_encryption,omitempty"`
 }
 
-// VPC ...
-type VPC struct {
+// ResourceReference identifies a cloud resource by its ID, CRN, URL, and name.
+type ResourceReference struct {
 	ID   string `json:"id"`
 	CRN  string `json:"crn,omitempty"`
 	Href string `json:"href,omitempty"`
@@ -90,11 +90,11 @@ type VolumeAccessPoint struct {
 	Href string `json:"href,omitempty"`
 	Name string `json:"name,omitempty"`
 	// Status of volume target named - deleted, deleting, failed, pending_deletion, stable, updating, waiting, suspended
-	Status    string     `json:"status,omitempty"`
-	MountPath *string    `json:"mount_path,omitempty"`
-	VPC       *VPC       `json:"vpc,omitempty"`
-	Zone      *Zone      `json:"zone,omitempty"`
-	CreatedAt *time.Time `json:"created_at,omitempty"`
+	Status    string             `json:"status,omitempty"`
+	MountPath *string            `json:"mount_path,omitempty"`
+	VPC       *ResourceReference `json:"vpc,omitempty"`
+	Zone      *Zone              `json:"zone,omitempty"`
+	CreatedAt *time.Time         `json:"created_at,omitempty"`
 }
 
 // Zone ...

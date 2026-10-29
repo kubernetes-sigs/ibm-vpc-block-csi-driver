@@ -432,10 +432,14 @@ func FromProviderToLibSnapshot(vpcSnapshot *models.Snapshot, logger *zap.Logger)
 		SnapshotCRN:          vpcSnapshot.CRN,
 		SnapshotCreationTime: createdTime,
 		SnapshotSize:         GiBToBytes(vpcSnapshot.MinimumCapacity),
-		VPC:                  provider.VPC{Href: vpcSnapshot.Href},
+		ResourceReference:    provider.ResourceReference{Href: vpcSnapshot.Href},
 	}
 	if vpcSnapshot.SourceVolume != nil {
 		libSnapshot.VolumeID = vpcSnapshot.SourceVolume.ID
+	}
+	// Keep group membership when a snapshot is fetched on its own.
+	if vpcSnapshot.SnapshotConsistencyGroup != nil {
+		libSnapshot.GroupSnapshotID = vpcSnapshot.SnapshotConsistencyGroup.ID
 	}
 	libSnapshot.ReadyToUse = libSnapshot.VolumeID != "" && vpcSnapshot.LifecycleState == snapshotReadyState
 	return
@@ -463,7 +467,7 @@ func FromProviderToLibGroupSnapshot(vpcGroup *models.SnapshotConsistencyGroupRes
 		GroupSnapshotID:           vpcGroup.ID,
 		GroupSnapshotCRN:          vpcGroup.CRN,
 		GroupSnapshotCreationTime: createdTime,
-		VPC:                       provider.VPC{Href: vpcGroup.Href},
+		ResourceReference:         provider.ResourceReference{Href: vpcGroup.Href},
 		ReadyToUse:                vpcGroup.LifecycleState == snapshotReadyState && len(vpcGroup.Snapshots) > 0,
 	}
 
@@ -482,9 +486,9 @@ func FromProviderToLibGroupSnapshot(vpcGroup *models.SnapshotConsistencyGroupRes
 			member = FromProviderToLibSnapshot(snap, logger)
 		} else {
 			member = &provider.Snapshot{
-				SnapshotID:  ref.ID,
-				SnapshotCRN: ref.CRN,
-				VPC:         provider.VPC{Href: ref.Href},
+				SnapshotID:        ref.ID,
+				SnapshotCRN:       ref.CRN,
+				ResourceReference: provider.ResourceReference{Href: ref.Href},
 			}
 		}
 		if !member.ReadyToUse {

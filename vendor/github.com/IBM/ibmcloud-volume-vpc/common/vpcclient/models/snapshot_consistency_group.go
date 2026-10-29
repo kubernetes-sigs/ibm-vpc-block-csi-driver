@@ -20,38 +20,19 @@ import "time"
 
 // SnapshotConsistencyGroupResponse is the response received from the VPC
 type SnapshotConsistencyGroupResponse struct {
-	Href                    string                     `json:"href"`
-	ID                      string                     `json:"id"`
-	Name                    string                     `json:"name"`
-	CRN                     string                     `json:"crn"`
-	ResourceGroup           *ResourceGroup             `json:"resource_group"`
-	CreatedAt               *time.Time                 `json:"created_at"`
-	Status                  string                     `json:"status"`
-	LifecycleState          string                     `json:"lifecycle_state"`
-	ResourceType            string                     `json:"resource_type"`
-	Snapshots               []SnapshotReference        `json:"snapshots"`
-	ServiceTags             []string                   `json:"service_tags"`
-	UserTags                []string                   `json:"user_tags"`
-	DeleteSnapshotsOnDelete bool                       `json:"delete_snapshots_on_delete"`
-	BackupPolicyPlan        *BackupPolicyPlanReference `json:"backup_policy_plan"`
-}
-
-type BackupPolicyPlanReference struct {
-	ID           string                  `json:"id"`
-	Href         string                  `json:"href"`
-	Name         string                  `json:"name"`
-	Deleted      *Deleted                `json:"deleted"`
-	ResourceType string                  `json:"resource_type"`
-	Remote       *BackupPolicyPlanRemote `json:"remote"`
-}
-
-type BackupPolicyPlanRemote struct {
-	Region *RegionReference `json:"region"`
-}
-
-type RegionReference struct {
-	Href string `json:"href"`
-	Name string `json:"name"`
+	Href                    string              `json:"href"`
+	ID                      string              `json:"id"`
+	Name                    string              `json:"name"`
+	CRN                     string              `json:"crn"`
+	ResourceGroup           *ResourceGroup      `json:"resource_group"`
+	CreatedAt               *time.Time          `json:"created_at"`
+	Status                  string              `json:"status"`
+	LifecycleState          string              `json:"lifecycle_state"`
+	ResourceType            string              `json:"resource_type"`
+	Snapshots               []SnapshotReference `json:"snapshots"`
+	ServiceTags             []string            `json:"service_tags"`
+	UserTags                []string            `json:"user_tags"`
+	DeleteSnapshotsOnDelete bool                `json:"delete_snapshots_on_delete"`
 }
 
 // SnapshotReference is a reference to a snapshot within a consistency group

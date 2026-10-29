@@ -1,6 +1,6 @@
 package core
 
-// (C) Copyright IBM Corp. 2019, 2022.
+// (C) Copyright IBM Corp. 2019, 2024.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -65,7 +64,6 @@ type ServiceOptions struct {
 // BaseService implements the common functionality shared by generated services
 // to manage requests and responses, authenticate outbound requests, etc.
 type BaseService struct {
-
 	// Configuration values for a service.
 	Options *ServiceOptions
 
@@ -90,7 +88,7 @@ func NewBaseService(options *ServiceOptions) (*BaseService, error) {
 	}
 
 	if IsNil(options.Authenticator) {
-		err := fmt.Errorf(ERRORMSG_NO_AUTHENTICATOR)
+		err := errors.New(ERRORMSG_NO_AUTHENTICATOR)
 		return nil, SDKErrorf(err, "", "missing-auth", getComponentInfo())
 	}
 
@@ -131,6 +129,8 @@ func (service *BaseService) Clone() *BaseService {
 
 // ConfigureService updates the service with external configuration values.
 func (service *BaseService) ConfigureService(serviceName string) error {
+	GetLogger().Debug("Configuring BaseService instance with service name: %s\n", serviceName)
+
 	// Try to load service properties from external config.
 	serviceProps, err := getServiceProperties(serviceName)
 	if err != nil {
@@ -144,7 +144,7 @@ func (service *BaseService) ConfigureService(serviceName string) error {
 
 		// URL
 		if url, ok := serviceProps[PROPNAME_SVC_URL]; ok && url != "" {
-			err := service.SetURL(url)
+			err := service.SetServiceURL(url)
 			if err != nil {
 				err = RepurposeSDKProblem(err, "set-url-fail")
 				return err
@@ -180,7 +180,7 @@ func (service *BaseService) ConfigureService(serviceName string) error {
 		if enableRetries, ok := serviceProps[PROPNAME_SVC_ENABLE_RETRIES]; ok && enableRetries != "" {
 			boolValue, err := strconv.ParseBool(enableRetries)
 			if boolValue && err == nil {
-				var maxRetries int = 0
+				var maxRetries = 0
 				var retryInterval time.Duration = 0
 
 				var s string
@@ -221,6 +221,7 @@ func (service *BaseService) SetServiceURL(url string) error {
 	}
 
 	service.Options.URL = url
+	GetLogger().Debug("Set service URL: %s\n", url)
 	return nil
 }
 
@@ -289,6 +290,7 @@ func (service *BaseService) DisableSSLVerification() {
 		// Disable server ssl cert & hostname verification.
 		tr.TLSClientConfig.InsecureSkipVerify = true // #nosec G402
 	}
+	GetLogger().Debug("Disabled SSL verification in HTTP client")
 }
 
 // IsSSLDisabled returns true if and only if the service's http.Client instance
@@ -332,11 +334,12 @@ func (service *BaseService) buildUserAgent() string {
 }
 
 // SetUserAgent sets the user agent value.
-func (service *BaseService) SetUserAgent(userAgentString string) {
-	if userAgentString == "" {
-		userAgentString = service.buildUserAgent()
+func (service *BaseService) SetUserAgent(userAgent string) {
+	if userAgent == "" {
+		userAgent = service.buildUserAgent()
 	}
-	service.UserAgent = userAgentString
+	service.UserAgent = userAgent
+	GetLogger().Debug("Set User-Agent: %s\n", userAgent)
 }
 
 // Request invokes the specified HTTP request and returns the response.
@@ -353,14 +356,14 @@ func (service *BaseService) SetUserAgent(userAgentString string) {
 // detailedResponse: a DetailedResponse instance containing the status code, headers, etc.
 //
 // err: a non-nil error object if an error occurred
-func (service *BaseService) Request(req *http.Request, result interface{}) (detailedResponse *DetailedResponse, err error) {
-	// Add default headers.
+func (service *BaseService) Request(req *http.Request, result any) (detailedResponse *DetailedResponse, err error) {
+	// Set default headers on the request.
 	if service.DefaultHeaders != nil {
 		for k, v := range service.DefaultHeaders {
-			req.Header.Add(k, strings.Join(v, ""))
+			req.Header.Set(k, strings.Join(v, ""))
 		}
 
-		// After adding the default headers, make one final check to see if the user
+		// After setting the default headers, make one final check to see if the user
 		// specified the "Host" header within the default headers.
 		// This needs to be handled separately because it will be ignored by
 		// the Request.Write() method.
@@ -378,7 +381,7 @@ func (service *BaseService) Request(req *http.Request, result interface{}) (deta
 
 	// Add authentication to the outbound request.
 	if IsNil(service.Options.Authenticator) {
-		err = fmt.Errorf(ERRORMSG_NO_AUTHENTICATOR)
+		err = errors.New(ERRORMSG_NO_AUTHENTICATOR)
 		err = SDKErrorf(err, "", "missing-auth", getComponentInfo())
 		return
 	}
@@ -414,16 +417,17 @@ func (service *BaseService) Request(req *http.Request, result interface{}) (deta
 	}
 
 	// Invoke the request, then check for errors during the invocation.
+	GetLogger().Debug("Sending HTTP request message...")
 	var httpResponse *http.Response
-	httpResponse, err = service.Client.Do(req)
-
+	httpResponse, err = service.Client.Do(req) // #nosec G704
 	if err != nil {
 		if strings.Contains(err.Error(), SSL_CERTIFICATION_ERROR) {
-			err = fmt.Errorf(ERRORMSG_SSL_VERIFICATION_FAILED + "\n" + err.Error())
+			err = errors.New(ERRORMSG_SSL_VERIFICATION_FAILED + "\n" + err.Error())
 		}
 		err = SDKErrorf(err, "", "no-connection-made", getComponentInfo())
 		return
 	}
+	GetLogger().Debug("Received HTTP response message, status code %d", httpResponse.StatusCode)
 
 	// If debug is enabled, then dump the response.
 	if GetLogger().IsLogLevelEnabled(LevelDebug) {
@@ -491,20 +495,21 @@ func (service *BaseService) Request(req *http.Request, result interface{}) (deta
 			// Check to see if the caller wanted the response body as a string.
 			// If the caller passed in 'result' as the address of *string,
 			// then we'll reflectively set result to point to it.
-			if resultType == "**string" {
+			switch resultType {
+			case "**string":
 				responseString := string(responseBody)
 				rResult := reflect.ValueOf(result).Elem()
 				rResult.Set(reflect.ValueOf(&responseString))
 
 				// And set the string in the Result field.
 				detailedResponse.Result = &responseString
-			} else if resultType == "*[]uint8" { // byte is an alias for uint8
+			case "*[]uint8": // byte is an alias for uint8
 				rResult := reflect.ValueOf(result).Elem()
 				rResult.Set(reflect.ValueOf(responseBody))
 
 				// And set the byte slice in the Result field.
 				detailedResponse.Result = responseBody
-			} else {
+			default:
 				// At this point, we don't know how to set the result field, so we have to return an error.
 				// But make sure we save the bytes we read in the DetailedResponse for debugging purposes
 				detailedResponse.Result = responseBody
@@ -607,7 +612,7 @@ type Error struct {
 //     b) the string form of the byte-stream if the byte-stream could not be successfully
 //     decoded as JSON.
 //  3. This function will close the io.ReadCloser before returning.
-func decodeAsMap(byteBuffer []byte) (result map[string]interface{}, err error) {
+func decodeAsMap(byteBuffer []byte) (result map[string]any, err error) {
 	err = json.NewDecoder(bytes.NewReader(byteBuffer)).Decode(&result)
 	if err != nil {
 		err = SDKErrorf(err, "", "decode-error", getComponentInfo())
@@ -616,15 +621,18 @@ func decodeAsMap(byteBuffer []byte) (result map[string]interface{}, err error) {
 }
 
 // getErrorMessage: try to retrieve an error message from the decoded response body (map).
-func getErrorMessage(responseMap map[string]interface{}, statusCode int) string {
-
+func getErrorMessage(responseMap map[string]any, statusCode int) string {
 	// If the response contained the "errors" field, then try to deserialize responseMap
 	// into an array of Error structs, then return the first entry's "Message" field.
 	if _, ok := responseMap["errors"]; ok {
 		var errors Errors
 		responseBuffer, _ := json.Marshal(responseMap)
 		if err := json.Unmarshal(responseBuffer, &errors); err == nil {
-			return errors.Errors[0].Message
+			if len(errors.Errors) > 0 {
+				return errors.Errors[0].Message
+			}
+
+			return ""
 		}
 	}
 
@@ -658,8 +666,7 @@ func getErrorMessage(responseMap map[string]interface{}, statusCode int) string 
 }
 
 // getErrorCode tries to retrieve an error code from the decoded response body (map).
-func getErrorCode(responseMap map[string]interface{}) string {
-
+func getErrorCode(responseMap map[string]any) string {
 	// If the response contained the "errors" field, then try to deserialize responseMap
 	// into an array of Error structs, then return the first entry's "Message" field.
 	if _, ok := responseMap["errors"]; ok {
@@ -695,7 +702,7 @@ func getErrorCode(responseMap map[string]interface{}) string {
 // A retryable client is a client whose transport is a
 // retryablehttp.RoundTripper instance.
 func isRetryableClient(client *http.Client) bool {
-	var isRetryable bool = false
+	var isRetryable = false
 	if client != nil && client.Transport != nil {
 		_, isRetryable = client.Transport.(*retryablehttp.RoundTripper)
 	}
@@ -754,6 +761,7 @@ func (service *BaseService) EnableRetries(maxRetries int, maxRetryInterval time.
 		// Hang the retryable client off the base service via the "shim" client.
 		service.Client = client.StandardClient()
 	}
+	GetLogger().Debug("Enabled retries; maxRetries=%d, maxRetryInterval=%s\n", maxRetries, maxRetryInterval.String())
 }
 
 // DisableRetries will disable automatic retries in the service.
@@ -765,6 +773,8 @@ func (service *BaseService) DisableRetries() {
 		// the retryable client instance.
 		tr := service.Client.Transport.(*retryablehttp.RoundTripper)
 		service.Client = tr.Client.HTTPClient
+
+		GetLogger().Debug("Disabled retries\n")
 	}
 }
 
@@ -776,13 +786,12 @@ func DefaultHTTPClient() *http.Client {
 }
 
 // httpLogger is a shim layer used to allow the Go core's logger to be used with the retryablehttp interfaces.
-type httpLogger struct {
-}
+type httpLogger struct{}
 
-func (l *httpLogger) Printf(format string, inserts ...interface{}) {
+func (l *httpLogger) Printf(format string, inserts ...any) {
 	if GetLogger().IsLogLevelEnabled(LevelDebug) {
 		msg := fmt.Sprintf(format, inserts...)
-		GetLogger().Log(LevelDebug, RedactSecrets(msg))
+		GetLogger().Log(LevelDebug, "%s", RedactSecrets(msg))
 	}
 }
 
@@ -826,16 +835,46 @@ var (
 	// scheme specified in the URL is invalid. This error isn't typed
 	// specifically so we resort to matching on the error string.
 	schemeErrorRe = regexp.MustCompile(`unsupported protocol scheme`)
+
+	// A regular expression to match the error returned by net/http when a
+	// request header or value is invalid. This error isn't typed
+	// specifically so we resort to matching on the error string.
+	invalidHeaderErrorRe = regexp.MustCompile(`invalid header`)
+
+	// A regular expression to match the error returned by net/http when the
+	// TLS certificate is not trusted. This error isn't typed
+	// specifically so we resort to matching on the error string.
+	notTrustedErrorRe = regexp.MustCompile(`certificate is not trusted|certificate is signed by unknown authority`)
 )
 
 // IBMCloudSDKRetryPolicy provides a default implementation of the CheckRetry interface
 // associated with a retryablehttp.Client.
 // This function will return true if the specified request/response should be retried.
 func IBMCloudSDKRetryPolicy(ctx context.Context, resp *http.Response, err error) (bool, error) {
-	// This logic was adapted from go-relyablehttp.ErrorPropagatedRetryPolicy().
+	// This logic was adapted from go-retryablehttp.ErrorPropagatedRetryPolicy().
+
+	if GetLogger().IsLogLevelEnabled(LevelDebug) {
+		// Compile the details to be included in the debug message.
+		var details []string
+		if resp != nil {
+			details = append(details, fmt.Sprintf("status_code=%d", resp.StatusCode))
+			if resp.Request != nil {
+				details = append(details, fmt.Sprintf("method=%s", resp.Request.Method))
+				details = append(details, fmt.Sprintf("url=%s", resp.Request.URL.Redacted()))
+			}
+		}
+		if err != nil {
+			details = append(details, fmt.Sprintf("error=%s", err.Error()))
+		} else {
+			details = append(details, "error=nil")
+		}
+
+		GetLogger().Debug("Considering retry attempt; %s\n", strings.Join(details, ", "))
+	}
 
 	// Do not retry on a Context-related error (Canceled or DeadlineExceeded).
 	if ctx.Err() != nil {
+		GetLogger().Debug("No retry, Context error: %s\n", ctx.Err().Error())
 		return false, ctx.Err()
 	}
 
@@ -844,21 +883,35 @@ func IBMCloudSDKRetryPolicy(ctx context.Context, resp *http.Response, err error)
 		if v, ok := err.(*url.Error); ok {
 			// Don't retry if the error was due to too many redirects.
 			if redirectsErrorRe.MatchString(v.Error()) {
+				GetLogger().Debug("No retry, too many redirects: %s\n", v.Error())
 				return false, SDKErrorf(v, "", "too-many-redirects", getComponentInfo())
 			}
 
 			// Don't retry if the error was due to an invalid protocol scheme.
 			if schemeErrorRe.MatchString(v.Error()) {
+				GetLogger().Debug("No retry, invalid protocol scheme: %s\n", v.Error())
 				return false, SDKErrorf(v, "", "invalid-scheme", getComponentInfo())
 			}
 
+			// Don't retry if the error was due to an invalid header.
+			if invalidHeaderErrorRe.MatchString(v.Error()) {
+				GetLogger().Debug("No retry, invalid header: %s\n", v.Error())
+				return false, SDKErrorf(v, "", "invalid-header", getComponentInfo())
+			}
+
 			// Don't retry if the error was due to TLS cert verification failure.
-			if _, ok := v.Err.(x509.UnknownAuthorityError); ok {
+			if notTrustedErrorRe.MatchString(v.Error()) {
+				GetLogger().Debug("No retry, TLS certificate is not trusted: %s\n", v.Error())
+				return false, SDKErrorf(v, "", "cert-not-trusted", getComponentInfo())
+			}
+			if _, ok := v.Err.(*tls.CertificateVerificationError); ok {
+				GetLogger().Debug("No retry, TLS certificate validation error: %s\n", v.Error())
 				return false, SDKErrorf(v, "", "cert-failure", getComponentInfo())
 			}
 		}
 
 		// The error is likely recoverable so retry.
+		GetLogger().Debug("Retry will be attempted...")
 		return true, nil
 	}
 
@@ -867,9 +920,11 @@ func IBMCloudSDKRetryPolicy(ctx context.Context, resp *http.Response, err error)
 	// A 429 should be retryable.
 	// All codes in the 500's range except for 501 (Not Implemented) should be retryable.
 	if resp.StatusCode == 429 || (resp.StatusCode >= 500 && resp.StatusCode <= 599 && resp.StatusCode != 501) {
+		GetLogger().Debug("Retry will be attempted")
 		return true, nil
 	}
 
+	GetLogger().Debug("No retry for status code: %d\n", resp.StatusCode)
 	return false, nil
 }
 
@@ -880,6 +935,8 @@ func IBMCloudSDKBackoffPolicy(min, max time.Duration, attemptNum int, resp *http
 	// Check for a Retry-After header.
 	if resp != nil {
 		if s, ok := resp.Header["Retry-After"]; ok {
+			GetLogger().Debug("Found Retry-After header: %s\n", s)
+
 			// First, try to parse the value as an integer (number of seconds to wait)
 			if sleep, err := strconv.ParseInt(s[0], 10, 64); err == nil {
 				return time.Second * time.Duration(sleep)
@@ -893,7 +950,6 @@ func IBMCloudSDKBackoffPolicy(min, max time.Duration, attemptNum int, resp *http
 				}
 				return sleep
 			}
-
 		}
 	}
 

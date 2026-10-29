@@ -495,11 +495,12 @@ func createCSISnapshotResponse(snapshot provider.Snapshot) *csi.CreateSnapshotRe
 	ts := timestamppb.New(snapshot.SnapshotCreationTime)
 	return &csi.CreateSnapshotResponse{
 		Snapshot: &csi.Snapshot{
-			SnapshotId:     snapshot.SnapshotCRN,
-			SourceVolumeId: snapshot.VolumeID,
-			SizeBytes:      snapshot.SnapshotSize,
-			CreationTime:   ts,
-			ReadyToUse:     snapshot.ReadyToUse,
+			SnapshotId:      snapshot.SnapshotCRN,
+			SourceVolumeId:  snapshot.VolumeID,
+			SizeBytes:       snapshot.SnapshotSize,
+			CreationTime:    ts,
+			ReadyToUse:      snapshot.ReadyToUse,
+			GroupSnapshotId: snapshot.GroupSnapshotID,
 		},
 	}
 }

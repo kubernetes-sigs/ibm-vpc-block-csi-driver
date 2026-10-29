@@ -389,6 +389,19 @@ type FakeSession struct {
 		result1 *provider.VolumeList
 		result2 error
 	}
+	ModifyVolumeStub        func(provider.ModifyVolumeRequest) (*provider.ModifyVolumeResponse, error)
+	modifyVolumeMutex       sync.RWMutex
+	modifyVolumeArgsForCall []struct {
+		arg1 provider.ModifyVolumeRequest
+	}
+	modifyVolumeReturns struct {
+		result1 *provider.ModifyVolumeResponse
+		result2 error
+	}
+	modifyVolumeReturnsOnCall map[int]struct {
+		result1 *provider.ModifyVolumeResponse
+		result2 error
+	}
 	ProviderNameStub        func() provider.VolumeProvider
 	providerNameMutex       sync.RWMutex
 	providerNameArgsForCall []struct {
@@ -2340,6 +2353,70 @@ func (fake *FakeSession) ListVolumesReturnsOnCall(i int, result1 *provider.Volum
 	}
 	fake.listVolumesReturnsOnCall[i] = struct {
 		result1 *provider.VolumeList
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeSession) ModifyVolume(arg1 provider.ModifyVolumeRequest) (*provider.ModifyVolumeResponse, error) {
+	fake.modifyVolumeMutex.Lock()
+	ret, specificReturn := fake.modifyVolumeReturnsOnCall[len(fake.modifyVolumeArgsForCall)]
+	fake.modifyVolumeArgsForCall = append(fake.modifyVolumeArgsForCall, struct {
+		arg1 provider.ModifyVolumeRequest
+	}{arg1})
+	stub := fake.ModifyVolumeStub
+	fakeReturns := fake.modifyVolumeReturns
+	fake.recordInvocation("ModifyVolume", []interface{}{arg1})
+	fake.modifyVolumeMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeSession) ModifyVolumeCallCount() int {
+	fake.modifyVolumeMutex.RLock()
+	defer fake.modifyVolumeMutex.RUnlock()
+	return len(fake.modifyVolumeArgsForCall)
+}
+
+func (fake *FakeSession) ModifyVolumeCalls(stub func(provider.ModifyVolumeRequest) (*provider.ModifyVolumeResponse, error)) {
+	fake.modifyVolumeMutex.Lock()
+	defer fake.modifyVolumeMutex.Unlock()
+	fake.ModifyVolumeStub = stub
+}
+
+func (fake *FakeSession) ModifyVolumeArgsForCall(i int) provider.ModifyVolumeRequest {
+	fake.modifyVolumeMutex.RLock()
+	defer fake.modifyVolumeMutex.RUnlock()
+	argsForCall := fake.modifyVolumeArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeSession) ModifyVolumeReturns(result1 *provider.ModifyVolumeResponse, result2 error) {
+	fake.modifyVolumeMutex.Lock()
+	defer fake.modifyVolumeMutex.Unlock()
+	fake.ModifyVolumeStub = nil
+	fake.modifyVolumeReturns = struct {
+		result1 *provider.ModifyVolumeResponse
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeSession) ModifyVolumeReturnsOnCall(i int, result1 *provider.ModifyVolumeResponse, result2 error) {
+	fake.modifyVolumeMutex.Lock()
+	defer fake.modifyVolumeMutex.Unlock()
+	fake.ModifyVolumeStub = nil
+	if fake.modifyVolumeReturnsOnCall == nil {
+		fake.modifyVolumeReturnsOnCall = make(map[int]struct {
+			result1 *provider.ModifyVolumeResponse
+			result2 error
+		})
+	}
+	fake.modifyVolumeReturnsOnCall[i] = struct {
+		result1 *provider.ModifyVolumeResponse
 		result2 error
 	}{result1, result2}
 }

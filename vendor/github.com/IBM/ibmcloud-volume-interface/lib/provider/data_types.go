@@ -110,6 +110,9 @@ type Snapshot struct {
 	// a unique Snapshot CRN assigned by cloud provider to snapshot
 	SnapshotCRN string `json:"snapshotCRN,omitempty"`
 
+	// The group this snapshot belongs to; empty for standalone snapshots.
+	GroupSnapshotID string `json:"groupSnapshotID,omitempty"`
+
 	// The size of the snapshot, in bytes
 	SnapshotSize int64 `json:"snapshotSize"`
 
@@ -122,8 +125,8 @@ type Snapshot struct {
 	// status of snapshot
 	ReadyToUse bool `json:"readyToUse"`
 
-	// VPC contains vpc fields
-	VPC
+	// Common cloud resource details.
+	ResourceReference
 }
 
 // SnapshotList ...
@@ -149,8 +152,8 @@ type GroupSnapshot struct {
 	// status of the group snapshot
 	ReadyToUse bool `json:"readyToUse"`
 
-	// VPC contains vpc fields
-	VPC
+	// Common cloud resource details.
+	ResourceReference
 }
 
 // GroupSnapshotParameters contains the parameters for creating a group snapshot
@@ -186,6 +189,47 @@ type ExpandVolumeRequest struct {
 
 	// The new Capacity of the volume, in GiB
 	Capacity int64 `json:"capacity"`
+}
+
+// VolumePerformance holds the performance attributes of a volume that can be modified.
+// It is embedded in both ModifyVolumeRequest and ModifyVolumeResponse.
+// The field is named Bandwidth (not Throughput) to match the VPC API and VPCVolume.Bandwidth;
+// the CSI "throughput" parameter maps to it.
+type VolumePerformance struct {
+	// IOPS of the volume
+	Iops int64 `json:"iops,omitempty"`
+
+	// Bandwidth (throughput) of the volume, in Mbps
+	Bandwidth int32 `json:"bandwidth,omitempty"`
+}
+
+// ModifyVolumeRequest ...
+type ModifyVolumeRequest struct {
+	// VolumeID id for the volume
+	VolumeID string `json:"volumeID"`
+
+	// changed Volume name
+	Name string `json:"name,omitempty"`
+
+	// The new performance attributes (IOPS, Bandwidth) of the volume
+	VolumePerformance
+}
+
+// ModifyVolumeResponse holds the updated attributes returned after a ModifyVolume call.
+// Using a struct keeps the VolumeManager interface stable: new return fields can be
+// added here in the future without changing the method signature.
+type ModifyVolumeResponse struct {
+	// VolumeID id of the modified volume
+	VolumeID string `json:"volumeID"`
+
+	// Href of the modified volume
+	Href string `json:"href"`
+
+	// CRN of the modified volume
+	CRN string `json:"crn"`
+
+	// The updated performance attributes (IOPS, Bandwidth) of the volume
+	VolumePerformance
 }
 
 // SnapshotParameters ...
