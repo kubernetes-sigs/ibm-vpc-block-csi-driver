@@ -73,6 +73,7 @@ var skipErrorCodes = map[string]bool{
 	SnapshotNotFound:                               true,
 	"snapshots_not_authorized":                     true,
 	SnapshotIDNotFound:                             true,
+	"snapshot_consistency_groups_not_found":        true,
 	"snapshots_source_volume_not_found":            true,
 	"snapshots_source_volume_not_attached":         true,
 	"volume_capacity_maximum":                      true,
@@ -427,17 +428,73 @@ func FromProviderToLibSnapshot(vpcSnapshot *models.Snapshot, logger *zap.Logger)
 		createdTime = *vpcSnapshot.CreatedAt
 	}
 	libSnapshot = &provider.Snapshot{
-		VolumeID:             vpcSnapshot.SourceVolume.ID,
 		SnapshotID:           vpcSnapshot.ID,
 		SnapshotCRN:          vpcSnapshot.CRN,
 		SnapshotCreationTime: createdTime,
 		SnapshotSize:         GiBToBytes(vpcSnapshot.MinimumCapacity),
-		VPC:                  provider.VPC{Href: vpcSnapshot.Href},
+		ResourceReference:    provider.ResourceReference{Href: vpcSnapshot.Href},
 	}
-	if vpcSnapshot.LifecycleState == snapshotReadyState {
-		libSnapshot.ReadyToUse = true
-	} else {
-		libSnapshot.ReadyToUse = false
+	if vpcSnapshot.SourceVolume != nil {
+		libSnapshot.VolumeID = vpcSnapshot.SourceVolume.ID
+	}
+	// Keep group membership when a snapshot is fetched on its own.
+	if vpcSnapshot.SnapshotConsistencyGroup != nil {
+		libSnapshot.GroupSnapshotID = vpcSnapshot.SnapshotConsistencyGroup.ID
+	}
+	libSnapshot.ReadyToUse = libSnapshot.VolumeID != "" && vpcSnapshot.LifecycleState == snapshotReadyState
+	return
+}
+
+// FromProviderToLibGroupSnapshot converts	 VPC group details to the shared provider model.
+// The group is ready only when it is stable and all member snapshots are ready.
+func FromProviderToLibGroupSnapshot(vpcGroup *models.SnapshotConsistencyGroupResponse, snapshotDetails []*models.Snapshot, logger *zap.Logger) (libGroupSnapshot *provider.GroupSnapshot) {
+	logger.Debug("Entry of FromProviderToLibGroupSnapshot method...")
+	defer logger.Debug("Exit from FromProviderToLibGroupSnapshot method...")
+
+	if vpcGroup == nil {
+		logger.Info("GroupSnapshot details are empty")
+		return
+	}
+
+	logger.Debug("GroupSnapshot details of VPC client", zap.Reflect("models.SnapshotConsistencyGroupResponse", vpcGroup))
+
+	var createdTime time.Time
+	if vpcGroup.CreatedAt != nil {
+		createdTime = *vpcGroup.CreatedAt
+	}
+
+	libGroupSnapshot = &provider.GroupSnapshot{
+		GroupSnapshotID:           vpcGroup.ID,
+		GroupSnapshotCRN:          vpcGroup.CRN,
+		GroupSnapshotCreationTime: createdTime,
+		ResourceReference:         provider.ResourceReference{Href: vpcGroup.Href},
+		ReadyToUse:                vpcGroup.LifecycleState == snapshotReadyState && len(vpcGroup.Snapshots) > 0,
+	}
+
+	detailsByID := make(map[string]*models.Snapshot, len(snapshotDetails))
+	for _, snap := range snapshotDetails {
+		if snap != nil {
+			detailsByID[snap.ID] = snap
+		}
+	}
+
+	// Keep all members. Members with missing details stay not ready and have no source volume ID.
+	libGroupSnapshot.Snapshots = make([]*provider.Snapshot, 0, len(vpcGroup.Snapshots))
+	for _, ref := range vpcGroup.Snapshots {
+		var member *provider.Snapshot
+		if snap := detailsByID[ref.ID]; snap != nil {
+			member = FromProviderToLibSnapshot(snap, logger)
+		} else {
+			member = &provider.Snapshot{
+				SnapshotID:        ref.ID,
+				SnapshotCRN:       ref.CRN,
+				ResourceReference: provider.ResourceReference{Href: ref.Href},
+			}
+		}
+		if !member.ReadyToUse {
+			libGroupSnapshot.ReadyToUse = false
+		}
+		libGroupSnapshot.Snapshots = append(libGroupSnapshot.Snapshots, member)
 	}
 	return
 }

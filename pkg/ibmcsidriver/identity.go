@@ -47,36 +47,48 @@ func (csiIdentity *CSIIdentityServer) GetPluginInfo(ctx context.Context, req *cs
 	}, nil
 }
 
-// GetPluginCapabilities ...
+// GetPluginCapabilities exposes the GroupController service only when VGS is
+// explicitly enabled, keeping capability discovery aligned with the RPCs.
 func (csiIdentity *CSIIdentityServer) GetPluginCapabilities(ctx context.Context, req *csi.GetPluginCapabilitiesRequest) (*csi.GetPluginCapabilitiesResponse, error) {
 	ctxLogger, _ := utils.GetContextLogger(ctx, false)
 	ctxLogger.Info("CSIIdentityServer-GetPluginCapabilities...", zap.Reflect("Request", req))
 
-	return &csi.GetPluginCapabilitiesResponse{
-		Capabilities: []*csi.PluginCapability{
-			{
-				Type: &csi.PluginCapability_Service_{
-					Service: &csi.PluginCapability_Service{
-						Type: csi.PluginCapability_Service_CONTROLLER_SERVICE,
-					},
+	caps := []*csi.PluginCapability{
+		{
+			Type: &csi.PluginCapability_Service_{
+				Service: &csi.PluginCapability_Service{
+					Type: csi.PluginCapability_Service_CONTROLLER_SERVICE,
 				},
 			},
-			{
-				Type: &csi.PluginCapability_Service_{
-					Service: &csi.PluginCapability_Service{
-						Type: csi.PluginCapability_Service_VOLUME_ACCESSIBILITY_CONSTRAINTS,
-					},
-				},
-			},
-			/* TODO Add Volume Expansion {
-				Type: &csi.PluginCapability_Service_{
-					Service: &csi.PluginCapability_Service{
-						Type: csi.PluginCapability_VolumeExpansion_ONLINE,
-					},
-				},
-			}, */
 		},
-	}, nil
+		{
+			Type: &csi.PluginCapability_Service_{
+				Service: &csi.PluginCapability_Service{
+					Type: csi.PluginCapability_Service_VOLUME_ACCESSIBILITY_CONSTRAINTS,
+				},
+			},
+		},
+	}
+
+	if isVGSEnabled() {
+		caps = append(caps, &csi.PluginCapability{
+			Type: &csi.PluginCapability_Service_{
+				Service: &csi.PluginCapability_Service{
+					Type: csi.PluginCapability_Service_GROUP_CONTROLLER_SERVICE,
+				},
+			},
+		})
+	}
+
+	/* TODO Add Volume Expansion {
+		Type: &csi.PluginCapability_Service_{
+			Service: &csi.PluginCapability_Service{
+				Type: csi.PluginCapability_VolumeExpansion_ONLINE,
+			},
+		},
+	}, */
+
+	return &csi.GetPluginCapabilitiesResponse{Capabilities: caps}, nil
 }
 
 // Probe ...

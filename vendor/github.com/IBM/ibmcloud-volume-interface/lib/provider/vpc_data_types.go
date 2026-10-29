@@ -50,8 +50,8 @@ type VPCFileVolume struct {
 	TransitEncryption  string               `json:"transit_encryption,omitempty"`
 }
 
-// VPC ...
-type VPC struct {
+// ResourceReference identifies a cloud resource by its ID, CRN, URL, and name.
+type ResourceReference struct {
 	ID   string `json:"id"`
 	CRN  string `json:"crn,omitempty"`
 	Href string `json:"href,omitempty"`
@@ -90,11 +90,11 @@ type VolumeAccessPoint struct {
 	Href string `json:"href,omitempty"`
 	Name string `json:"name,omitempty"`
 	// Status of volume target named - deleted, deleting, failed, pending_deletion, stable, updating, waiting, suspended
-	Status    string     `json:"status,omitempty"`
-	MountPath *string    `json:"mount_path,omitempty"`
-	VPC       *VPC       `json:"vpc,omitempty"`
-	Zone      *Zone      `json:"zone,omitempty"`
-	CreatedAt *time.Time `json:"created_at,omitempty"`
+	Status    string             `json:"status,omitempty"`
+	MountPath *string            `json:"mount_path,omitempty"`
+	VPC       *ResourceReference `json:"vpc,omitempty"`
+	Zone      *Zone              `json:"zone,omitempty"`
+	CreatedAt *time.Time         `json:"created_at,omitempty"`
 }
 
 // Zone ...
@@ -166,4 +166,15 @@ type VolumeEncryptionKey struct {
 // IKSVolumeAttachment  encapulates IKS related attachment parameters
 type IKSVolumeAttachment struct {
 	ClusterID *string `json:"clusterID,omitempty"`
+}
+
+// VolumeProfileBand represents one capacity/IOPS band for a VPC file share
+// profile. Each band defines the inclusive GiB capacity range and the
+// inclusive IOPS range that are valid together.
+// Returned by Session.GetVolumeProfileBands.
+type VolumeProfileBand struct {
+	CapacityMin int64 `json:"capacityMin"`
+	CapacityMax int64 `json:"capacityMax"`
+	IOPSMin     int64 `json:"iopsMin"`
+	IOPSMax     int64 `json:"iopsMax"`
 }

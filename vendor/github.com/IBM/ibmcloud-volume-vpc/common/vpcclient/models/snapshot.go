@@ -30,45 +30,41 @@ type SnapshotList struct {
 
 // LisSnapshotFilters ...
 type LisSnapshotFilters struct {
-	ResourceGroupID string `json:"resource_group.id,omitempty"`
-	Name            string `json:"name,omitempty"`
-	SourceVolumeID  string `json:"source_volume.id,omitempty"`
+	ResourceGroupID            string `json:"resource_group.id,omitempty"`
+	Name                       string `json:"name,omitempty"`
+	SourceVolumeID             string `json:"source_volume.id,omitempty"`
+	SnapshotConsistencyGroupID string `json:"snapshot_consistency_group.id,omitempty"`
 }
 
 // Snapshot ...
 type Snapshot struct {
-	Href            string           `json:"href,omitempty"`
-	ID              string           `json:"id,omitempty"`
-	Name            string           `json:"name,omitempty"`
-	CRN             string           `json:"crn,omitempty"`
-	MinimumCapacity int64            `json:"minimum_capacity,omitempty"`
-	ResourceGroup   *ResourceGroup   `json:"resource_group,omitempty"`
-	OperatingSystem *OperatingSystem `json:"operating_system,omitempty"`
-	CreatedAt       *time.Time       `json:"created_at,omitempty"`
-	Status          string           `json:"status,omitempty"`
-	Encryption      string           `json:"encryption,omitempty"`
-	ResourceType    string           `json:"resource_type,omitempty"`
-	Size            int64            `json:"size,omitempty"`
-	Bootable        bool             `json:"bootable,omitempty"`
-	LifecycleState  string           `json:"lifecycle_state,omitempty"`
-	SourceVolume    *SourceVolume    `json:"source_volume,omitempty"`
-	UserTags        []string         `json:"user_tags,omitempty"`
-	ServiceTags     []string         `json:"service_tags,omitempty"`
-	CapturedAt      *time.Time       `json:"captured_at,omitempty"`
-
-	SourceImage      *SourceImage         `json:"source_image,omitempty"`
-	Clones           *[]Clone             `json:"clones,omitempty"`
-	BackupPolicyPlan *BackupPolicyPlan    `json:"backup_policy_plan,omitempty"`
-	EncryptionKey    *VolumeEncryptionKey `json:"encryption_key,omitempty"`
+	Href                     string                             `json:"href,omitempty"`
+	ID                       string                             `json:"id,omitempty"`
+	Name                     string                             `json:"name,omitempty"`
+	CRN                      string                             `json:"crn,omitempty"`
+	MinimumCapacity          int64                              `json:"minimum_capacity,omitempty"`
+	ResourceGroup            *ResourceGroup                     `json:"resource_group,omitempty"`
+	OperatingSystem          *OperatingSystem                   `json:"operating_system,omitempty"`
+	CreatedAt                *time.Time                         `json:"created_at,omitempty"`
+	Status                   string                             `json:"status,omitempty"`
+	Encryption               string                             `json:"encryption,omitempty"`
+	ResourceType             string                             `json:"resource_type,omitempty"`
+	Size                     int64                              `json:"size,omitempty"`
+	Bootable                 bool                               `json:"bootable,omitempty"`
+	LifecycleState           string                             `json:"lifecycle_state,omitempty"`
+	SourceVolume             *SourceVolume                      `json:"source_volume,omitempty"`
+	UserTags                 []string                           `json:"user_tags,omitempty"`
+	ServiceTags              []string                           `json:"service_tags,omitempty"`
+	CapturedAt               *time.Time                         `json:"captured_at,omitempty"`
+	SnapshotConsistencyGroup *SnapshotConsistencyGroupReference `json:"snapshot_consistency_group,omitempty"`
+	SourceImage              *SourceImage                       `json:"source_image,omitempty"`
+	Clones                   *[]Clone                           `json:"clones,omitempty"`
+	EncryptionKey            *VolumeEncryptionKey               `json:"encryption_key,omitempty"`
 }
 
-// BackupPolicyPlan ...
-type BackupPolicyPlan struct {
-	ID           string   `json:"id,omitempty"`
-	Href         string   `json:"href,omitempty"`
-	Name         string   `json:"name,omitempty"`
-	Deleted      *Deleted `json:"deleted,omitempty"`
-	ResourceType string   `json:"resource_type,omitempty"`
+// SnapshotConsistencyGroupReference identifies the group that created a snapshot.
+type SnapshotConsistencyGroupReference struct {
+	ID string `json:"id"`
 }
 
 // OperatingSystem ...
