@@ -23,10 +23,12 @@ import (
 	"github.com/IBM/ibmcloud-volume-interface/lib/metrics"
 	"github.com/IBM/ibmcloud-volume-interface/lib/provider"
 	userError "github.com/IBM/ibmcloud-volume-vpc/common/messages"
+	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/models"
 	"go.uber.org/zap"
 )
 
-// WaitForAttachVolume waits for volume to be attached to node. e.g waits till status becomes attached
+// WaitForAttachVolume waits for volume to be attached to node. e.g waits till status becomes attached.
+// For BMS SDP volumes the terminal status is "available"; for VSI volumes it is "attached".
 func (vpcs *VPCSession) WaitForAttachVolume(volumeAttachmentTemplate provider.VolumeAttachmentRequest) (*provider.VolumeAttachmentResponse, error) {
 	vpcs.Logger.Debug("Entry of WaitForAttachVolume method...")
 	defer vpcs.Logger.Debug("Exit from WaitForAttachVolume method...")
@@ -44,6 +46,13 @@ func (vpcs *VPCSession) WaitForAttachVolume(volumeAttachmentTemplate provider.Vo
 		return nil, err
 	}
 
+	// BMS SDP volumes report "available" when ready; VSI volumes report "attached".
+	isBMS := !vpcs.Config.VPCConfig.IsIKS && volumeAttachmentTemplate.BMSVolumeAttachment != nil
+	terminalStatus := StatusAttached
+	if isBMS {
+		terminalStatus = models.VolumeAvailable
+	}
+
 	var currentVolAttachment *provider.VolumeAttachmentResponse
 	err = vpcs.APIRetry.FlexyRetryWithCustomGap(vpcs.Logger, func() (error, bool) {
 		currentVolAttachment, err = vpcs.GetVolumeAttachment(volumeAttachmentTemplate)
@@ -52,11 +61,11 @@ func (vpcs *VPCSession) WaitForAttachVolume(volumeAttachmentTemplate provider.Vo
 			// considering that vpcs.GetVolumeAttachment already re-tried
 			return err, true
 		}
-		// Stop retry in case of volume is attached
-		return err, currentVolAttachment != nil && currentVolAttachment.Status == StatusAttached
+		// Stop retry once the volume reaches its terminal attached status
+		return err, currentVolAttachment != nil && currentVolAttachment.Status == terminalStatus
 	})
-	// Success case, checks are required in case of timeout happened and volume is still not attached state
-	if err == nil && (currentVolAttachment != nil && currentVolAttachment.Status == StatusAttached) {
+	// Success case, checks are required in case of timeout happened and volume is still not in attached state
+	if err == nil && (currentVolAttachment != nil && currentVolAttachment.Status == terminalStatus) {
 		return currentVolAttachment, nil
 	}
 

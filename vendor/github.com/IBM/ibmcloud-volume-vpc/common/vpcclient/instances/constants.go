@@ -25,11 +25,19 @@ const (
 	instanceIDvolumeAttachmentPath = instanceIDPath + "/" + volumeAttachmentPath
 	instanceIDattachmentIDPath     = instanceIDvolumeAttachmentPath + "/{" + attachmentIDParam + "}"
 
+	// BMS paths — used by RotateEncryptedSecret and GetBMSServer.
+	// All operations share the same server-ID path parameter (instanceIDParam).
+	bmsServerSuffix       = instanceIDPath                               // GET  /bare_metal_servers/{id}
+	bmsRotateSecretSuffix = instanceIDPath + "/storage_access/encrypted_secret/rotate" // POST
+
 	// VpcPathPrefix  VPC URL path prefix
 	VpcPathPrefix = "v1/instances"
 
 	// IksPathPrefix  IKS URL path prefix
 	IksPathPrefix = "v2/storage/vpc/"
+
+	// BMSPathPrefix  Bare Metal Server URL path prefix for SDP volume attachments
+	BMSPathPrefix = "v1/bare_metal_servers"
 
 	// IksClusterQueryKey ...
 	IksClusterQueryKey = "cluster"

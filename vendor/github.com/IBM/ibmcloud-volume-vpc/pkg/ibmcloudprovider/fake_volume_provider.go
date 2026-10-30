@@ -47,13 +47,13 @@ const (
 	IAMURL = "test-iam-url"
 
 	// IAMClientID ...
-	IAMClientID = "test-iam_client_id"
+	IAMClientID = "test-iam_client_id" // pragma: allowlist secret
 
 	// IAMClientSecret ...
-	IAMClientSecret = "test-iam_client_secret"
+	IAMClientSecret = "test-iam_client_secret" // pragma: allowlist secret
 
 	// IAMAPIKey ...
-	IAMAPIKey = "test-iam_api_key" // #nosec G101
+	IAMAPIKey = "test-iam_api_key" // #nosec G101 // pragma: allowlist secret
 
 	// RefreshToken ...
 	RefreshToken = "test-refresh_token"
@@ -126,4 +126,14 @@ func (ficp *FakeIBMCloudStorageProvider) GetConfig() *config.Config {
 // GetClusterID ...
 func (ficp *FakeIBMCloudStorageProvider) GetClusterID() string {
 	return ficp.ClusterID
+}
+
+// GetBMSPrivKey returns nil for test use (non-BMS fake provider).
+func (ficp *FakeIBMCloudStorageProvider) GetBMSPrivKey() []byte {
+	return nil
+}
+
+// GetBMSKeyID returns empty string for test use (non-BMS fake provider).
+func (ficp *FakeIBMCloudStorageProvider) GetBMSKeyID() string {
+	return ""
 }

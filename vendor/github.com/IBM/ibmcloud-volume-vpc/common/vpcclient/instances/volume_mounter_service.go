@@ -37,6 +37,21 @@ type VolumeAttachManager interface {
 	ListVolumeAttachments(*models.VolumeAttachment, *zap.Logger) (*models.VolumeAttachmentList, error)
 	// Delete the volume
 	DetachVolume(*models.VolumeAttachment, *zap.Logger) (*http.Response, error)
+
+	// RotateEncryptedSecret calls
+	// POST v1/bare_metal_servers/{serverID}/storage_access/encrypted_secret/rotate
+	// body: {"key":{"id":keyID}}
+	// BMS-only: tells VPC to re-encrypt the NVMe-oF PSK with the RSA public key
+	// registered as VPC key {keyID}.  No-op / returns error on non-BMS managers.
+	RotateEncryptedSecret(serverID, keyID string, ctxLogger *zap.Logger) error
+
+	// GetBMSServer calls GET v1/bare_metal_servers/{serverID} and returns the
+	// fields the CSI controller needs in one round-trip:
+	//   nvme_qualified_name          → HOSTNQN (initiator NQN of the server)
+	//   storage_access.encrypted_secret → RSA-encrypted PSK ciphertext
+	// BMS-only: returns error on non-BMS managers.
+	GetBMSServer(serverID string, ctxLogger *zap.Logger) (*models.BMSServerResponse, error)
+
 }
 
 // VolumeAttachService ...
@@ -79,5 +94,22 @@ func NewIKSVolumeAttachmentManager(clientIn client.SessionClient) VolumeAttachMa
 		client:        clientIn,
 		pathPrefix:    IksPathPrefix,
 		receiverError: &err,
+	}
+}
+
+// NewBMSVolumeAttachmentManager creates a VolumeAttachManager that targets the
+// Bare Metal Server SDP volume-attachment API (v1/bare_metal_servers/…).
+// It reuses VolumeAttachService because the BMS REST resource has the same
+// path structure as the VSI resource: /<serverID>/volume_attachments[/<id>].
+func NewBMSVolumeAttachmentManager(clientIn client.SessionClient) VolumeAttachManager {
+	err := models.Error{}
+	return &VolumeAttachService{
+		client:        clientIn,
+		pathPrefix:    BMSPathPrefix,
+		receiverError: &err,
+		populatePathPrefixParameters: func(request *client.Request, volumeAttachmentTemplate *models.VolumeAttachment) *client.Request {
+			request.PathParameter(instanceIDParam, *volumeAttachmentTemplate.InstanceID)
+			return request
+		},
 	}
 }

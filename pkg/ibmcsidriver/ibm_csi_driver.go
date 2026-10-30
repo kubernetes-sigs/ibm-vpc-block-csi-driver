@@ -101,7 +101,9 @@ func (icDriver *IBMCSIDriver) SetupIBMCSIDriver(provider cloudProvider.CloudProv
 
 	// Set up CSI RPC Servers
 	icDriver.ids = NewIdentityServer(icDriver)
-	icDriver.ns = NewNodeServer(icDriver, mounter, statsUtil, metadata)
+	// GetBMSPrivKey returns nil on non-BMS clusters (secret absent) — NewNodeServer
+	// stores it and all BMS code paths guard on len(BMSPrivKey) > 0.
+	icDriver.ns = NewNodeServer(icDriver, mounter, statsUtil, metadata, provider.GetBMSPrivKey())
 	icDriver.cs = NewControllerServer(icDriver, provider)
 
 	icDriver.logger.Info("Successfully setup IBM CSI driver")
@@ -180,20 +182,24 @@ func NewIdentityServer(icDriver *IBMCSIDriver) *CSIIdentityServer {
 }
 
 // NewNodeServer ...
-func NewNodeServer(icDriver *IBMCSIDriver, mounter mountManager.Mounter, statsUtil StatsUtils, nodeMetadata nodeMetadata.NodeMetadata) *CSINodeServer {
+func NewNodeServer(icDriver *IBMCSIDriver, mounter mountManager.Mounter, statsUtil StatsUtils, nodeMetadata nodeMetadata.NodeMetadata, bmsPrivKey []byte) *CSINodeServer {
 	return &CSINodeServer{
-		Driver:   icDriver,
-		Mounter:  mounter,
-		Stats:    statsUtil,
-		Metadata: nodeMetadata,
+		Driver:         icDriver,
+		Mounter:        mounter,
+		Stats:          statsUtil,
+		Metadata:       nodeMetadata,
+		BMSPrivKey:     bmsPrivKey,
+		subsysRefCount: make(map[string]int),
 	}
 }
 
 // NewControllerServer ...
 func NewControllerServer(icDriver *IBMCSIDriver, provider cloudProvider.CloudProviderInterface) *CSIControllerServer {
 	return &CSIControllerServer{
-		Driver:      icDriver,
-		CSIProvider: provider,
+		Driver:          icDriver,
+		CSIProvider:     provider,
+		bmsCacheHostNQN: make(map[string]string),
+		bmsCacheSecret:  make(map[string]string),
 	}
 }
 

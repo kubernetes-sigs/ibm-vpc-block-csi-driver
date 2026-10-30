@@ -56,12 +56,20 @@ func (vpcs *VPCSession) AttachVolume(volumeAttachmentRequest provider.VolumeAtta
 	}
 	var volumeAttachResult *models.VolumeAttachment
 	var varp *provider.VolumeAttachmentResponse
-	// If it is Non IKS environment then remove the IKSVolumeAttachment field from request struct which contains clusterID.
-	// TO-DO : Enhance this check. Put it in right place
+	// For non-IKS clusters, strip the IKS cluster ID from the request.
+	// Also determine whether this request targets a Bare Metal Server.
+	isBMS := false
 	if !vpcs.Config.VPCConfig.IsIKS {
 		volumeAttachmentRequest.IKSVolumeAttachment = nil
+		isBMS = volumeAttachmentRequest.BMSVolumeAttachment != nil
 	}
 	volumeAttachment := models.NewVolumeAttachment(volumeAttachmentRequest)
+
+	// Choose the correct attachment manager: BMS SDP API or VSI/IKS API.
+	attachMgr := vpcs.APIClientVolAttachMgr
+	if isBMS {
+		attachMgr = vpcs.getBMSVolAttachMgr()
+	}
 
 	err = vpcs.APIRetry.FlexyRetry(vpcs.Logger, func() (error, bool) {
 		// First , check if volume is already attached or attaching to given instance
@@ -73,13 +81,13 @@ func (vpcs *VPCSession) AttachVolume(volumeAttachmentRequest provider.VolumeAtta
 			return nil, true // stop retry volume already attached
 		}
 		//Try attaching volume if it's not already attached or there is error in getting current volume attachment
-		vpcs.Logger.Info("Attaching volume from VPC provider...", zap.Bool("IKSEnabled?", vpcs.Config.VPCConfig.IsIKS))
-		volumeAttachResult, err = vpcs.APIClientVolAttachMgr.AttachVolume(&volumeAttachment, vpcs.Logger)
+		vpcs.Logger.Info("Attaching volume from VPC provider...", zap.Bool("IKSEnabled?", vpcs.Config.VPCConfig.IsIKS), zap.Bool("isBMS?", isBMS))
+		volumeAttachResult, err = attachMgr.AttachVolume(&volumeAttachment, vpcs.Logger)
 		// Keep retry, until we get the proper volumeAttachResult object
 		if err != nil {
 			return err, skipRetryForObviousErrors(err, vpcs.Config.VPCConfig.IsIKS)
 		}
-		varp = volumeAttachResult.ToVolumeAttachmentResponse(vpcs.Config.VPCConfig.VPCBlockProviderType)
+		varp = volumeAttachResult.ToVolumeAttachmentResponse(vpcs.Config.VPCConfig.VPCBlockProviderType, isBMS)
 		return err, true // stop retry as no error
 	})
 

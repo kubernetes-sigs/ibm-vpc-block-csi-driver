@@ -24,6 +24,10 @@ spec:
     spec:
       priorityClassName: system-node-critical
       serviceAccountName: ibm-vpc-block-node-sa
+      # BMS NVMe-oF/TCP: nvme connect opens TCP sockets to VPC storage IPs.
+      # hostNetwork ensures the container uses the host network namespace so
+      # the NVMe/TCP connections reach the correct VPC network interface.
+      hostNetwork: true
       tolerations:
       - operator: Exists
       containers:
@@ -129,6 +133,16 @@ spec:
             - name: customer-auth
               readOnly: true
               mountPath: /etc/storage_ibmc
+            # BMS NVMe-oF/TCP: nvme-cli reads hostnqn and hostid from /etc/nvme
+            # on the host.  Without this mount nvme-cli generates a random NQN
+            # on each connect, breaking subsystem association across restarts.
+            - name: host-nvme-config
+              mountPath: /etc/nvme
+            # BMS NVMe-oF/TCP: nvme check-tls-key may need to load the nvme-tcp
+            # kernel module from the host module tree if not already loaded.
+            - name: host-modules
+              mountPath: /lib/modules
+              readOnly: true
         - name: liveness-probe
           image: MUSTPATCHWITHKUSTOMIZE
           securityContext:
@@ -187,3 +201,15 @@ spec:
         - name: customer-auth # altough its not required, This is just to finish lib configuration which is a common code in the driver
           secret:
             secretName: storage-secret-store
+        # BMS NVMe-oF/TCP: exposes /etc/nvme/hostnqn and /etc/nvme/hostid from
+        # the host so nvme-cli inside the container uses the same stable host NQN.
+        # DirectoryOrCreate ensures the path is created on non-BMS nodes without error.
+        - name: host-nvme-config
+          hostPath:
+            path: /etc/nvme
+            type: DirectoryOrCreate
+        # BMS NVMe-oF/TCP: host kernel module tree for nvme-tcp module loading.
+        - name: host-modules
+          hostPath:
+            path: /lib/modules
+            type: Directory

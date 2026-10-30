@@ -1,4 +1,11 @@
-FROM ubuntu:16.04
+# ubuntu:24.04 (Noble) is required for BMS NVMe-oF/TCP support.
+# nvme-cli 2.9 ships in the Ubuntu 24.04 default apt repo, satisfying the
+# >=2.16 requirement for `nvme connect --tls-key`.
+#
+# Note: ktls-utils (tlshd) is a BMS node OS prerequisite — like iscsid for
+# iSCSI — and is NOT installed in this container image.  It must be present
+# on the BMS worker node OS before scheduling any BMS workloads.
+FROM ubuntu:24.04
 
 # Default values
 ARG git_commit_id=unknown
@@ -16,12 +23,14 @@ LABEL jenkins-build-number=${jenkins_build_number}
 LABEL razee.io/source-url="${REPO_SOURCE_URL}"
 LABEL razee.io/build-url="${BUILD_URL}"
 
-# Install required filesystem utilities for CSI driver operations
+# Install required filesystem utilities for CSI driver operations.
+#
+# BMS NVMe-oF/TCP additionally requires nvme-cli >=2.16 in the container.
+# Ubuntu 24.04 ships nvme-cli 2.9 in the default apt repo.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         # Core utilities
         ca-certificates \
-        apt \
         # Device management (provides udevadm for device discovery)
         udev \
         # Filesystem detection and mounting (provides blkid, mount, umount)
@@ -32,7 +41,10 @@ RUN apt-get update && \
         # XFS filesystem support (provides mkfs.xfs, xfs_repair, xfs_growfs)
         xfsprogs \
         # NFS support
-        nfs-common && \
+        nfs-common \
+        # BMS NVMe-oF/TCP: nvme-cli provides `nvme connect --tls-key`
+        # Ubuntu 24.04 ships 2.9 which satisfies the >=2.16 requirement
+        nvme-cli && \
     # Security updates
     apt-get upgrade -y && \
     # Cleanup to reduce image size
@@ -58,12 +70,15 @@ RUN echo "Verifying required CSI driver dependencies..." && \
     command -v mkfs.xfs >/dev/null 2>&1 || MISSING_COMMANDS="$MISSING_COMMANDS mkfs.xfs" && \
     command -v xfs_repair >/dev/null 2>&1 || MISSING_COMMANDS="$MISSING_COMMANDS xfs_repair" && \
     command -v xfs_growfs >/dev/null 2>&1 || MISSING_COMMANDS="$MISSING_COMMANDS xfs_growfs" && \
+    # Check BMS NVMe-oF/TCP command
+    command -v nvme >/dev/null 2>&1 || MISSING_COMMANDS="$MISSING_COMMANDS nvme" && \
     # Fail build if any commands are missing
     if [ -n "$MISSING_COMMANDS" ]; then \
         echo "ERROR: Required commands are missing:$MISSING_COMMANDS" && \
         echo "CSI driver will not function correctly without these commands." && \
         exit 1; \
     fi && \
+    echo "nvme-cli: $(nvme version)" && \
     echo "✓ All required CSI driver dependencies verified successfully"
 
 RUN mkdir -p /home/ibm-csi-drivers/

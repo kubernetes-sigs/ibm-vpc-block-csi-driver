@@ -30,4 +30,13 @@ type CloudProviderInterface interface {
 	GetProviderSession(ctx context.Context, logger *zap.Logger) (provider.Session, error)
 	GetConfig() *config.Config
 	GetClusterID() string
+	// GetBMSPrivKey returns the PEM-encoded RSA private key loaded at startup
+	// from the k8s secret "storage-bm-secret" (key "rsa_private_key").
+	// Returns nil on non-BMS nodes where the secret does not exist.
+	GetBMSPrivKey() []byte
+	// GetBMSKeyID returns the VPC SSH Key resource ID loaded at startup from
+	// the k8s secret "storage-bm-secret" (key "key_id").
+	// Used by the controller in STEP 4 to call the rotate API.
+	// Returns empty string on non-BMS clusters.
+	GetBMSKeyID() string
 }

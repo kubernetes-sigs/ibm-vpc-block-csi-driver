@@ -35,12 +35,60 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	// bmsSecretName is the k8s Secret created by the cluster admin that holds
+	// the RSA key pair used for BMS NVMe-oF/TCP PSK encryption.
+	//
+	// Expected secret fields (create once per cluster):
+	//
+	//   key_id          – VPC SSH Key resource ID returned by:
+	//                       ibmcloud is key-create <name> --key-material @rsa_public_key.pub
+	//                     The controller passes this ID to the rotate API so VPC
+	//                     knows which stored public key to encrypt the PSK with.
+	//
+	//   rsa_private_key – PEM-encoded RSA private key.  Read by the node
+	//                     DaemonSet to RSA-OAEP decrypt the ciphertext received
+	//                     via publishContext at NodeStageVolume time.
+	//
+	//   rsa_public_key  – PEM-encoded RSA public key (stored for reference only).
+	//                     The driver does NOT read this field at runtime; it must
+	//                     be registered with VPC via `ibmcloud is key-create`
+	//                     before creating BMS volume attachments so VPC can
+	//                     encrypt the PSK ciphertext.
+	bmsSecretName = "storage-bm-secret"
+
+	// bmsSecretPrivKeyField is the Secret data key that holds the
+	// PEM-encoded RSA private key (used by the node DaemonSet only).
+	bmsSecretPrivKeyField = "rsa_private_key"
+
+	// bmsSecretKeyIDField is the Secret data key that holds the VPC SSH Key
+	// resource ID used by the controller to call the rotate API.
+	// The corresponding RSA public key must already be registered in VPC as an
+	// SSH key with this ID so VPC can encrypt the PSK for this cluster.
+	bmsSecretKeyIDField = "key_id"
+
+	// bmsSecretPubKeyField names the public-key field stored in the secret for
+	// operator reference.  The driver does not read this field; it is used only
+	// during one-time VPC SSH Key registration.
+	bmsSecretPubKeyField = "rsa_public_key" //nolint:deadcode,unused
+)
+
 // IBMCloudStorageProvider Provider
 type IBMCloudStorageProvider struct {
 	ProviderName   string
 	ProviderConfig *config.Config
 	Registry       registry.Providers
 	ClusterID      string
+	// BMSPrivKey is the PEM-encoded RSA private key read once at startup from
+	// the k8s secret "storage-bm-secret".  Nil on non-BMS clusters where the
+	// secret does not exist — all BMS code paths guard on this being non-nil.
+	BMSPrivKey []byte
+	// BMSKeyID is the VPC SSH Key resource ID read once at startup from the
+	// k8s secret "storage-bm-secret" (key "key_id").
+	// Used by the controller in STEP 4 to call the rotate API so VPC encrypts
+	// the PSK with the cluster's RSA public key.
+	// Empty on non-BMS clusters.
+	BMSKeyID string
 }
 
 var _ CloudProviderInterface = &IBMCloudStorageProvider{}
@@ -98,11 +146,40 @@ func NewIBMCloudStorageProvider(clusterVolumeLabel string, k8sClient *k8s_utils.
 		providerName = conf.VPC.VPCBlockProviderName
 	}
 
+	// Read BMS credentials from "storage-bm-secret".  Both reads are non-fatal:
+	// if the secret does not exist (non-BMS cluster) the fields stay at their
+	// zero values and all BMS code paths are skipped automatically.
+	//
+	// rsa_private_key — node DaemonSet only: decrypt PSK at NodeStageVolume
+	// key_id          — controller only:     passed in the rotate API body
+	var bmsPrivKey []byte
+	var bmsKeyID string
+
+	if privKeyPEM, err := k8s_utils.GetSecretData(*k8sClient, bmsSecretName, bmsSecretPrivKeyField); err != nil {
+		logger.Warn("NewIBMCloudStorageProvider: BMS private key not found — BMS NVMe attach will be disabled on node",
+			zap.String("secret", bmsSecretName), zap.String("key", bmsSecretPrivKeyField), zap.Error(err))
+	} else {
+		bmsPrivKey = []byte(privKeyPEM)
+		logger.Info("NewIBMCloudStorageProvider: BMS private key loaded successfully",
+			zap.String("secret", bmsSecretName))
+	}
+
+	if keyID, err := k8s_utils.GetSecretData(*k8sClient, bmsSecretName, bmsSecretKeyIDField); err != nil {
+		logger.Warn("NewIBMCloudStorageProvider: BMS key_id not found — encrypted_secret rotate will be disabled on controller",
+			zap.String("secret", bmsSecretName), zap.String("key", bmsSecretKeyIDField), zap.Error(err))
+	} else {
+		bmsKeyID = keyID
+		logger.Info("NewIBMCloudStorageProvider: BMS key_id loaded successfully",
+			zap.String("secret", bmsSecretName))
+	}
+
 	cloudProvider := &IBMCloudStorageProvider{
 		ProviderName:   providerName,
 		ProviderConfig: conf,
 		Registry:       registry,
 		ClusterID:      clusterInfo.ClusterID,
+		BMSPrivKey:     bmsPrivKey,
+		BMSKeyID:       bmsKeyID,
 	}
 	logger.Info("Successfully read provider configuration")
 	return cloudProvider, nil
@@ -152,6 +229,18 @@ func (icp *IBMCloudStorageProvider) GetConfig() *config.Config {
 // GetClusterID ...
 func (icp *IBMCloudStorageProvider) GetClusterID() string {
 	return icp.ClusterID
+}
+
+// GetBMSPrivKey returns the PEM-encoded RSA private key loaded at startup from
+// the k8s secret "storage-bm-secret".  Returns nil on non-BMS nodes.
+func (icp *IBMCloudStorageProvider) GetBMSPrivKey() []byte {
+	return icp.BMSPrivKey
+}
+
+// GetBMSKeyID returns the VPC SSH Key resource ID loaded at startup from
+// the k8s secret "storage-bm-secret".  Returns empty string on non-BMS clusters.
+func (icp *IBMCloudStorageProvider) GetBMSKeyID() string {
+	return icp.BMSKeyID
 }
 
 // CorrectEndpointURL corrects endpoint url if it is of form "http://"

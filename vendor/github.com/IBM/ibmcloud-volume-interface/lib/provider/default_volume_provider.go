@@ -51,6 +51,11 @@ func (volprov *DefaultVolumeProvider) AttachVolume(attachRequest VolumeAttachmen
 	return nil, nil
 }
 
+// ModifyVolume modify the volume with authorization by passing required information in the volume object
+func (volprov *DefaultVolumeProvider) ModifyVolume(modifyVolumeRequest ModifyVolumeRequest) (*ModifyVolumeResponse, error) {
+	return &ModifyVolumeResponse{}, nil
+}
+
 // CreateVolumeFromSnapshot creates a volume from snapshot
 func (volprov *DefaultVolumeProvider) CreateVolumeFromSnapshot(snapshot Snapshot, tags map[string]string) (*Volume, error) {
 	return nil, nil
@@ -196,4 +201,23 @@ func (volprov *DefaultVolumeProvider) GetSubnetForVolumeAccessPoint(subnetReques
 // GetSecurityGroupForVolumeAccessPoint retrieves the securityGroup matching with available cluster SG in the VPC
 func (volprov *DefaultVolumeProvider) GetSecurityGroupForVolumeAccessPoint(securityGroupRequest SecurityGroupRequest) (string, error) {
 	return "", nil
+}
+
+// GetVolumeProfileBands returns a no-op nil result.
+// Concrete session implementations that support this operation
+// (e.g. IksVpcSession via armada-storage-api) override this method.
+func (volprov *DefaultVolumeProvider) GetVolumeProfileBands(profile string) ([]VolumeProfileBand, error) {
+	return nil, nil
+}
+
+// RotateBMSEncryptedSecret is a no-op default. Concrete BMS-capable session
+// implementations override this method.
+func (volprov *DefaultVolumeProvider) RotateBMSEncryptedSecret(serverID, keyID string) error {
+	return nil
+}
+
+// GetBMSServer is a no-op default. Concrete BMS-capable session
+// implementations override this method.
+func (volprov *DefaultVolumeProvider) GetBMSServer(serverID string) (*BMSServerInfo, error) {
+	return nil, nil
 }
