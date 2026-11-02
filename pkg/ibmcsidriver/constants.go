@@ -131,6 +131,9 @@ const (
 
 	// Throughput ...
 	Throughput = "throughput"
+
+	// IsBMEnabledEnv is the environment variable for enabling Bare Metal support
+	IsBMEnabledEnv = "IS_BM_ENABLED"
 )
 
 // SupportedFS the supported FS types
