@@ -175,10 +175,10 @@ func TestDirectoryDelete(t *testing.T) {
 				if err != nil {
 					t.Fatalf("failed to create temp dir: %v", err)
 				}
-				if err := os.MkdirAll(dir+"/sub", 0755); err != nil {
+				if err := os.MkdirAll(dir+"/sub", 0750); err != nil {
 					t.Fatalf("failed to create subdir: %v", err)
 				}
-				if err := os.WriteFile(dir+"/sub/file.txt", []byte("data"), 0644); err != nil {
+				if err := os.WriteFile(dir+"/sub/file.txt", []byte("data"), 0600); err != nil {
 					t.Fatalf("failed to write nested file: %v", err)
 				}
 				return dir
@@ -242,13 +242,12 @@ func TestRemoveCSISocket(t *testing.T) {
 	}()
 
 	// Build the subprocess command: re-run this test binary targeting the helper
-	testBinary, err := exec.LookPath(os.Args[0])
+	testBinary, err := os.Executable()
 	if err != nil {
-		// os.Args[0] is already the absolute path when run via `go test`
-		testBinary = os.Args[0]
+		t.Fatalf("failed to locate test binary: %v", err)
 	}
 
-	cmd := exec.Command(testBinary,
+	cmd := exec.Command(testBinary, // #nosec G204 -- Re-run this test binary with fixed helper arguments; no external command input.
 		"-test.run=TestRemoveCSISocketHelper",
 		"-test.v",
 	)
