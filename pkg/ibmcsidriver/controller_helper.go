@@ -465,11 +465,11 @@ func getAccountID(input string) string {
 	}
 }
 
-func getResourceGroup(logger *zap.Logger, snapshotParameters map[string]string, config *config.Config) string {
-	if rg, ok := snapshotParameters[ResourceGroup]; ok && len(strings.TrimSpace(rg)) > 0 {
-		logger.Info("Using resource group from VolumeSnapshotClass", zap.String("resourceGroup", rg))
+// getResourceGroup fetches the resourceGroup from volumeSnapshotClass & volumeGroupSnapshotClass parameters
+func getResourceGroup(logger *zap.Logger, classParameters map[string]string, config *config.Config) string {
+	if rg, ok := classParameters[ResourceGroup]; ok && len(strings.TrimSpace(rg)) > 0 {
+		logger.Info("Using resource group from class parameters", zap.String("resourceGroup", rg))
 		return rg
-
 	}
 
 	// return cluster's resource group from storage-secret-store
