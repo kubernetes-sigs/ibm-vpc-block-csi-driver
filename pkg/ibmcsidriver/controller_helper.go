@@ -32,6 +32,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// IsBMEnabled checks whether Bare Metal support is enabled via feature flag
+func IsBMEnabled() bool {
+	return strings.EqualFold(os.Getenv(IsBMEnabledEnv), "true")
+}
+
 // normalize the requested capacity(in GiB) to what is supported by the driver
 func getRequestedCapacity(capRange *csi.CapacityRange, profileName string) (int64, error) {
 	// Input is in bytes from csi
