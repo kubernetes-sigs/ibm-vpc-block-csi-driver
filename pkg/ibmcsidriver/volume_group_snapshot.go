@@ -30,14 +30,23 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// validateGroupSnapshotSourceVolumes checks if members from req and resp match
-func validateGroupSnapshotSourceVolumes(snapshotName, requestID string, snapshots []*provider.Snapshot, sourceVolumeIDs []string, mismatchCode codes.Code) error {
-	memberVolumeIDs := make([]string, 0, len(snapshots))
-	for _, snapshot := range snapshots {
+// validateCreateGroupSnapshotMembers checks source-volume membership and CSI snapshot IDs.
+// Report a source-volume mismatch before reporting a missing CRN.
+func validateCreateGroupSnapshotMembers(snapshotName, requestID string, group *provider.GroupSnapshot, sourceVolumeIDs []string, mismatchCode codes.Code) error {
+	memberVolumeIDs := make([]string, 0, len(group.Snapshots))
+	missingCRN := false
+	for _, snapshot := range group.Snapshots {
+		if snapshot == nil {
+			return volumeGroupSnapshotStatusError(codes.Internal, requestID, "backend response for volume group snapshot %q contained an empty individual member snapshot", group.GroupSnapshotID)
+		}
 		memberVolumeIDs = append(memberVolumeIDs, snapshot.VolumeID)
+		missingCRN = missingCRN || snapshot.SnapshotCRN == ""
 	}
 
 	if matchIDs(memberVolumeIDs, sourceVolumeIDs) {
+		if missingCRN {
+			return volumeGroupSnapshotStatusError(codes.Internal, requestID, "backend response for volume group snapshot %q did not include individual member snapshot CRNs", group.GroupSnapshotID)
+		}
 		return nil
 	}
 

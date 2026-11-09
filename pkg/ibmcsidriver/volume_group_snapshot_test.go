@@ -154,7 +154,7 @@ func TestIsGroupSnapshotNotFound(t *testing.T) {
 }
 
 // Source validation must distinguish a name conflict from an invalid new backend result.
-func TestValidateGroupSnapshotSourceVolumes(t *testing.T) {
+func TestValidateCreateGroupSnapshotMembers(t *testing.T) {
 	testCases := []struct {
 		name         string
 		snapshots    []*provider.Snapshot
@@ -162,8 +162,11 @@ func TestValidateGroupSnapshotSourceVolumes(t *testing.T) {
 		wantCode     codes.Code
 	}{
 		{
-			name:         "matching sources in a different order",
-			snapshots:    []*provider.Snapshot{{VolumeID: "volume-b"}, {VolumeID: "volume-a"}},
+			name: "matching sources in a different order",
+			snapshots: []*provider.Snapshot{
+				{VolumeID: "volume-b", SnapshotCRN: "snapshot-crn-b"},
+				{VolumeID: "volume-a", SnapshotCRN: "snapshot-crn-a"},
+			},
 			mismatchCode: codes.AlreadyExists, wantCode: codes.OK,
 		},
 		{
@@ -179,7 +182,8 @@ func TestValidateGroupSnapshotSourceVolumes(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := validateGroupSnapshotSourceVolumes("group-name", "request-id", tc.snapshots, []string{"volume-a", "volume-b"}, tc.mismatchCode)
+			group := &provider.GroupSnapshot{GroupSnapshotID: "group-id", Snapshots: tc.snapshots}
+			err := validateCreateGroupSnapshotMembers("group-name", "request-id", group, []string{"volume-a", "volume-b"}, tc.mismatchCode)
 			assert.Equal(t, tc.wantCode, status.Code(err))
 			if err != nil {
 				assert.Contains(t, err.Error(), "group-name")

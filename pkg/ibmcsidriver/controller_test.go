@@ -1918,16 +1918,21 @@ func TestCreateVolumeGroupSnapshotRejectsNilGroupResponse(t *testing.T) {
 	assert.Equal(t, 1, fakeStructSession.CreateGroupSnapshotCallCount())
 }
 
-// Both Create paths must reject missing CRNs rather than return empty CSI snapshot IDs.
-func TestCreateVolumeGroupSnapshotRejectsMissingMemberCRNs(t *testing.T) {
+// Both Create paths must reject nil members and members without a CSI snapshot ID.
+func TestCreateVolumeGroupSnapshotRejectsInvalidMembers(t *testing.T) {
 	t.Setenv(vgsFeatureFlag, "true")
+	missingCRN := &provider.Snapshot{SnapshotID: "snapshot-id-1", VolumeID: "volume-id-1"}
 	testCases := []struct {
 		name                string
 		existingGroup       bool
+		member              *provider.Snapshot
+		wantMessage         string
 		expectedCreateCalls int
 	}{
-		{name: "existing group", existingGroup: true, expectedCreateCalls: 0},
-		{name: "new group", existingGroup: false, expectedCreateCalls: 1},
+		{name: "existing group with missing CRN", existingGroup: true, member: missingCRN, wantMessage: "individual member snapshot CRNs"},
+		{name: "new group with missing CRN", member: missingCRN, wantMessage: "individual member snapshot CRNs", expectedCreateCalls: 1},
+		{name: "existing group with nil member", existingGroup: true, wantMessage: "empty individual member snapshot"},
+		{name: "new group with nil member", wantMessage: "empty individual member snapshot", expectedCreateCalls: 1},
 	}
 
 	for _, tc := range testCases {
@@ -1942,9 +1947,7 @@ func TestCreateVolumeGroupSnapshotRejectsMissingMemberCRNs(t *testing.T) {
 
 			groupSnapshot := &provider.GroupSnapshot{
 				GroupSnapshotID: "group-snapshot-id",
-				Snapshots: []*provider.Snapshot{
-					{SnapshotID: "snapshot-id-1", VolumeID: "volume-id-1"},
-				},
+				Snapshots:       []*provider.Snapshot{tc.member},
 			}
 			if tc.existingGroup {
 				fakeStructSession.GetGroupSnapshotByNameReturns(groupSnapshot, nil)
@@ -1960,7 +1963,7 @@ func TestCreateVolumeGroupSnapshotRejectsMissingMemberCRNs(t *testing.T) {
 
 			assert.Nil(t, response)
 			assert.Equal(t, codes.Internal, status.Code(err))
-			assert.Contains(t, status.Convert(err).Message(), "individual member snapshot CRNs")
+			assert.Contains(t, status.Convert(err).Message(), tc.wantMessage)
 			assert.Equal(t, 1, fakeStructSession.GetGroupSnapshotByNameCallCount())
 			assert.Equal(t, tc.expectedCreateCalls, fakeStructSession.CreateGroupSnapshotCallCount())
 		})

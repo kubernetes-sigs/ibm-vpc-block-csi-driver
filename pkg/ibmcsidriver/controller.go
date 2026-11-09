@@ -751,41 +751,27 @@ func (csiCS *CSIControllerServer) CreateVolumeGroupSnapshot(ctx context.Context,
 	if err != nil {
 		return nil, volumeGroupSnapshotStatusError(volumeGroupSnapshotErrorCode(err), requestID, "failed to check whether volume group snapshot %q exists in resource group %q; no new group was created by this request: %v", snapshotName, resourceGroupID, err)
 	}
-	if groupSnapshot != nil {
-		if err := validateGroupSnapshotSourceVolumes(snapshotName, requestID, groupSnapshot.Snapshots, sourceVolumeIDs, codes.AlreadyExists); err != nil {
-			return nil, err
+	existingGroup := groupSnapshot != nil
+	mismatchCode := codes.AlreadyExists
+	if !existingGroup {
+		groupSnapshot, err = session.CreateGroupSnapshot(sourceVolumeIDs, provider.GroupSnapshotParameters{
+			Name:          snapshotName,
+			ResourceGroup: resourceGroupID,
+		})
+		if err != nil {
+			return nil, volumeGroupSnapshotCSIError(ctxLogger, requestID, "create", err)
 		}
-
-		// check if each member's CRN is present
-		if _, ok := resolveGroupSnapshotMemberCRNs(groupSnapshot.Snapshots); !ok {
-			return nil, volumeGroupSnapshotStatusError(codes.Internal, requestID, "backend response for volume group snapshot %q did not include individual member snapshot CRNs", groupSnapshot.GroupSnapshotID)
+		if groupSnapshot == nil {
+			return nil, volumeGroupSnapshotStatusError(codes.Aborted, requestID, "backend returned no details for volume group snapshot %q; retry the request", snapshotName)
 		}
-
-		ctxLogger.Info("Volume group snapshot with matching source volumes already exists", zap.Reflect("SnapshotName", snapshotName), zap.Reflect("GroupSnapshotID", groupSnapshot.GroupSnapshotID))
-		return createCSIVolumeGroupSnapshotResponse(*groupSnapshot), nil
+		mismatchCode = codes.Internal
 	}
 
-	// Create the group snapshot
-	groupSnapshotParameters := provider.GroupSnapshotParameters{
-		Name:          snapshotName,
-		ResourceGroup: resourceGroupID,
-	}
-
-	groupSnapshot, err = session.CreateGroupSnapshot(sourceVolumeIDs, groupSnapshotParameters)
-	if err != nil {
-		return nil, volumeGroupSnapshotCSIError(ctxLogger, requestID, "create", err)
-	}
-	if groupSnapshot == nil {
-		return nil, volumeGroupSnapshotStatusError(codes.Aborted, requestID, "backend returned no details for volume group snapshot %q; retry the request", snapshotName)
-	}
-
-	if err := validateGroupSnapshotSourceVolumes(snapshotName, requestID, groupSnapshot.Snapshots, sourceVolumeIDs, codes.Internal); err != nil {
+	if err := validateCreateGroupSnapshotMembers(snapshotName, requestID, groupSnapshot, sourceVolumeIDs, mismatchCode); err != nil {
 		return nil, err
 	}
-
-	// check if all snapshot members have CRN's
-	if _, ok := resolveGroupSnapshotMemberCRNs(groupSnapshot.Snapshots); !ok {
-		return nil, volumeGroupSnapshotStatusError(codes.Internal, requestID, "backend response for volume group snapshot %q did not include individual member snapshot CRNs", groupSnapshot.GroupSnapshotID)
+	if existingGroup {
+		ctxLogger.Info("Volume group snapshot with matching source volumes already exists", zap.Reflect("SnapshotName", snapshotName), zap.Reflect("GroupSnapshotID", groupSnapshot.GroupSnapshotID))
 	}
 
 	return createCSIVolumeGroupSnapshotResponse(*groupSnapshot), nil
