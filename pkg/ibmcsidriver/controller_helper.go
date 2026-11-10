@@ -512,6 +512,9 @@ func createCSIVolumeGroupSnapshotResponse(groupSnapshot provider.GroupSnapshot) 
 	snapshots := make([]*csi.Snapshot, 0, len(groupSnapshot.Snapshots))
 	for _, snap := range groupSnapshot.Snapshots {
 		csiSnap := createCSISnapshotResponse(*snap).GetSnapshot()
+		if snap.SnapshotCreationTime.IsZero() {
+			csiSnap.CreationTime = nil
+		}
 		csiSnap.GroupSnapshotId = groupSnapshot.GroupSnapshotID
 		snapshots = append(snapshots, csiSnap)
 	}

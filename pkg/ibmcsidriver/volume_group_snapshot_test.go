@@ -170,6 +170,29 @@ func TestValidateCreateGroupSnapshotMembers(t *testing.T) {
 			mismatchCode: codes.AlreadyExists, wantCode: codes.OK,
 		},
 		{
+			name: "one source ID is missing",
+			snapshots: []*provider.Snapshot{
+				{SnapshotCRN: "snapshot-crn-a"},
+				{VolumeID: "volume-b", SnapshotCRN: "snapshot-crn-b"},
+			},
+			mismatchCode: codes.AlreadyExists, wantCode: codes.OK,
+		},
+		{
+			name: "a known source does not match even though another source ID is missing",
+			snapshots: []*provider.Snapshot{
+				{SnapshotCRN: "snapshot-crn-a"},
+				{VolumeID: "volume-c", SnapshotCRN: "snapshot-crn-c"},
+			},
+			mismatchCode: codes.AlreadyExists, wantCode: codes.AlreadyExists,
+		},
+		{
+			name: "fewer snapshots than requested and source ID is missing",
+			snapshots: []*provider.Snapshot{
+				{SnapshotCRN: "snapshot-crn-a"},
+			},
+			mismatchCode: codes.Internal, wantCode: codes.Internal,
+		},
+		{
 			name:         "existing group contains different sources",
 			snapshots:    []*provider.Snapshot{{VolumeID: "volume-a"}, {VolumeID: "volume-c"}},
 			mismatchCode: codes.AlreadyExists, wantCode: codes.AlreadyExists,

@@ -30,7 +30,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// validateCreateGroupSnapshotMembers checks source-volume membership and CSI snapshot IDs.
+// validateCreateGroupSnapshotMembers checks the member count, known source volumes, and CSI snapshot IDs.
 // Report a source-volume mismatch before reporting a missing CRN.
 func validateCreateGroupSnapshotMembers(snapshotName, requestID string, group *provider.GroupSnapshot, sourceVolumeIDs []string, mismatchCode codes.Code) error {
 	memberVolumeIDs := make([]string, 0, len(group.Snapshots))
@@ -39,11 +39,14 @@ func validateCreateGroupSnapshotMembers(snapshotName, requestID string, group *p
 		if snapshot == nil {
 			return volumeGroupSnapshotStatusError(codes.Internal, requestID, "backend response for volume group snapshot %q contained an empty individual member snapshot", group.GroupSnapshotID)
 		}
-		memberVolumeIDs = append(memberVolumeIDs, snapshot.VolumeID)
+		// A missing source volume ID is unknown, not a different volume.
+		if snapshot.VolumeID != "" {
+			memberVolumeIDs = append(memberVolumeIDs, snapshot.VolumeID)
+		}
 		missingCRN = missingCRN || snapshot.SnapshotCRN == ""
 	}
 
-	if matchIDs(memberVolumeIDs, sourceVolumeIDs) {
+	if len(group.Snapshots) == len(sourceVolumeIDs) && containsAllIDs(sourceVolumeIDs, memberVolumeIDs) {
 		if missingCRN {
 			return volumeGroupSnapshotStatusError(codes.Internal, requestID, "backend response for volume group snapshot %q did not include individual member snapshot CRNs", group.GroupSnapshotID)
 		}
@@ -77,15 +80,16 @@ func resolveGroupSnapshotMemberCRNs(snapshots []*provider.Snapshot) ([]string, b
 
 // matchIDs reports whether left and right contain the same IDs regardless of order, preserving duplicate counts.
 func matchIDs(left, right []string) bool {
-	if len(left) != len(right) {
-		return false
-	}
+	return len(left) == len(right) && containsAllIDs(left, right)
+}
 
-	counts := make(map[string]int, len(left))
-	for _, id := range left {
+// containsAllIDs checks that each ID occurs at least as often as required.
+func containsAllIDs(available, required []string) bool {
+	counts := make(map[string]int, len(available))
+	for _, id := range available {
 		counts[id]++
 	}
-	for _, id := range right {
+	for _, id := range required {
 		if counts[id] == 0 {
 			return false
 		}
