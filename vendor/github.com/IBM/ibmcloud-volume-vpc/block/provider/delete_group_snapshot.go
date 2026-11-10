@@ -17,14 +17,17 @@
 package provider
 
 import (
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/IBM/ibmcloud-volume-interface/lib/metrics"
 	userError "github.com/IBM/ibmcloud-volume-vpc/common/messages"
+	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/models"
 	"go.uber.org/zap"
 )
 
-// DeleteGroupSnapshot deletes a snapshot consistency group
+// DeleteGroupSnapshot deletes the group and waits until VPC confirms it is gone.
 func (vpcs *VPCSession) DeleteGroupSnapshot(groupSnapshotID string) error {
 	vpcs.Logger.Info("Entry DeleteGroupSnapshot", zap.Reflect("groupSnapshotID", groupSnapshotID))
 	defer vpcs.Logger.Info("Exit DeleteGroupSnapshot", zap.Reflect("groupSnapshotID", groupSnapshotID))
@@ -37,6 +40,40 @@ func (vpcs *VPCSession) DeleteGroupSnapshot(groupSnapshotID string) error {
 		return userError.GetUserError("FailedToDeleteGroupSnapshot", err, groupSnapshotID)
 	}
 
-	vpcs.Logger.Info("Successfully deleted the snapshot consistency group")
+	if err := vpcs.waitForGroupSnapshotDeletion(groupSnapshotID); err != nil {
+		return userError.GetUserError("FailedToDeleteGroupSnapshot", err, groupSnapshotID)
+	}
+
+	vpcs.Logger.Info("Successfully deleted the volume group snapshot")
+	return nil
+}
+
+// waitForGroupSnapshotDeletion checks until VPC reports the group was not found.
+// Other GET errors and exhausted checks are returned to the caller.
+func (vpcs *VPCSession) waitForGroupSnapshotDeletion(groupID string) error {
+	// flag that indicates the group snapshot is truly deleted
+	deleted := false
+
+	err := vpcs.APIRetry.FlexyRetry(vpcs.Logger, func() (error, bool) {
+		_, err := vpcs.Apiclient.SnapshotConsistencyGroupService().GetSnapshotConsistencyGroup(groupID, vpcs.Logger)
+		if err == nil {
+			return nil, false
+		}
+
+		if apiErr, ok := errors.AsType[*models.Error](err); ok && apiErr != nil {
+			if len(apiErr.Errors) > 0 && apiErr.Errors[0].Code == SnapshotConsistencyGroupNotFound {
+				deleted = true
+				return nil, true
+			}
+		}
+
+		return err, true
+	})
+	if err != nil {
+		return fmt.Errorf("could not confirm deletion of volume group snapshot %q: %w", groupID, err)
+	}
+	if !deleted {
+		return fmt.Errorf("volume group snapshot %q still exists after %d retry attempts", groupID, vpcs.APIRetry.maxRetryAttempt)
+	}
 	return nil
 }

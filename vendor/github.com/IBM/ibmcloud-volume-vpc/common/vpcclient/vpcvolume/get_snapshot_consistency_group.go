@@ -17,20 +17,21 @@
 package vpcvolume
 
 import (
+	"errors"
 	"time"
 
-	util "github.com/IBM/ibmcloud-volume-interface/lib/utils"
+	"github.com/IBM/ibmcloud-volume-interface/lib/metrics"
 	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/client"
 	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/models"
 	"go.uber.org/zap"
 )
 
-// GetSnapshotConsistencyGroup returns group details and references to its member snapshots.
+// GetSnapshotConsistencyGroup returns the group and its member snapshots.
 func (scg *SnapshotConsistencyGroupService) GetSnapshotConsistencyGroup(groupID string, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroupResponse, error) {
-	ctxLogger.Debug("Entry Backend GetSnapshotConsistencyGroup")
-	defer ctxLogger.Debug("Exit Backend GetSnapshotConsistencyGroup")
+	ctxLogger.Info("Entry Backend GetSnapshotConsistencyGroup")
+	defer ctxLogger.Info("Exit Backend GetSnapshotConsistencyGroup")
 
-	defer util.TimeTracker("GetSnapshotConsistencyGroup", time.Now())
+	defer metrics.UpdateDurationFromStart(ctxLogger, "GetSnapshotConsistencyGroup", time.Now())
 
 	operation := &client.Operation{
 		Name:        "GetSnapshotConsistencyGroup",
@@ -58,10 +59,10 @@ func (scg *SnapshotConsistencyGroupService) GetSnapshotConsistencyGroup(groupID 
 
 // GetSnapshotConsistencyGroupByName GETs /snapshot_consistency_groups filtered by name
 func (scg *SnapshotConsistencyGroupService) GetSnapshotConsistencyGroupByName(name, resourceGroupID string, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroupResponse, error) {
-	ctxLogger.Debug("Entry Backend GetSnapshotConsistencyGroupByName")
-	defer ctxLogger.Debug("Exit Backend GetSnapshotConsistencyGroupByName")
+	ctxLogger.Info("Entry Backend GetSnapshotConsistencyGroupByName")
+	defer ctxLogger.Info("Exit Backend GetSnapshotConsistencyGroupByName")
 
-	defer util.TimeTracker("GetSnapshotConsistencyGroupByName", time.Now())
+	defer metrics.UpdateDurationFromStart(ctxLogger, "GetSnapshotConsistencyGroupByName", time.Now())
 
 	filters := &models.ListSnapshotConsistencyGroupFilters{Name: name, ResourceGroupID: resourceGroupID}
 	groups, err := scg.ListSnapshotConsistencyGroups(1, "", filters, ctxLogger)
@@ -69,11 +70,15 @@ func (scg *SnapshotConsistencyGroupService) GetSnapshotConsistencyGroupByName(na
 		return nil, err
 	}
 
-	if groups != nil {
-		groupList := groups.SnapshotConsistencyGroups
-		if len(groupList) > 0 {
-			return groupList[0], nil
-		}
+	if groups == nil || groups.SnapshotConsistencyGroups == nil {
+		return nil, errors.New("VPC group snapshot lookup response did not include a group list")
 	}
-	return nil, err
+	groupList := groups.SnapshotConsistencyGroups
+	if len(groupList) == 0 {
+		return nil, nil
+	}
+	if groupList[0] == nil {
+		return nil, errors.New("VPC group snapshot lookup response contained a null group")
+	}
+	return groupList[0], nil
 }

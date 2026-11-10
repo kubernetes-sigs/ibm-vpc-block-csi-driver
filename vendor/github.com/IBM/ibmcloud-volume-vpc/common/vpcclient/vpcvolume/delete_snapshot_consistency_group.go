@@ -19,7 +19,7 @@ package vpcvolume
 import (
 	"time"
 
-	util "github.com/IBM/ibmcloud-volume-interface/lib/utils"
+	"github.com/IBM/ibmcloud-volume-interface/lib/metrics"
 	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/client"
 	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/models"
 	"go.uber.org/zap"
@@ -27,10 +27,10 @@ import (
 
 // DeleteSnapshotConsistencyGroup DELETEs /snapshot_consistency_groups/{id}
 func (scg *SnapshotConsistencyGroupService) DeleteSnapshotConsistencyGroup(groupID string, ctxLogger *zap.Logger) error {
-	ctxLogger.Debug("Entry Backend DeleteSnapshotConsistencyGroup")
-	defer ctxLogger.Debug("Exit Backend DeleteSnapshotConsistencyGroup")
+	ctxLogger.Info("Entry Backend DeleteSnapshotConsistencyGroup")
+	defer ctxLogger.Info("Exit Backend DeleteSnapshotConsistencyGroup")
 
-	defer util.TimeTracker("DeleteSnapshotConsistencyGroup", time.Now())
+	defer metrics.UpdateDurationFromStart(ctxLogger, "DeleteSnapshotConsistencyGroup", time.Now())
 
 	operation := &client.Operation{
 		Name:        "DeleteSnapshotConsistencyGroup",

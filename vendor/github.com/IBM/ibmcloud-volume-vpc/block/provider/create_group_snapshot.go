@@ -26,7 +26,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// CreateGroupSnapshot creates a snapshot consistency group for the given source volume IDs
+// CreateGroupSnapshot creates a volume group snapshot for the given source volume IDs
 func (vpcs *VPCSession) CreateGroupSnapshot(sourceVolumeIDs []string, groupSnapshotParameters provider.GroupSnapshotParameters) (*provider.GroupSnapshot, error) {
 	vpcs.Logger.Info("Entry CreateGroupSnapshot", zap.Reflect("groupSnapshotParameters", groupSnapshotParameters), zap.Reflect("sourceVolumeIDs", sourceVolumeIDs))
 	defer vpcs.Logger.Info("Exit CreateGroupSnapshot", zap.Reflect("groupSnapshotParameters", groupSnapshotParameters), zap.Reflect("sourceVolumeIDs", sourceVolumeIDs))
@@ -63,7 +63,7 @@ func (vpcs *VPCSession) CreateGroupSnapshot(sourceVolumeIDs []string, groupSnaps
 		return nil, userError.GetUserError("FailedToCreateGroupSnapshot", err)
 	}
 
-	vpcs.Logger.Info("Successfully created snapshot consistency group", zap.Reflect("GroupSnapshot", result))
+	vpcs.Logger.Info("Successfully created volume group snapshot", zap.Reflect("GroupSnapshot", result))
 
-	return vpcs.getGroupSnapshotWithMembers(result)
+	return fromProviderToLibGroupSnapshot(result, vpcs.Logger)
 }

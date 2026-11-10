@@ -30,10 +30,9 @@ type SnapshotList struct {
 
 // LisSnapshotFilters ...
 type LisSnapshotFilters struct {
-	ResourceGroupID            string `json:"resource_group.id,omitempty"`
-	Name                       string `json:"name,omitempty"`
-	SourceVolumeID             string `json:"source_volume.id,omitempty"`
-	SnapshotConsistencyGroupID string `json:"snapshot_consistency_group.id,omitempty"`
+	ResourceGroupID string `json:"resource_group.id,omitempty"`
+	Name            string `json:"name,omitempty"`
+	SourceVolumeID  string `json:"source_volume.id,omitempty"`
 }
 
 // Snapshot ...
@@ -64,7 +63,8 @@ type Snapshot struct {
 
 // SnapshotConsistencyGroupReference identifies the group that created a snapshot.
 type SnapshotConsistencyGroupReference struct {
-	ID string `json:"id"`
+	ID  string `json:"id"`
+	CRN string `json:"crn,omitempty"`
 }
 
 // OperatingSystem ...

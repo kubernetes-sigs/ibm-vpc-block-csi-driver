@@ -20,29 +20,19 @@ import "time"
 
 // SnapshotConsistencyGroupResponse is the response received from the VPC
 type SnapshotConsistencyGroupResponse struct {
-	Href                    string              `json:"href"`
-	ID                      string              `json:"id"`
-	Name                    string              `json:"name"`
-	CRN                     string              `json:"crn"`
-	ResourceGroup           *ResourceGroup      `json:"resource_group"`
-	CreatedAt               *time.Time          `json:"created_at"`
-	Status                  string              `json:"status"`
-	LifecycleState          string              `json:"lifecycle_state"`
-	ResourceType            string              `json:"resource_type"`
-	Snapshots               []SnapshotReference `json:"snapshots"`
-	ServiceTags             []string            `json:"service_tags"`
-	UserTags                []string            `json:"user_tags"`
-	DeleteSnapshotsOnDelete bool                `json:"delete_snapshots_on_delete"`
-}
-
-// SnapshotReference is a reference to a snapshot within a consistency group
-type SnapshotReference struct {
-	Href         string   `json:"href"`
-	ID           string   `json:"id"`
-	Name         string   `json:"name"`
-	CRN          string   `json:"crn"`
-	ResourceType string   `json:"resource_type"`
-	Deleted      *Deleted `json:"deleted"`
+	Href                    string         `json:"href"`
+	ID                      string         `json:"id"`
+	Name                    string         `json:"name"`
+	CRN                     string         `json:"crn"`
+	ResourceGroup           *ResourceGroup `json:"resource_group"`
+	CreatedAt               *time.Time     `json:"created_at"`
+	Status                  string         `json:"status"`
+	LifecycleState          string         `json:"lifecycle_state"`
+	ResourceType            string         `json:"resource_type"`
+	Snapshots               []*Snapshot    `json:"snapshots"`
+	ServiceTags             []string       `json:"service_tags"`
+	UserTags                []string       `json:"user_tags"`
+	DeleteSnapshotsOnDelete bool           `json:"delete_snapshots_on_delete"`
 }
 
 // SnapshotConsistencyGroupList ...

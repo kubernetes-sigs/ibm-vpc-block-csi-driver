@@ -27,8 +27,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// ListSnapshots returns full individual snapshot objects, not group objects.
-// A group ID filter selects only that group's member snapshots.
+// ListSnapshots GETs /snapshots
 func (ss *SnapshotService) ListSnapshots(limit int, start string, filters *models.LisSnapshotFilters, ctxLogger *zap.Logger) (*models.SnapshotList, error) {
 	ctxLogger.Debug("Entry Backend ListSnapshots")
 	defer ctxLogger.Debug("Exit Backend ListSnapshots")
@@ -66,9 +65,6 @@ func (ss *SnapshotService) ListSnapshots(limit int, start string, filters *model
 		}
 		if filters.SourceVolumeID != "" {
 			req.AddQueryValue("source_volume.id", filters.SourceVolumeID)
-		}
-		if filters.SnapshotConsistencyGroupID != "" {
-			req.AddQueryValue("snapshot_consistency_group.id", filters.SnapshotConsistencyGroupID)
 		}
 	}
 

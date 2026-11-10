@@ -20,7 +20,7 @@ import (
 	"strconv"
 	"time"
 
-	util "github.com/IBM/ibmcloud-volume-interface/lib/utils"
+	"github.com/IBM/ibmcloud-volume-interface/lib/metrics"
 	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/client"
 	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/models"
 	"go.uber.org/zap"
@@ -28,10 +28,10 @@ import (
 
 // ListSnapshotConsistencyGroups returns group objects, not individual snapshots.
 func (scg *SnapshotConsistencyGroupService) ListSnapshotConsistencyGroups(limit int, start string, filters *models.ListSnapshotConsistencyGroupFilters, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroupList, error) {
-	ctxLogger.Debug("Entry Backend ListSnapshotConsistencyGroups")
-	defer ctxLogger.Debug("Exit Backend ListSnapshotConsistencyGroups")
+	ctxLogger.Info("Entry Backend ListSnapshotConsistencyGroups")
+	defer ctxLogger.Info("Exit Backend ListSnapshotConsistencyGroups")
 
-	defer util.TimeTracker("ListSnapshotConsistencyGroups", time.Now())
+	defer metrics.UpdateDurationFromStart(ctxLogger, "ListSnapshotConsistencyGroups", time.Now())
 
 	operation := &client.Operation{
 		Name:        "ListSnapshotConsistencyGroups",

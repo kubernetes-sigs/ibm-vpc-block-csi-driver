@@ -19,7 +19,7 @@ package vpcvolume
 import (
 	"time"
 
-	util "github.com/IBM/ibmcloud-volume-interface/lib/utils"
+	"github.com/IBM/ibmcloud-volume-interface/lib/metrics"
 	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/client"
 	"github.com/IBM/ibmcloud-volume-vpc/common/vpcclient/models"
 	"go.uber.org/zap"
@@ -27,10 +27,10 @@ import (
 
 // CreateSnapshotConsistencyGroup POSTs to /snapshot_consistency_groups
 func (scg *SnapshotConsistencyGroupService) CreateSnapshotConsistencyGroup(snapshotGroupReq *models.SnapshotConsistencyGroupRequest, ctxLogger *zap.Logger) (*models.SnapshotConsistencyGroupResponse, error) {
-	ctxLogger.Debug("Entry Backend CreateSnapshotConsistencyGroup")
-	defer ctxLogger.Debug("Exit Backend CreateSnapshotConsistencyGroup")
+	ctxLogger.Info("Entry Backend CreateSnapshotConsistencyGroup")
+	defer ctxLogger.Info("Exit Backend CreateSnapshotConsistencyGroup")
 
-	defer util.TimeTracker("CreateSnapshotConsistencyGroup", time.Now())
+	defer metrics.UpdateDurationFromStart(ctxLogger, "CreateSnapshotConsistencyGroup", time.Now())
 
 	operation := &client.Operation{
 		Name:        "CreateSnapshotConsistencyGroup",
