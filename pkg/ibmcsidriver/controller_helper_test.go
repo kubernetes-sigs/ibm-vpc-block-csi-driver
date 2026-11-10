@@ -1009,3 +1009,65 @@ func TestGetAccountID(t *testing.T) {
 		})
 	}
 }
+
+func TestIsBMEnabled(t *testing.T) {
+	testCases := []struct {
+		name     string
+		envVal   string
+		setEnv   bool
+		expected bool
+	}{
+		{
+			name:     "IS_BM_ENABLED is true",
+			envVal:   "true",
+			setEnv:   true,
+			expected: true,
+		},
+		{
+			name:     "IS_BM_ENABLED is True",
+			envVal:   "True",
+			setEnv:   true,
+			expected: true,
+		},
+		{
+			name:     "IS_BM_ENABLED is TRUE",
+			envVal:   "TRUE",
+			setEnv:   true,
+			expected: true,
+		},
+		{
+			name:     "IS_BM_ENABLED is false",
+			envVal:   "false",
+			setEnv:   true,
+			expected: false,
+		},
+		{
+			name:     "IS_BM_ENABLED is False",
+			envVal:   "False",
+			setEnv:   true,
+			expected: false,
+		},
+		{
+			name:     "IS_BM_ENABLED is unset",
+			setEnv:   false,
+			expected: false,
+		},
+		{
+			name:     "IS_BM_ENABLED is invalid string",
+			envVal:   "random",
+			setEnv:   true,
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.setEnv {
+				t.Setenv(IsBMEnabledEnv, tc.envVal)
+			} else {
+				t.Setenv(IsBMEnabledEnv, "")
+			}
+			assert.Equal(t, tc.expected, IsBMEnabled())
+		})
+	}
+}
