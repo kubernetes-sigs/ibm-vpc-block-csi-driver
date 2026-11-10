@@ -177,7 +177,8 @@ func removeCSISocket(endPoint string) {
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc, syscall.SIGTERM)
 	<-sigc
-	err := os.Remove(endPoint)
+
+	err := os.Remove(endPoint) // #nosec G703 -- Remove the configured listener path during shutdown.
 	if err != nil && !os.IsNotExist(err) {
 		glog.Errorf("failed to remove socket: %s with error: %+v", endPoint, err)
 	}

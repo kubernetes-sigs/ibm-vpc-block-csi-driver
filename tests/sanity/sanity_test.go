@@ -23,7 +23,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"os"
 	"path"
@@ -555,8 +554,7 @@ func (c *fakeProviderSession) ListSnapshots(maxResults int, nextToken string, ta
 		}
 	}
 	if maxResults > 0 {
-		r1 := rand.New(rand.NewSource(time.Now().UnixNano()))
-		retToken = fmt.Sprintf("token-%d", r1.Uint64())
+		retToken = "token-" + uuid.NewString()
 		c.tokens[retToken] = maxResults
 		snapshots = snapshots[0:maxResults]
 		fmt.Printf("%v\n", snapshots)
@@ -601,7 +599,7 @@ func (c *fakeProviderSession) GetSnapshotByName(snapshotName string, _ ...string
 func createTargetDir(targetPath string) error {
 	fileInfo, err := os.Stat(targetPath)
 	if err != nil && os.IsNotExist(err) {
-		return os.MkdirAll(targetPath, 0755)
+		return os.MkdirAll(targetPath, 0750)
 	} else if err != nil {
 		return err
 	}
