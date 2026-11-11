@@ -81,3 +81,20 @@ func NewIKSVolumeAttachmentManager(clientIn client.SessionClient) VolumeAttachMa
 		receiverError: &err,
 	}
 }
+
+// NewBMSVolumeAttachmentManager creates a VolumeAttachManager that targets the
+// Bare Metal Server SDP volume-attachment API (v1/bare_metal_servers/…).
+// It reuses VolumeAttachService because the BMS REST resource has the same
+// path structure as the VSI resource: /<serverID>/volume_attachments[/<id>].
+func NewBMSVolumeAttachmentManager(clientIn client.SessionClient) VolumeAttachManager {
+	err := models.Error{}
+	return &VolumeAttachService{
+		client:        clientIn,
+		pathPrefix:    BMSPathPrefix,
+		receiverError: &err,
+		populatePathPrefixParameters: func(request *client.Request, volumeAttachmentTemplate *models.VolumeAttachment) *client.Request {
+			request.PathParameter(instanceIDParam, *volumeAttachmentTemplate.InstanceID)
+			return request
+		},
+	}
+}

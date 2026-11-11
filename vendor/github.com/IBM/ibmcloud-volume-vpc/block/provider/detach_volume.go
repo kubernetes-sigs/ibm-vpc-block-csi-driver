@@ -47,6 +47,15 @@ func (vpcs *VPCSession) DetachVolume(volumeAttachmentTemplate provider.VolumeAtt
 		return nil, err
 	}
 
+	// Determine whether this request targets a Bare Metal Server.
+	isBMS := !vpcs.Config.VPCConfig.IsIKS && volumeAttachmentTemplate.BMSVolumeAttachment != nil
+
+	// Choose the correct attachment manager.
+	detachMgr := vpcs.APIClientVolAttachMgr
+	if isBMS {
+		detachMgr = vpcs.getBMSVolAttachMgr()
+	}
+
 	var response *http.Response
 	var volumeAttachment models.VolumeAttachment
 
@@ -59,8 +68,8 @@ func (vpcs *VPCSession) DetachVolume(volumeAttachmentTemplate provider.VolumeAtt
 			vpcs.Logger.Info("Found volume attachment", zap.Reflect("currentVolAttachment", currentVolAttachment))
 			volumeAttachment := models.NewVolumeAttachment(volumeAttachmentTemplate)
 			volumeAttachment.ID = currentVolAttachment.VPCVolumeAttachment.ID
-			vpcs.Logger.Info("Detaching volume from VPC provider...")
-			response, err = vpcs.APIClientVolAttachMgr.DetachVolume(&volumeAttachment, vpcs.Logger) //nolint:bodyclose
+			vpcs.Logger.Info("Detaching volume from VPC provider...", zap.Bool("isBMS?", isBMS))
+			response, err = detachMgr.DetachVolume(&volumeAttachment, vpcs.Logger) //nolint:bodyclose
 
 			if err != nil {
 				return err, skipRetryForObviousErrors(err, vpcs.Config.VPCConfig.IsIKS) // Retry in case of all errors

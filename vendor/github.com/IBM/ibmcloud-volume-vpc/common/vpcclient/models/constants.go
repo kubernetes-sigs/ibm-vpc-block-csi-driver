@@ -44,4 +44,14 @@ const (
 
 	// VolumeAttached ...
 	VolumeAttached = "attached"
+
+	// VolumeAvailable is the terminal attach status for BMS SDP volumes
+	VolumeAvailable = "available"
+
+	// GTypeBMS ...
+	GTypeBMS = "bms"
+
+	// GTypeBMSDevicePrefix is the NVMe-oF device path prefix used for BMS SDP volumes.
+	// Full path is GTypeBMSDevicePrefix + <full-volume-uuid>
+	GTypeBMSDevicePrefix = "/dev/disk/by-id/nvme-uuid."
 )
