@@ -625,7 +625,7 @@ func (c *fakeProviderSession) GetSnapshotByName(snapshotName string, _ ...string
 func createTargetDir(targetPath string) error {
 	fileInfo, err := os.Stat(targetPath)
 	if err != nil && os.IsNotExist(err) {
-		return os.MkdirAll(targetPath, 0755)
+		return os.MkdirAll(targetPath, 0750)
 	} else if err != nil {
 		return err
 	}
