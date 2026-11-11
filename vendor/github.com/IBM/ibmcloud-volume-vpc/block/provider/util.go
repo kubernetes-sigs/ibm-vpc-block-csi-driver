@@ -18,6 +18,8 @@
 package provider
 
 import (
+	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -443,45 +445,42 @@ func FromProviderToLibSnapshot(vpcSnapshot *models.Snapshot, logger *zap.Logger)
 		libSnapshot.GroupSnapshotID = vpcSnapshot.SnapshotConsistencyGroup.ID
 		libSnapshot.GroupSnapshotCRN = vpcSnapshot.SnapshotConsistencyGroup.CRN
 	}
-	libSnapshot.ReadyToUse = libSnapshot.VolumeID != "" && vpcSnapshot.LifecycleState == snapshotReadyState
+	libSnapshot.ReadyToUse = vpcSnapshot.LifecycleState == snapshotReadyState
 	return
 }
 
-// fromProviderToLibGroupSnapshot uses the member details returned with the VPC group.
-func fromProviderToLibGroupSnapshot(vpcGroup *models.SnapshotConsistencyGroupResponse, logger *zap.Logger) (*provider.GroupSnapshot, error) {
-	if vpcGroup == nil {
-		return nil, userError.GetUserError("InvalidGroupSnapshotResponse", nil, "the response is empty")
-	}
-	if vpcGroup.ID == "" {
-		return nil, userError.GetUserError("InvalidGroupSnapshotResponse", nil, "the group ID is missing")
-	}
-	if len(vpcGroup.Snapshots) == 0 {
-		return nil, userError.GetUserError("GroupSnapshotMemberDetailsUnavailable", nil, vpcGroup.ID)
-	}
-
-	logger.Debug("GroupSnapshot details of VPC client", zap.Reflect("models.SnapshotConsistencyGroupResponse", vpcGroup))
-
-	var createdTime time.Time
-	if vpcGroup.CreatedAt != nil {
-		createdTime = *vpcGroup.CreatedAt
-	}
-
+// Match by snapshot ID because VPC may list the snapshots in a different order.
+func fromProviderToLibGroupSnapshot(vpcGroup *models.SnapshotConsistencyGroupResponse, membersByID map[string]*models.Snapshot, logger *zap.Logger) (*provider.GroupSnapshot, error) {
 	libGroupSnapshot := &provider.GroupSnapshot{
 		GroupSnapshotID:           vpcGroup.ID,
 		GroupSnapshotCRN:          vpcGroup.CRN,
-		GroupSnapshotCreationTime: createdTime,
+		GroupSnapshotCreationTime: *vpcGroup.CreatedAt,
 		GroupSnapshotMetadata:     provider.GroupSnapshotMetadata{Href: vpcGroup.Href},
 		ReadyToUse:                vpcGroup.LifecycleState == snapshotReadyState,
 		Snapshots:                 make([]*provider.Snapshot, 0, len(vpcGroup.Snapshots)),
 	}
 
-	for _, snap := range vpcGroup.Snapshots {
-		if snap == nil {
-			libGroupSnapshot.ReadyToUse = false
-			continue
+	seen := make(map[string]bool, len(vpcGroup.Snapshots))
+	for _, ref := range vpcGroup.Snapshots {
+		if ref == nil || ref.ID == "" {
+			return nil, userError.GetUserError("GroupSnapshotMemberDetailsUnavailable", errors.New("a member reference is missing its snapshot ID"), vpcGroup.ID)
 		}
-		// VPC may return only a reference for a member. Keep the fields it provides.
-		member := FromProviderToLibSnapshot(snap, logger)
+		if seen[ref.ID] {
+			return nil, userError.GetUserError("GroupSnapshotMemberDetailsUnavailable", fmt.Errorf("snapshot %q appears more than once in the group", ref.ID), vpcGroup.ID)
+		}
+		seen[ref.ID] = true
+
+		snapshot := membersByID[ref.ID]
+		member := FromProviderToLibSnapshot(snapshot, logger)
+		if member == nil || member.VolumeID == "" || member.SnapshotCRN == "" || member.SnapshotCreationTime.IsZero() {
+			return nil, userError.GetUserError("GroupSnapshotMemberDetailsUnavailable", fmt.Errorf("snapshot %q is missing required details", ref.ID), vpcGroup.ID)
+		}
+
+		if (ref.CRN != "" && ref.CRN != snapshot.CRN) ||
+			(snapshot.SnapshotConsistencyGroup != nil && snapshot.SnapshotConsistencyGroup.ID != "" && snapshot.SnapshotConsistencyGroup.ID != vpcGroup.ID) {
+			return nil, userError.GetUserError("GroupSnapshotMemberDetailsUnavailable", fmt.Errorf("snapshot %q does not match its group reference", ref.ID), vpcGroup.ID)
+		}
+
 		member.GroupSnapshotID = vpcGroup.ID
 		member.GroupSnapshotCRN = vpcGroup.CRN
 		if !member.ReadyToUse {

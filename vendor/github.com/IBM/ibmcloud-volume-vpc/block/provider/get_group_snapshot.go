@@ -17,6 +17,9 @@
 package provider
 
 import (
+	"errors"
+	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/IBM/ibmcloud-volume-interface/lib/metrics"
@@ -46,7 +49,7 @@ func (vpcs *VPCSession) GetGroupSnapshot(groupSnapshotID string) (*provider.Grou
 
 	vpcs.Logger.Info("Successfully retrieved volume group snapshot details", zap.Reflect("groupSnapshotDetails", result))
 
-	return fromProviderToLibGroupSnapshot(result, vpcs.Logger)
+	return vpcs.getGroupSnapshotWithMembers(result)
 }
 
 // GetGroupSnapshotByName gets a volume group snapshot by name and resourceGroupID
@@ -77,5 +80,98 @@ func (vpcs *VPCSession) GetGroupSnapshotByName(name string, resourceGroupID stri
 
 	vpcs.Logger.Info("Successfully retrieved volume group snapshot details", zap.Reflect("groupSnapshotDetails", result))
 
-	return fromProviderToLibGroupSnapshot(result, vpcs.Logger)
+	return vpcs.getGroupSnapshotWithMembers(result)
+}
+
+// The group API lists snapshot IDs but doesn't say which volume each came from.
+func (vpcs *VPCSession) getGroupSnapshotWithMembers(group *models.SnapshotConsistencyGroupResponse) (*provider.GroupSnapshot, error) {
+	if group == nil {
+		return nil, userError.GetUserError("InvalidGroupSnapshotResponse", nil, "the response is empty")
+	}
+	// An empty group ID would list snapshots for the entire account.
+	if group.ID == "" {
+		return nil, userError.GetUserError("InvalidGroupSnapshotResponse", nil, "the group ID is missing")
+	}
+	if len(group.Snapshots) == 0 {
+		return nil, userError.GetUserError("GroupSnapshotMemberDetailsUnavailable", nil, group.ID)
+	}
+	if group.CreatedAt == nil || group.CreatedAt.IsZero() || group.LifecycleState == "" {
+		return nil, userError.GetUserError("InvalidGroupSnapshotResponse", nil, fmt.Sprintf("group %q is missing its creation time or lifecycle state", group.ID))
+	}
+
+	members, err := vpcs.listGroupMemberSnapshots(group.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return fromProviderToLibGroupSnapshot(group, members, vpcs.Logger)
+}
+
+// Read every page with the same group filter. If a page fails, don't return a partial list.
+func (vpcs *VPCSession) listGroupMemberSnapshots(groupID string) (map[string]*models.Snapshot, error) {
+	filters := &models.LisSnapshotFilters{SnapshotConsistencyGroupID: groupID}
+
+	members := make(map[string]*models.Snapshot)
+	seenTokens := make(map[string]bool)
+
+	start := ""
+	for {
+		page, err := vpcs.Apiclient.SnapshotService().ListSnapshots(maxLimit, start, filters, vpcs.Logger)
+		if err != nil {
+			return nil, userError.GetUserError("GroupSnapshotMemberLookupFailed", err, groupID)
+		}
+
+		if page == nil {
+			return nil, userError.GetUserError("InvalidGroupSnapshotResponse", nil, fmt.Sprintf("empty member snapshot page for group %q", groupID))
+		}
+
+		for _, snapshot := range page.Snapshots {
+			if snapshot == nil || snapshot.ID == "" {
+				continue
+			}
+
+			if _, exists := members[snapshot.ID]; exists {
+				return nil, userError.GetUserError("GroupSnapshotMemberLookupFailed", fmt.Errorf("VPC listed snapshot %q more than once", snapshot.ID), groupID)
+			}
+			members[snapshot.ID] = snapshot
+		}
+
+		start, err = nextSnapshotStart(page.Next)
+		if err != nil {
+			return nil, userError.GetUserError("GroupSnapshotMemberLookupFailed", err, groupID)
+		}
+
+		if start == "" {
+			return members, nil
+		}
+		// A token we already used would send us back to a page we've read.
+		if seenTokens[start] {
+			return nil, userError.GetUserError("GroupSnapshotMemberLookupFailed", errors.New("VPC repeated a snapshot page token"), groupID)
+		}
+		seenTokens[start] = true
+	}
+}
+
+// Read the next page token. No link means there are no more pages.
+func nextSnapshotStart(nextLink *models.HReference) (string, error) {
+	if nextLink == nil {
+		return "", nil
+	}
+
+	link, err := url.Parse(nextLink.Href)
+	if err != nil {
+		return "", fmt.Errorf("invalid snapshot next-page link: %w", err)
+	}
+
+	query, err := url.ParseQuery(link.RawQuery)
+	if err != nil {
+		return "", fmt.Errorf("invalid snapshot next-page query: %w", err)
+	}
+
+	tokens := query["start"]
+	if len(tokens) != 1 || tokens[0] == "" {
+		return "", errors.New("snapshot next-page link must contain one non-empty start token")
+	}
+
+	return tokens[0], nil
 }

@@ -29,7 +29,7 @@ github.com/IBM/ibmcloud-volume-interface/lib/utils/reasoncode
 github.com/IBM/ibmcloud-volume-interface/provider/auth
 github.com/IBM/ibmcloud-volume-interface/provider/iam
 github.com/IBM/ibmcloud-volume-interface/provider/local
-# github.com/IBM/ibmcloud-volume-vpc v1.1.24 => github.com/MahanteshR12/ibmcloud-volume-vpc v1.1.23-0.20261110120008-3d05b18923ff
+# github.com/IBM/ibmcloud-volume-vpc v1.1.24 => github.com/MahanteshR12/ibmcloud-volume-vpc v1.1.23-0.20261111073913-d3ef86d15691
 ## explicit; go 1.26.10
 github.com/IBM/ibmcloud-volume-vpc/block/provider
 github.com/IBM/ibmcloud-volume-vpc/block/utils
@@ -910,7 +910,7 @@ sigs.k8s.io/structured-merge-diff/v6/value
 ## explicit; go 1.22
 sigs.k8s.io/yaml
 sigs.k8s.io/yaml/goyaml.v2
-# github.com/IBM/ibmcloud-volume-vpc => github.com/MahanteshR12/ibmcloud-volume-vpc v1.1.23-0.20261110120008-3d05b18923ff
+# github.com/IBM/ibmcloud-volume-vpc => github.com/MahanteshR12/ibmcloud-volume-vpc v1.1.23-0.20261111073913-d3ef86d15691
 # k8s.io/cli-runtime => k8s.io/cli-runtime v0.32.10
 # k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.32.10
 # k8s.io/cri-api => k8s.io/cri-api v0.32.10

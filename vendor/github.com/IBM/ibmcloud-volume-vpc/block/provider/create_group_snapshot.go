@@ -65,5 +65,5 @@ func (vpcs *VPCSession) CreateGroupSnapshot(sourceVolumeIDs []string, groupSnaps
 
 	vpcs.Logger.Info("Successfully created volume group snapshot", zap.Reflect("GroupSnapshot", result))
 
-	return fromProviderToLibGroupSnapshot(result, vpcs.Logger)
+	return vpcs.getGroupSnapshotWithMembers(result)
 }

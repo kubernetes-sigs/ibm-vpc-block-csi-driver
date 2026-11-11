@@ -121,6 +121,13 @@ var messagesEn = map[string]util.Message{
 		RC:          404,
 		Action:      "Review the backend error and verify that the volume group snapshot name and resource group are correct.",
 	},
+	"GroupSnapshotMemberLookupFailed": {
+		Code:        "GroupSnapshotMemberLookupFailed",
+		Description: "Failed to list member snapshots for volume group snapshot '%s'.",
+		Type:        util.RetrivalFailed,
+		RC:          500,
+		Action:      "Review the backend error and verify that the member snapshots can be read.",
+	},
 	"GroupSnapshotMemberDetailsUnavailable": {
 		Code:        "GroupSnapshotMemberDetailsUnavailable",
 		Description: "The VPC response for volume group snapshot '%s' did not include complete member snapshot details.",
