@@ -30,26 +30,14 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// validateCreateGroupSnapshotMembers checks the member count, known source volumes, and CSI snapshot IDs.
-// Report a source-volume mismatch before reporting a missing CRN.
-func validateCreateGroupSnapshotMembers(snapshotName, requestID string, group *provider.GroupSnapshot, sourceVolumeIDs []string, mismatchCode codes.Code) error {
-	memberVolumeIDs := make([]string, 0, len(group.Snapshots))
-	missingCRN := false
-	for _, snapshot := range group.Snapshots {
-		if snapshot == nil {
-			return volumeGroupSnapshotStatusError(codes.Internal, requestID, "backend response for volume group snapshot %q contained an empty individual member snapshot", group.GroupSnapshotID)
-		}
-		// A missing source volume ID is unknown, not a different volume.
-		if snapshot.VolumeID != "" {
-			memberVolumeIDs = append(memberVolumeIDs, snapshot.VolumeID)
-		}
-		missingCRN = missingCRN || snapshot.SnapshotCRN == ""
+// Check that the provider returned the same volumes the caller asked to snapshot.
+func validateCreateGroupSnapshotMembers(snapshotName, requestID string, snapshots []*provider.Snapshot, sourceVolumeIDs []string, mismatchCode codes.Code) error {
+	memberVolumeIDs := make([]string, 0, len(snapshots))
+	for _, snapshot := range snapshots {
+		memberVolumeIDs = append(memberVolumeIDs, snapshot.VolumeID)
 	}
 
-	if len(group.Snapshots) == len(sourceVolumeIDs) && containsAllIDs(sourceVolumeIDs, memberVolumeIDs) {
-		if missingCRN {
-			return volumeGroupSnapshotStatusError(codes.Internal, requestID, "backend response for volume group snapshot %q did not include individual member snapshot CRNs", group.GroupSnapshotID)
-		}
+	if matchIDs(sourceVolumeIDs, memberVolumeIDs) {
 		return nil
 	}
 
@@ -57,39 +45,20 @@ func validateCreateGroupSnapshotMembers(snapshotName, requestID string, group *p
 		return volumeGroupSnapshotStatusError(codes.AlreadyExists, requestID, "volume group snapshot %q already exists with a different set of source volume IDs (requested %v, existing %v); create a new VolumeGroupSnapshot or delete and recreate the requested VolumeGroupSnapshot to generate a new snapshot name", snapshotName, sourceVolumeIDs, memberVolumeIDs)
 	}
 
-	// comes here after a VGS gets created, but VPC returned snapshots of different volumes
+	// VPC returned snapshots for different volumes after creating the group.
 	return volumeGroupSnapshotStatusError(codes.Internal, requestID, "backend returned unexpected source volumes for newly created volume group snapshot %q (requested %v, returned %v)", snapshotName, sourceVolumeIDs, memberVolumeIDs)
-}
-
-// resolveGroupSnapshotMemberCRNs returns the CRN for each member snapshot. The boolean is false when any member has no CRN.
-func resolveGroupSnapshotMemberCRNs(snapshots []*provider.Snapshot) ([]string, bool) {
-	if len(snapshots) == 0 {
-		return nil, false
-	}
-
-	crns := make([]string, 0, len(snapshots))
-	for _, snapshot := range snapshots {
-		if snapshot == nil || snapshot.SnapshotCRN == "" {
-			return nil, false
-		}
-		crns = append(crns, snapshot.SnapshotCRN)
-	}
-
-	return crns, true
 }
 
 // matchIDs reports whether left and right contain the same IDs regardless of order, preserving duplicate counts.
 func matchIDs(left, right []string) bool {
-	return len(left) == len(right) && containsAllIDs(left, right)
-}
-
-// containsAllIDs checks that each ID occurs at least as often as required.
-func containsAllIDs(available, required []string) bool {
-	counts := make(map[string]int, len(available))
-	for _, id := range available {
+	if len(left) != len(right) {
+		return false
+	}
+	counts := make(map[string]int, len(left))
+	for _, id := range left {
 		counts[id]++
 	}
-	for _, id := range required {
+	for _, id := range right {
 		if counts[id] == 0 {
 			return false
 		}
@@ -136,6 +105,16 @@ func volumeGroupSnapshotCSIError(logger *zap.Logger, requestID, operation string
 		zap.String("grpcCode", code.String()),
 		zap.Error(err))
 	return status.Errorf(code, "failed to %s volume group snapshot (request ID: %s): %v", operation, requestID, err)
+}
+
+// The group may already exist. Keep the creation pending until the sidecar gets its ID.
+func groupSnapshotCreateErrorCode(err error) codes.Code {
+	switch userError.GetUserErrorCode(err) {
+	case "GroupSnapshotMemberLookupFailed", "InvalidGroupSnapshotResponse":
+		return codes.Aborted
+	default:
+		return volumeGroupSnapshotErrorCode(err)
+	}
 }
 
 // volumeGroupSnapshotErrorCode maps backend reason codes first, then falls back

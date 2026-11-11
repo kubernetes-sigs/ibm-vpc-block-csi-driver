@@ -505,27 +505,22 @@ func createCSISnapshotResponse(snapshot provider.Snapshot) *csi.CreateSnapshotRe
 	}
 }
 
-// createCSIVolumeGroupSnapshotResponse converts a group whose members have already been validated.
-func createCSIVolumeGroupSnapshotResponse(groupSnapshot provider.GroupSnapshot) *csi.CreateVolumeGroupSnapshotResponse {
+// The provider has already checked the group and members for missing data.
+func toCSIVolumeGroupSnapshot(groupSnapshot *provider.GroupSnapshot) *csi.VolumeGroupSnapshot {
 	ts := timestamppb.New(groupSnapshot.GroupSnapshotCreationTime)
 
 	snapshots := make([]*csi.Snapshot, 0, len(groupSnapshot.Snapshots))
 	for _, snap := range groupSnapshot.Snapshots {
 		csiSnap := createCSISnapshotResponse(*snap).GetSnapshot()
-		if snap.SnapshotCreationTime.IsZero() {
-			csiSnap.CreationTime = nil
-		}
 		csiSnap.GroupSnapshotId = groupSnapshot.GroupSnapshotID
 		snapshots = append(snapshots, csiSnap)
 	}
 
-	return &csi.CreateVolumeGroupSnapshotResponse{
-		GroupSnapshot: &csi.VolumeGroupSnapshot{
-			GroupSnapshotId: groupSnapshot.GroupSnapshotID,
-			Snapshots:       snapshots,
-			CreationTime:    ts,
-			ReadyToUse:      groupSnapshot.ReadyToUse,
-		},
+	return &csi.VolumeGroupSnapshot{
+		GroupSnapshotId: groupSnapshot.GroupSnapshotID,
+		Snapshots:       snapshots,
+		CreationTime:    ts,
+		ReadyToUse:      groupSnapshot.ReadyToUse,
 	}
 }
 

@@ -39,45 +39,6 @@ func TestVolumeGroupSnapshotStatusErrorIncludesMessageAndRequestID(t *testing.T)
 	assert.True(t, strings.Contains(message, "request ID: request-id"))
 }
 
-// Member resolution uses CRNs only and never accepts a partial member list.
-func TestResolveGroupSnapshotMemberCRNs(t *testing.T) {
-	testCases := []struct {
-		name         string
-		snapshots    []*provider.Snapshot
-		expectedCRNs []string
-		expectedOK   bool
-	}{
-		{name: "nil members"},
-		{name: "empty members", snapshots: []*provider.Snapshot{}},
-		{
-			name:      "nil member after a valid member",
-			snapshots: []*provider.Snapshot{{SnapshotCRN: "snapshot-crn-1"}, nil},
-		},
-		{
-			name:      "missing CRN after a valid member",
-			snapshots: []*provider.Snapshot{{SnapshotCRN: "snapshot-crn-1"}, {VolumeID: "volume-2"}},
-		},
-		{
-			name:      "short snapshot ID without CRN",
-			snapshots: []*provider.Snapshot{{SnapshotID: "snapshot-id-1", VolumeID: "volume-1"}},
-		},
-		{
-			name:         "complete CRNs",
-			snapshots:    []*provider.Snapshot{{SnapshotCRN: "snapshot-crn-2"}, {SnapshotCRN: "snapshot-crn-1"}},
-			expectedCRNs: []string{"snapshot-crn-2", "snapshot-crn-1"},
-			expectedOK:   true,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			crns, ok := resolveGroupSnapshotMemberCRNs(tc.snapshots)
-			assert.Equal(t, tc.expectedOK, ok)
-			assert.Equal(t, tc.expectedCRNs, crns)
-		})
-	}
-}
-
 // A failed GetProviderSession call is mapped by its provider reason code.
 // Anything that is not a known reason code, including a plain error, becomes Internal.
 func TestProviderSessionCSIError(t *testing.T) {
@@ -170,25 +131,9 @@ func TestValidateCreateGroupSnapshotMembers(t *testing.T) {
 			mismatchCode: codes.AlreadyExists, wantCode: codes.OK,
 		},
 		{
-			name: "one source ID is missing",
+			name: "fewer snapshots than requested",
 			snapshots: []*provider.Snapshot{
-				{SnapshotCRN: "snapshot-crn-a"},
-				{VolumeID: "volume-b", SnapshotCRN: "snapshot-crn-b"},
-			},
-			mismatchCode: codes.AlreadyExists, wantCode: codes.OK,
-		},
-		{
-			name: "a known source does not match even though another source ID is missing",
-			snapshots: []*provider.Snapshot{
-				{SnapshotCRN: "snapshot-crn-a"},
-				{VolumeID: "volume-c", SnapshotCRN: "snapshot-crn-c"},
-			},
-			mismatchCode: codes.AlreadyExists, wantCode: codes.AlreadyExists,
-		},
-		{
-			name: "fewer snapshots than requested and source ID is missing",
-			snapshots: []*provider.Snapshot{
-				{SnapshotCRN: "snapshot-crn-a"},
+				{VolumeID: "volume-a", SnapshotCRN: "snapshot-crn-a"},
 			},
 			mismatchCode: codes.Internal, wantCode: codes.Internal,
 		},
@@ -205,8 +150,7 @@ func TestValidateCreateGroupSnapshotMembers(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			group := &provider.GroupSnapshot{GroupSnapshotID: "group-id", Snapshots: tc.snapshots}
-			err := validateCreateGroupSnapshotMembers("group-name", "request-id", group, []string{"volume-a", "volume-b"}, tc.mismatchCode)
+			err := validateCreateGroupSnapshotMembers("group-name", "request-id", tc.snapshots, []string{"volume-a", "volume-b"}, tc.mismatchCode)
 			assert.Equal(t, tc.wantCode, status.Code(err))
 			if err != nil {
 				assert.Contains(t, err.Error(), "group-name")

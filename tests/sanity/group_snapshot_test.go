@@ -324,7 +324,7 @@ func TestVolumeGroupSnapshotBackendErrorSanity(t *testing.T) {
 				})
 				return err
 			},
-			wantCode:    codes.PermissionDenied,
+			wantCode:    codes.Aborted,
 			wantMessage: "member-lookup-trace",
 		},
 		{
@@ -338,7 +338,7 @@ func TestVolumeGroupSnapshotBackendErrorSanity(t *testing.T) {
 				})
 				return err
 			},
-			wantCode:    codes.PermissionDenied,
+			wantCode:    codes.Aborted,
 			wantMessage: "member-lookup-trace",
 		},
 		{
@@ -537,26 +537,6 @@ func TestVolumeGroupSnapshotMissingMemberDetailsSanity(t *testing.T) {
 			},
 			wantCode:    codes.Aborted,
 			wantMessage: "GroupSnapshotMemberDetailsUnavailable",
-		},
-		{
-			name: "get response is missing member snapshot CRN",
-			configure: func(session *fakeProviderSession) {
-				session.groupSnapshots["missing-member-id"] = &fakeGroupSnapshot{
-					GroupSnapshot: &provider.GroupSnapshot{
-						GroupSnapshotID: "missing-member-id",
-						Snapshots:       []*provider.Snapshot{{VolumeID: "volume-1"}},
-					},
-				}
-			},
-			call: func(ctx context.Context, client csi.GroupControllerClient) error {
-				_, err := client.GetVolumeGroupSnapshot(ctx, &csi.GetVolumeGroupSnapshotRequest{
-					GroupSnapshotId: "missing-member-id",
-					SnapshotIds:     []string{"snapshot-1"},
-				})
-				return err
-			},
-			wantCode:    codes.Internal,
-			wantMessage: "did not include individual member snapshot CRNs",
 		},
 		{
 			name: "get response is missing source volume ID",
