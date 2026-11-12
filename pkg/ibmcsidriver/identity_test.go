@@ -57,6 +57,7 @@ func TestGetPluginInfo(t *testing.T) {
 }
 
 func TestGetPluginCapabilities(t *testing.T) {
+	t.Setenv(vgsFeatureFlag, "true")
 	icDriver := initIBMCSIDriver(t)
 	if icDriver == nil {
 		t.Fatalf("Failed to setup IBM CSI Driver")
@@ -71,9 +72,46 @@ func TestGetPluginCapabilities(t *testing.T) {
 		switch capability.GetService().GetType() {
 		case csi.PluginCapability_Service_CONTROLLER_SERVICE:
 		case csi.PluginCapability_Service_VOLUME_ACCESSIBILITY_CONSTRAINTS:
+		case csi.PluginCapability_Service_GROUP_CONTROLLER_SERVICE:
 		default:
 			t.Fatalf("Unknown capability: %v", capability.GetService().GetType())
 		}
+	}
+}
+
+func TestGetPluginCapabilitiesVGSDisabled(t *testing.T) {
+	t.Setenv(vgsFeatureFlag, "false")
+
+	icDriver := initIBMCSIDriver(t)
+	if icDriver == nil {
+		t.Fatalf("Failed to setup IBM CSI Driver")
+	}
+
+	resp, err := icDriver.ids.GetPluginCapabilities(context.Background(), &csi.GetPluginCapabilitiesRequest{})
+	if err != nil {
+		t.Fatalf("GetPluginCapabilities returned unexpected error: %v", err)
+	}
+
+	for _, capability := range resp.GetCapabilities() {
+		if capability.GetService().GetType() == csi.PluginCapability_Service_GROUP_CONTROLLER_SERVICE {
+			t.Fatalf("GROUP_CONTROLLER_SERVICE must not be advertised when IS_VGS_ENABLED=false")
+		}
+	}
+}
+
+func TestGetPluginCapabilitiesVGSFailsClosed(t *testing.T) {
+	for _, value := range []string{"", "invalid"} {
+		t.Run(value, func(t *testing.T) {
+			t.Setenv(vgsFeatureFlag, value)
+			icDriver := initIBMCSIDriver(t)
+
+			resp, err := icDriver.ids.GetPluginCapabilities(context.Background(), &csi.GetPluginCapabilitiesRequest{})
+
+			assert.NoError(t, err)
+			for _, capability := range resp.GetCapabilities() {
+				assert.NotEqual(t, csi.PluginCapability_Service_GROUP_CONTROLLER_SERVICE, capability.GetService().GetType())
+			}
+		})
 	}
 }
 

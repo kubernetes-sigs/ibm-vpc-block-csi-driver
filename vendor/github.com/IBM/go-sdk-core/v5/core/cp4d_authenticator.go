@@ -17,6 +17,7 @@ package core
 import (
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
@@ -52,6 +53,9 @@ type CloudPakForDataAuthenticator struct {
 	// Default headers to be sent with every CP4D token request [optional].
 	Headers map[string]string
 
+	// The account ID used to obtain a bearer token [optional].
+	AccountID string
+
 	// The http.Client object used to invoke token server requests [optional]. If
 	// not specified, a suitable default Client will be constructed.
 	Client     *http.Client
@@ -85,7 +89,7 @@ func NewCloudPakForDataAuthenticator(url string, username string, password strin
 // instance from a username/password pair.
 func NewCloudPakForDataAuthenticatorUsingPassword(url string, username string, password string,
 	disableSSLVerification bool, headers map[string]string) (*CloudPakForDataAuthenticator, error) {
-	auth, err := newAuthenticator(url, username, password, "", disableSSLVerification, headers)
+	auth, err := newAuthenticator(url, username, password, "", "", disableSSLVerification, headers)
 	return auth, RepurposeSDKProblem(err, "new-auth-password-fail")
 }
 
@@ -93,17 +97,17 @@ func NewCloudPakForDataAuthenticatorUsingPassword(url string, username string, p
 // instance from a username/apikey pair.
 func NewCloudPakForDataAuthenticatorUsingAPIKey(url string, username string, apikey string,
 	disableSSLVerification bool, headers map[string]string) (*CloudPakForDataAuthenticator, error) {
-	auth, err := newAuthenticator(url, username, "", apikey, disableSSLVerification, headers)
+	auth, err := newAuthenticator(url, username, "", apikey, "", disableSSLVerification, headers)
 	return auth, RepurposeSDKProblem(err, "new-auth-apikey-fail")
 }
 
-func newAuthenticator(url string, username string, password string, apikey string,
+func newAuthenticator(url string, username string, password string, apikey string, accountID string,
 	disableSSLVerification bool, headers map[string]string) (authenticator *CloudPakForDataAuthenticator, err error) {
-
 	authenticator = &CloudPakForDataAuthenticator{
 		Username:               username,
 		Password:               password,
 		APIKey:                 apikey,
+		AccountID:              accountID,
 		URL:                    url,
 		DisableSSLVerification: disableSSLVerification,
 		Headers:                headers,
@@ -121,7 +125,7 @@ func newAuthenticator(url string, username string, password string, apikey strin
 // newCloudPakForDataAuthenticatorFromMap : Constructs a new CloudPakForDataAuthenticator instance from a map.
 func newCloudPakForDataAuthenticatorFromMap(properties map[string]string) (*CloudPakForDataAuthenticator, error) {
 	if properties == nil {
-		err := fmt.Errorf(ERRORMSG_PROPS_MAP_NIL)
+		err := errors.New(ERRORMSG_PROPS_MAP_NIL)
 		return nil, SDKErrorf(err, "", "missing-props", getComponentInfo())
 	}
 
@@ -132,7 +136,7 @@ func newCloudPakForDataAuthenticatorFromMap(properties map[string]string) (*Clou
 
 	return newAuthenticator(properties[PROPNAME_AUTH_URL],
 		properties[PROPNAME_USERNAME], properties[PROPNAME_PASSWORD],
-		properties[PROPNAME_APIKEY], disableSSL, nil)
+		properties[PROPNAME_APIKEY], properties[PROPNAME_CP4D_ACCOUNT_ID], disableSSL, nil)
 }
 
 // AuthenticationType returns the authentication type for this authenticator.
@@ -145,7 +149,6 @@ func (*CloudPakForDataAuthenticator) AuthenticationType() string {
 // Ensures the username, password, and url are not Nil. Additionally, ensures
 // they do not contain invalid characters.
 func (authenticator *CloudPakForDataAuthenticator) Validate() error {
-
 	if authenticator.Username == "" {
 		err := fmt.Errorf(ERRORMSG_PROP_MISSING, "Username")
 		return SDKErrorf(err, "", "no-user", getComponentInfo())
@@ -178,6 +181,7 @@ func (authenticator *CloudPakForDataAuthenticator) client() *http.Client {
 				transport := &http.Transport{
 					// #nosec G402
 					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+					Proxy:           http.ProxyFromEnvironment,
 				}
 				authenticator.Client.Transport = transport
 			}
@@ -207,6 +211,7 @@ func (authenticator *CloudPakForDataAuthenticator) Authenticate(request *http.Re
 	}
 
 	request.Header.Set("Authorization", fmt.Sprintf(`Bearer %s`, token))
+	GetLogger().Debug("Authenticated outbound request (type=%s)\n", authenticator.AuthenticationType())
 	return nil
 }
 
@@ -231,15 +236,19 @@ func (authenticator *CloudPakForDataAuthenticator) setTokenData(tokenData *cp4dT
 // or the existing token has expired), a new access token is fetched from the token server.
 func (authenticator *CloudPakForDataAuthenticator) GetToken() (string, error) {
 	if authenticator.getTokenData() == nil || !authenticator.getTokenData().isTokenValid() {
+		GetLogger().Debug("Performing synchronous token fetch...")
 		// synchronously request the token
 		err := authenticator.synchronizedRequestToken()
 		if err != nil {
 			return "", RepurposeSDKProblem(err, "request-token-fail")
 		}
 	} else if authenticator.getTokenData().needsRefresh() {
+		GetLogger().Debug("Performing background asynchronous token fetch...")
 		// If refresh needed, kick off a go routine in the background to get a new token
 		//nolint: errcheck
 		go authenticator.invokeRequestTokenData()
+	} else {
+		GetLogger().Debug("Using cached access token...")
 	}
 
 	// return an error if the access token is not valid or was not fetched
@@ -289,20 +298,21 @@ func (authenticator *CloudPakForDataAuthenticator) invokeRequestTokenData() erro
 // Note: we list both Password and APIKey fields, although exactly one of those will be used for
 // a specific invocation of the POST /v1/authorize operation.
 type cp4dRequestBody struct {
-	Username string `json:"username"`
-	Password string `json:"password,omitempty"`
-	APIKey   string `json:"api_key,omitempty"`
+	Username  string `json:"username"`
+	Password  string `json:"password,omitempty"`
+	APIKey    string `json:"api_key,omitempty"`
+	AccountID string `json:"account_id,omitempty"`
 }
 
 // requestToken: fetches a new access token from the token server.
 func (authenticator *CloudPakForDataAuthenticator) requestToken() (tokenResponse *cp4dTokenServerResponse, err error) {
-
 	// Create the request body (only one of APIKey or Password should be set
 	// on the authenticator so only one of them should end up in the serialized JSON).
 	body := &cp4dRequestBody{
-		Username: authenticator.Username,
-		Password: authenticator.Password,
-		APIKey:   authenticator.APIKey,
+		Username:  authenticator.Username,
+		Password:  authenticator.Password,
+		APIKey:    authenticator.APIKey,
+		AccountID: authenticator.AccountID,
 	}
 
 	builder := NewRequestBuilder(POST)

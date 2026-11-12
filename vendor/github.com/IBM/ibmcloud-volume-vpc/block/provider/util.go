@@ -18,6 +18,8 @@
 package provider
 
 import (
+	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -48,11 +50,12 @@ var maxVPCRetryAttempt = 46
 
 // ConstantRetryGap ...
 const (
-	ConstantRetryGap        = 10 // seconds
-	ConstMaxVPCRetryAttempt = 46
-	ConstMinVPCRetryGap     = 3 //seconds
-	SnapshotIDNotFound      = "snapshot_id_not_found"
-	SnapshotNotFound        = "snapshots_not_found"
+	ConstantRetryGap                 = 10 // seconds
+	ConstMaxVPCRetryAttempt          = 46
+	ConstMinVPCRetryGap              = 3 //seconds
+	SnapshotIDNotFound               = "snapshot_id_not_found"
+	SnapshotNotFound                 = "snapshots_not_found"
+	SnapshotConsistencyGroupNotFound = "snapshot_consistency_groups_not_found"
 )
 
 var volumeIDPartsCount = 5
@@ -73,6 +76,7 @@ var skipErrorCodes = map[string]bool{
 	SnapshotNotFound:                               true,
 	"snapshots_not_authorized":                     true,
 	SnapshotIDNotFound:                             true,
+	SnapshotConsistencyGroupNotFound:               true,
 	"snapshots_source_volume_not_found":            true,
 	"snapshots_source_volume_not_attached":         true,
 	"volume_capacity_maximum":                      true,
@@ -427,19 +431,64 @@ func FromProviderToLibSnapshot(vpcSnapshot *models.Snapshot, logger *zap.Logger)
 		createdTime = *vpcSnapshot.CreatedAt
 	}
 	libSnapshot = &provider.Snapshot{
-		VolumeID:             vpcSnapshot.SourceVolume.ID,
 		SnapshotID:           vpcSnapshot.ID,
 		SnapshotCRN:          vpcSnapshot.CRN,
 		SnapshotCreationTime: createdTime,
 		SnapshotSize:         GiBToBytes(vpcSnapshot.MinimumCapacity),
 		VPC:                  provider.VPC{Href: vpcSnapshot.Href},
 	}
-	if vpcSnapshot.LifecycleState == snapshotReadyState {
-		libSnapshot.ReadyToUse = true
-	} else {
-		libSnapshot.ReadyToUse = false
+	if vpcSnapshot.SourceVolume != nil {
+		libSnapshot.VolumeID = vpcSnapshot.SourceVolume.ID
 	}
+	// Keep group membership when a snapshot is fetched on its own.
+	if vpcSnapshot.SnapshotConsistencyGroup != nil {
+		libSnapshot.GroupSnapshotID = vpcSnapshot.SnapshotConsistencyGroup.ID
+		libSnapshot.GroupSnapshotCRN = vpcSnapshot.SnapshotConsistencyGroup.CRN
+	}
+	libSnapshot.ReadyToUse = vpcSnapshot.LifecycleState == snapshotReadyState
 	return
+}
+
+// Match by snapshot ID because VPC may list the snapshots in a different order.
+func fromProviderToLibGroupSnapshot(vpcGroup *models.SnapshotConsistencyGroupResponse, membersByID map[string]*models.Snapshot, logger *zap.Logger) (*provider.GroupSnapshot, error) {
+	libGroupSnapshot := &provider.GroupSnapshot{
+		GroupSnapshotID:           vpcGroup.ID,
+		GroupSnapshotCRN:          vpcGroup.CRN,
+		GroupSnapshotCreationTime: *vpcGroup.CreatedAt,
+		GroupSnapshotMetadata:     provider.GroupSnapshotMetadata{Href: vpcGroup.Href},
+		ReadyToUse:                vpcGroup.LifecycleState == snapshotReadyState,
+		Snapshots:                 make([]*provider.Snapshot, 0, len(vpcGroup.Snapshots)),
+	}
+
+	seen := make(map[string]bool, len(vpcGroup.Snapshots))
+	for _, ref := range vpcGroup.Snapshots {
+		if ref == nil || ref.ID == "" {
+			return nil, userError.GetUserError("GroupSnapshotMemberDetailsUnavailable", errors.New("a member reference is missing its snapshot ID"), vpcGroup.ID)
+		}
+		if seen[ref.ID] {
+			return nil, userError.GetUserError("GroupSnapshotMemberDetailsUnavailable", fmt.Errorf("snapshot %q appears more than once in the group", ref.ID), vpcGroup.ID)
+		}
+		seen[ref.ID] = true
+
+		snapshot := membersByID[ref.ID]
+		member := FromProviderToLibSnapshot(snapshot, logger)
+		if member == nil || member.VolumeID == "" || member.SnapshotCRN == "" || member.SnapshotCreationTime.IsZero() {
+			return nil, userError.GetUserError("GroupSnapshotMemberDetailsUnavailable", fmt.Errorf("snapshot %q is missing required details", ref.ID), vpcGroup.ID)
+		}
+
+		if (ref.CRN != "" && ref.CRN != snapshot.CRN) ||
+			(snapshot.SnapshotConsistencyGroup != nil && snapshot.SnapshotConsistencyGroup.ID != "" && snapshot.SnapshotConsistencyGroup.ID != vpcGroup.ID) {
+			return nil, userError.GetUserError("GroupSnapshotMemberDetailsUnavailable", fmt.Errorf("snapshot %q does not match its group reference", ref.ID), vpcGroup.ID)
+		}
+
+		member.GroupSnapshotID = vpcGroup.ID
+		member.GroupSnapshotCRN = vpcGroup.CRN
+		if !member.ReadyToUse {
+			libGroupSnapshot.ReadyToUse = false
+		}
+		libGroupSnapshot.Snapshots = append(libGroupSnapshot.Snapshots, member)
+	}
+	return libGroupSnapshot, nil
 }
 
 // IsValidVolumeIDFormat validating(gc has 5 parts and NG has 6 parts)

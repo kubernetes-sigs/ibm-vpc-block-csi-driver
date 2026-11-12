@@ -465,14 +465,14 @@ func getAccountID(input string) string {
 	}
 }
 
-func getResourceGroup(logger *zap.Logger, snapshotParameters map[string]string, config *config.Config) string {
-	if rg, ok := snapshotParameters[ResourceGroup]; ok && len(strings.TrimSpace(rg)) > 0 {
-		logger.Info("Using resource group from VolumeSnapshotClass", zap.String("resourceGroup", rg))
+// getResourceGroup fetches the resourceGroup from volumeSnapshotClass & volumeGroupSnapshotClass parameters
+func getResourceGroup(logger *zap.Logger, classParameters map[string]string, config *config.Config) string {
+	if rg, ok := classParameters[ResourceGroup]; ok && len(strings.TrimSpace(rg)) > 0 {
+		logger.Info("Using resource group from class parameters", zap.String("resourceGroup", rg))
 		return rg
-
 	}
 
-	// return cluster's resource group
+	// return cluster's resource group from storage-secret-store
 	logger.Info("Using cluster's resource group", zap.String("resourceGroup", config.VPC.G2ResourceGroupID))
 	return config.VPC.G2ResourceGroupID
 }
@@ -495,12 +495,32 @@ func createCSISnapshotResponse(snapshot provider.Snapshot) *csi.CreateSnapshotRe
 	ts := timestamppb.New(snapshot.SnapshotCreationTime)
 	return &csi.CreateSnapshotResponse{
 		Snapshot: &csi.Snapshot{
-			SnapshotId:     snapshot.SnapshotCRN,
-			SourceVolumeId: snapshot.VolumeID,
-			SizeBytes:      snapshot.SnapshotSize,
-			CreationTime:   ts,
-			ReadyToUse:     snapshot.ReadyToUse,
+			SnapshotId:      snapshot.SnapshotCRN,
+			SourceVolumeId:  snapshot.VolumeID,
+			SizeBytes:       snapshot.SnapshotSize,
+			CreationTime:    ts,
+			ReadyToUse:      snapshot.ReadyToUse,
+			GroupSnapshotId: snapshot.GroupSnapshotID,
 		},
+	}
+}
+
+// The provider has already checked the group and members for missing data.
+func toCSIVolumeGroupSnapshot(groupSnapshot *provider.GroupSnapshot) *csi.VolumeGroupSnapshot {
+	ts := timestamppb.New(groupSnapshot.GroupSnapshotCreationTime)
+
+	snapshots := make([]*csi.Snapshot, 0, len(groupSnapshot.Snapshots))
+	for _, snap := range groupSnapshot.Snapshots {
+		csiSnap := createCSISnapshotResponse(*snap).GetSnapshot()
+		csiSnap.GroupSnapshotId = groupSnapshot.GroupSnapshotID
+		snapshots = append(snapshots, csiSnap)
+	}
+
+	return &csi.VolumeGroupSnapshot{
+		GroupSnapshotId: groupSnapshot.GroupSnapshotID,
+		Snapshots:       snapshots,
+		CreationTime:    ts,
+		ReadyToUse:      groupSnapshot.ReadyToUse,
 	}
 }
 

@@ -15,7 +15,7 @@ package core
 // limitations under the License.
 
 import (
-	"gopkg.in/yaml.v2"
+	yaml "sigs.k8s.io/yaml/goyaml.v2"
 )
 
 // OrderedMaps provides a wrapper around the yaml package's
@@ -28,7 +28,7 @@ type OrderedMaps struct {
 }
 
 // Add appends a key/value pair to the ordered list of maps.
-func (m *OrderedMaps) Add(key string, value interface{}) {
+func (m *OrderedMaps) Add(key string, value any) {
 	m.maps = append(m.maps, yaml.MapItem{
 		Key:   key,
 		Value: value,

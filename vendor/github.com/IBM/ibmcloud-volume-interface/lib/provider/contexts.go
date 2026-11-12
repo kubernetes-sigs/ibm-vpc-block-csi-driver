@@ -24,6 +24,7 @@ type Context interface {
 	VolumeManager
 	VolumeAttachManager
 	SnapshotManager
+	GroupSnapshotManager
 	VolumeFileAccessPointManager
 }
 
